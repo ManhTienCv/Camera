@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { api } from '../lib/api';
 import { formatCurrency } from '../lib/utils';
 import type { Page, Category, Product } from '../types';
@@ -28,6 +29,7 @@ interface Props {
 export function Header({ onNavigate, currentPage, categories }: Props) {
   const { itemCount } = useCart();
   const { user, openAuthModal, logout } = useAuth();
+  const toast = useToast();
 
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -290,7 +292,14 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
 
               {/* Cart Button */}
               <button
-                onClick={() => onNavigate({ name: 'cart' })}
+                onClick={() => {
+                  if (!user) {
+                    toast.info('Vui lòng đăng nhập để xem giỏ hàng của bạn!');
+                    openAuthModal('login');
+                    return;
+                  }
+                  onNavigate({ name: 'cart' });
+                }}
                 className="relative p-3 hover:bg-cream-100 rounded-full transition-colors group cursor-pointer border border-cream-200 shadow-2xs"
                 aria-label="Giỏ hàng"
               >
@@ -432,7 +441,7 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
             >
               <ShoppingBag size={18} /> Tất cả sản phẩm
             </button>
-            {categories.map((cat) => (
+            {(Array.isArray(categories) ? categories : []).map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => {

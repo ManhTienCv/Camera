@@ -11,10 +11,11 @@ interface Props {
   categorySlug?: string;
 }
 
-type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'rating' | 'newest';
+type SortOption = 'featured' | 'best-seller' | 'price-asc' | 'price-desc' | 'rating' | 'newest';
 
 const sortLabels: Record<SortOption, string> = {
   featured: 'Nổi bật',
+  'best-seller': 'Bán chạy nhất 🔥',
   'price-asc': 'Giá thấp đến cao',
   'price-desc': 'Giá cao đến thấp',
   rating: 'Đánh giá cao',
@@ -37,9 +38,8 @@ export function CatalogPage({ onNavigate, categories, categorySlug }: Props) {
   useEffect(() => {
     (async () => {
       try {
-        const data = await api.getProducts({
-          sort: sort,
-        });
+        setLoading(true);
+        const data = await api.getProducts();
         setProducts(data || []);
       } catch (err) {
         console.error('Failed to load products:', err);
@@ -47,7 +47,7 @@ export function CatalogPage({ onNavigate, categories, categorySlug }: Props) {
         setLoading(false);
       }
     })();
-  }, [sort]);
+  }, []);
 
   const [allBrands, setAllBrands] = useState<string[]>([]);
 
@@ -69,9 +69,11 @@ export function CatalogPage({ onNavigate, categories, categorySlug }: Props) {
     return Array.from(new Set(products.map((p) => p.brand))).filter(Boolean).sort();
   }, [allBrands, products]);
 
+  const safeCategories = useMemo(() => (Array.isArray(categories) ? categories : []), [categories]);
+
   const activeCategory = useMemo(() => {
-    return categories.find((c) => c.slug === selectedCategory);
-  }, [categories, selectedCategory]);
+    return safeCategories.find((c) => c.slug === selectedCategory);
+  }, [safeCategories, selectedCategory]);
 
   const categoryFiltered = useMemo(() => {
     if (!selectedCategory) return products;
@@ -92,8 +94,28 @@ export function CatalogPage({ onNavigate, categories, categorySlug }: Props) {
       result = result.filter((p) => selectedBrands.includes(p.brand));
     }
     result = result.filter((p) => p.price >= priceRange[0] && p.price <= priceRange[1]);
+
+    // Instantaneous client-side sorting (0ms delay, zero network round-trip)
+    result.sort((a, b) => {
+      switch (sort) {
+        case 'price-asc':
+          return a.price - b.price;
+        case 'price-desc':
+          return b.price - a.price;
+        case 'rating':
+          return (b.rating || 0) - (a.rating || 0);
+        case 'best-seller':
+          return ((b as any).sales_count || 0) - ((a as any).sales_count || 0);
+        case 'newest':
+          return (b.is_new ? 1 : 0) - (a.is_new ? 1 : 0) || Number(b.id) - Number(a.id);
+        case 'featured':
+        default:
+          return (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0);
+      }
+    });
+
     return result;
-  }, [categoryFiltered, selectedBrands, priceRange]);
+  }, [categoryFiltered, selectedBrands, priceRange, sort]);
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands((prev) =>
@@ -102,7 +124,7 @@ export function CatalogPage({ onNavigate, categories, categorySlug }: Props) {
   };
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(9);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -312,37 +334,74 @@ export function CatalogPage({ onNavigate, categories, categorySlug }: Props) {
               </div>
 
               {/* Storefront Pagination Controls */}
-              {totalPages > 1 && (
-                <div className="mt-10 flex items-center justify-center gap-2">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="px-4 py-2 bg-white border border-ink-200 rounded-xl text-sm font-medium text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                  >
-                    ‹ Trước
-                  </button>
+              {filtered.length > 0 && (
+                <div className="mt-10 bg-white rounded-2xl border border-cream-200 p-4 px-6 flex flex-wrap items-center justify-between gap-4 shadow-xs">
+                  <div className="flex items-center gap-3 text-xs text-ink-600 font-medium">
+                    <div>
+                      Hiển thị <span className="font-bold text-ink-900">{(currentPage - 1) * itemsPerPage + 1}</span> -{' '}
+                      <span className="font-bold text-ink-900">{Math.min(currentPage * itemsPerPage, filtered.length)}</span> trên{' '}
+                      <span className="font-bold text-ink-900">{filtered.length}</span> sản phẩm
+                    </div>
 
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${
-                        currentPage === pageNum
-                          ? 'bg-ink-800 text-cream-50 shadow-xs'
-                          : 'bg-white text-ink-700 border border-ink-200 hover:border-ink-300'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  ))}
+                    <div className="flex items-center gap-1.5 border-l border-cream-200 pl-3">
+                      <span className="text-[11px] text-ink-400">Hiển thị:</span>
+                      <select
+                        value={itemsPerPage}
+                        onChange={(e) => {
+                          setItemsPerPage(Number(e.target.value));
+                          setCurrentPage(1);
+                        }}
+                        className="px-2 py-1 bg-white border border-cream-200 rounded-lg text-xs font-bold text-ink-800 focus:outline-none focus:border-accent-500 cursor-pointer shadow-2xs"
+                      >
+                        <option value={9}>9 sản phẩm / trang</option>
+                        <option value={12}>12 sản phẩm / trang</option>
+                        <option value={24}>24 sản phẩm / trang</option>
+                      </select>
+                    </div>
+                  </div>
 
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="px-4 py-2 bg-white border border-ink-200 rounded-xl text-sm font-medium text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                  >
-                    Sau ›
-                  </button>
+                  {totalPages > 1 && (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => {
+                          setCurrentPage((p) => Math.max(1, p - 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        disabled={currentPage === 1}
+                        className="px-3.5 py-1.5 bg-white border border-cream-300 rounded-xl text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                      >
+                        ‹ Trước
+                      </button>
+
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                        <button
+                          key={pageNum}
+                          onClick={() => {
+                            setCurrentPage(pageNum);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            currentPage === pageNum
+                              ? 'bg-ink-900 text-white shadow-xs'
+                              : 'bg-white text-ink-700 border border-cream-300 hover:bg-cream-100'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      ))}
+
+                      <button
+                        onClick={() => {
+                          setCurrentPage((p) => Math.min(totalPages, p + 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        disabled={currentPage === totalPages}
+                        className="px-3.5 py-1.5 bg-white border border-cream-300 rounded-xl text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                      >
+                        Sau ›
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </>

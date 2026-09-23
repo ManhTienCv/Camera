@@ -57,7 +57,7 @@ export function Footer({ onNavigate, categories }: Props) {
           <div>
             <h4 className="font-display font-semibold text-cream-50 text-sm mb-4">Danh mục sản phẩm</h4>
             <ul className="space-y-2.5 text-sm text-ink-300">
-              {categories.slice(0, 5).map((cat) => (
+              {(Array.isArray(categories) ? categories : []).slice(0, 5).map((cat) => (
                 <li key={cat.id}>
                   <button
                     onClick={() => onNavigate({ name: 'catalog', categorySlug: cat.slug })}
