@@ -74,7 +74,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
   return (
     <aside
-      className={`bg-white text-ink-800 flex flex-col flex-shrink-0 border-r border-cream-200 h-screen sticky top-0 select-none transition-all duration-300 ease-in-out z-30 ${isCollapsed ? 'w-[72px]' : 'w-64'
+      className={`bg-white text-ink-800 flex flex-col flex-shrink-0 border-r border-cream-200 h-screen sticky top-0 select-none overflow-x-hidden transition-all duration-300 ease-in-out z-30 ${isCollapsed ? 'w-[72px]' : 'w-64'
         }`}
     >
       {/* Top Header */}
@@ -126,7 +126,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       </div>
 
       {/* Nav List */}
-      <div className={`flex-1 overflow-y-auto overflow-x-hidden space-y-5 ${isCollapsed ? 'px-2 py-4' : 'px-3 py-4'}`}>
+      <div className={`flex-1 overflow-y-auto overflow-x-hidden scrollbar-none space-y-5 ${isCollapsed ? 'px-2 py-4' : 'px-3 py-4'}`}>
         {/* Section 1: Quản lý chung */}
         <div>
           {!isCollapsed && (
@@ -253,7 +253,10 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         className={`p-3 border-t border-cream-200 flex flex-shrink-0 bg-cream-50/70 transition-all ${isCollapsed ? 'flex-col items-center gap-2' : 'items-center justify-between px-3.5'
           }`}
       >
-        <div className="relative group flex items-center gap-2.5 overflow-hidden">
+        <div
+          className="relative group flex items-center gap-2.5 overflow-hidden"
+          title={isCollapsed ? `${adminUser?.fullName || 'Admin'} (${adminUser?.email || 'admin@camerahub.vn'})` : undefined}
+        >
           <div className="w-9 h-9 bg-accent-500 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-xs shrink-0 cursor-pointer">
             {adminUser?.fullName?.charAt(0) || 'A'}
           </div>
@@ -263,27 +266,18 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               <p className="text-[10px] text-ink-400 truncate">{adminUser?.email || 'admin@camerahub.vn'}</p>
             </div>
           )}
-
-          {isCollapsed && (
-            <div className="absolute left-full ml-3 px-3 py-1.5 bg-ink-900 text-white text-xs font-semibold rounded-full opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 whitespace-nowrap shadow-lg z-50 transform -translate-y-1/2 top-1/2">
-              {adminUser?.fullName || 'Admin'} ({adminUser?.email || 'admin@camerahub.vn'})
-            </div>
-          )}
         </div>
 
         <div className="relative group">
           <button
             onClick={() => onNavigate({ name: 'home' })}
+            title={isCollapsed ? 'Về trang chủ' : undefined}
             className={`text-ink-400 hover:text-ink-900 rounded-xl hover:bg-cream-200/60 transition-colors flex items-center justify-center cursor-pointer ${isCollapsed ? 'w-8 h-8' : 'p-1.5'
               }`}
             aria-label="Quay về trang cửa hàng"
           >
             <LogOut size={16} />
           </button>
-
-          <div className="absolute left-full ml-2 px-2.5 py-1 bg-ink-900 text-white text-[11px] font-semibold rounded-full opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 whitespace-nowrap shadow-md z-50 transform -translate-y-1/2 top-1/2">
-            Về trang chủ
-          </div>
         </div>
       </div>
     </aside>
