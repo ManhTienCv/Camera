@@ -285,13 +285,13 @@ export const AdminReviewsTab: React.FC = () => {
         {/* Filter Pills Group */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Status Pills */}
-          <div className="inline-flex items-center p-1 bg-white border border-cream-200 rounded-2xl shadow-xs">
+          <div className="inline-flex items-center p-1 bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-800 rounded-2xl shadow-xs">
             <button
               onClick={() => setStatusFilter('all')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 statusFilter === 'all'
-                  ? 'bg-ink-900 text-white shadow-xs'
-                  : 'text-ink-600 hover:text-ink-900 hover:bg-cream-100/70'
+                  ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
+                  : 'text-ink-600 dark:text-cream-300 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70 dark:hover:bg-ink-800'
               }`}
             >
               Tất cả
@@ -300,8 +300,8 @@ export const AdminReviewsTab: React.FC = () => {
               onClick={() => setStatusFilter('approved')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 statusFilter === 'approved'
-                  ? 'bg-ink-900 text-white shadow-xs'
-                  : 'text-ink-600 hover:text-ink-900 hover:bg-cream-100/70'
+                  ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
+                  : 'text-ink-600 dark:text-cream-300 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70 dark:hover:bg-ink-800'
               }`}
             >
               Đang hiển thị
@@ -310,8 +310,8 @@ export const AdminReviewsTab: React.FC = () => {
               onClick={() => setStatusFilter('hidden')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 statusFilter === 'hidden'
-                  ? 'bg-ink-900 text-white shadow-xs'
-                  : 'text-ink-600 hover:text-ink-900 hover:bg-cream-100/70'
+                  ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
+                  : 'text-ink-600 dark:text-cream-300 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70 dark:hover:bg-ink-800'
               }`}
             >
               Đã ẩn
@@ -319,13 +319,13 @@ export const AdminReviewsTab: React.FC = () => {
           </div>
 
           {/* Rating Pills */}
-          <div className="inline-flex items-center p-1 bg-white border border-cream-200 rounded-2xl shadow-xs">
+          <div className="inline-flex items-center p-1 bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-800 rounded-2xl shadow-xs">
             <button
               onClick={() => setRatingFilter('all')}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 ratingFilter === 'all'
                   ? 'bg-amber-500 text-white shadow-xs'
-                  : 'text-ink-600 hover:text-ink-900'
+                  : 'text-ink-600 dark:text-cream-300 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70 dark:hover:bg-ink-800'
               }`}
             >
               Tất cả sao
@@ -337,7 +337,7 @@ export const AdminReviewsTab: React.FC = () => {
                 className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   ratingFilter === String(star)
                     ? 'bg-amber-500 text-white shadow-xs'
-                    : 'text-ink-600 hover:text-ink-900'
+                    : 'text-ink-600 dark:text-cream-300 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70 dark:hover:bg-ink-800'
                 }`}
               >
                 {star} ★
@@ -574,7 +574,7 @@ export const AdminReviewsTab: React.FC = () => {
                       setItemsPerPage(Number(e.target.value));
                       setCurrentPage(1);
                     }}
-                    className="px-2 py-1 bg-cream-50 border border-cream-200 rounded-lg text-xs font-bold text-ink-800 focus:outline-none focus:border-accent-500 cursor-pointer shadow-2xs"
+                    className="px-2 py-1 bg-cream-50 dark:bg-ink-900 border border-cream-200 dark:border-ink-700 rounded-lg text-xs font-bold text-ink-800 dark:text-cream-100 focus:outline-none focus:border-accent-500 cursor-pointer shadow-2xs"
                   >
                     <option value={5}>5 đánh giá / trang</option>
                     <option value={10}>10 đánh giá / trang</option>
@@ -587,7 +587,7 @@ export const AdminReviewsTab: React.FC = () => {
                 <button
                   onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  className="px-3.5 py-1.5 rounded-xl border border-cream-300 bg-white text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                  className="px-3.5 py-1.5 rounded-xl border border-cream-300 dark:border-ink-700 bg-white dark:bg-ink-900 text-xs font-semibold text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                 >
                   ‹ Trước
                 </button>
@@ -597,8 +597,8 @@ export const AdminReviewsTab: React.FC = () => {
                     onClick={() => handlePageChange(pageNum)}
                     className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       currentPage === pageNum
-                        ? 'bg-ink-900 text-white shadow-xs'
-                        : 'bg-white text-ink-700 border border-cream-300 hover:bg-cream-100'
+                        ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
+                        : 'bg-white dark:bg-ink-900 text-ink-700 dark:text-cream-200 border border-cream-300 dark:border-ink-700 hover:bg-cream-100 dark:hover:bg-ink-800'
                     }`}
                   >
                     {pageNum}
@@ -607,7 +607,7 @@ export const AdminReviewsTab: React.FC = () => {
                 <button
                   onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages || totalPages === 0}
-                  className="px-3.5 py-1.5 rounded-xl border border-cream-300 bg-white text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                  className="px-3.5 py-1.5 rounded-xl border border-cream-300 dark:border-ink-700 bg-white dark:bg-ink-900 text-xs font-semibold text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                 >
                   Sau ›
                 </button>

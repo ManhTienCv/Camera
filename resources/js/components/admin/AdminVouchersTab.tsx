@@ -543,7 +543,7 @@ export const AdminVouchersTab: React.FC = () => {
                       setItemsPerPage(Number(e.target.value));
                       setCurrentPage(1);
                     }}
-                    className="px-2 py-1 bg-white border border-cream-200 rounded-lg text-xs font-bold text-ink-800 focus:outline-none focus:border-accent-500 cursor-pointer shadow-2xs"
+                    className="px-2 py-1 bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-700 rounded-lg text-xs font-bold text-ink-800 dark:text-cream-100 focus:outline-none focus:border-accent-500 cursor-pointer shadow-2xs"
                   >
                     <option value={6}>6 mã / trang</option>
                     <option value={12}>12 mã / trang</option>
@@ -557,7 +557,7 @@ export const AdminVouchersTab: React.FC = () => {
                   <button
                     onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
-                    className="px-3.5 py-1.5 rounded-xl border border-cream-300 bg-white text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                    className="px-3.5 py-1.5 rounded-xl border border-cream-300 dark:border-ink-700 bg-white dark:bg-ink-900 text-xs font-semibold text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                   >
                     ‹ Trước
                   </button>
@@ -567,8 +567,8 @@ export const AdminVouchersTab: React.FC = () => {
                       onClick={() => handlePageChange(pageNum)}
                       className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         currentPage === pageNum
-                          ? 'bg-ink-900 text-white shadow-xs'
-                          : 'bg-white text-ink-700 border border-cream-300 hover:bg-cream-100'
+                          ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
+                          : 'bg-white dark:bg-ink-900 text-ink-700 dark:text-cream-200 border border-cream-300 dark:border-ink-700 hover:bg-cream-100 dark:hover:bg-ink-800'
                       }`}
                     >
                       {pageNum}
@@ -577,7 +577,7 @@ export const AdminVouchersTab: React.FC = () => {
                   <button
                     onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages || totalPages === 0}
-                    className="px-3.5 py-1.5 rounded-xl border border-cream-300 bg-white text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                    className="px-3.5 py-1.5 rounded-xl border border-cream-300 dark:border-ink-700 bg-white dark:bg-ink-900 text-xs font-semibold text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                   >
                     Sau ›
                   </button>

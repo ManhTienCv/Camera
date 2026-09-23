@@ -226,8 +226,8 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
               }}
               className={`px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
                 isActive
-                  ? 'bg-ink-900 text-white shadow-sm scale-102'
-                  : 'bg-white text-ink-700 hover:bg-cream-100 border border-cream-200'
+                  ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-sm scale-102'
+                  : 'bg-white dark:bg-ink-900 text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800 border border-cream-200 dark:border-ink-800'
               }`}
             >
               <span>{tab.label}</span>
@@ -235,7 +235,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                 className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
                   isActive
                     ? 'bg-white/20 text-white'
-                    : 'bg-cream-200/80 text-ink-600'
+                    : 'bg-cream-200/80 dark:bg-ink-800 text-ink-600 dark:text-cream-300'
                 }`}
               >
                 {count}
@@ -482,7 +482,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                     setItemsPerPage(Number(e.target.value));
                     setAdminPageNum(1);
                   }}
-                  className="px-2 py-1 bg-white border border-cream-200 rounded-lg text-xs font-bold text-ink-800 focus:outline-none focus:border-accent-500 cursor-pointer shadow-2xs"
+                  className="px-2 py-1 bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-700 rounded-lg text-xs font-bold text-ink-800 dark:text-cream-100 focus:outline-none focus:border-accent-500 cursor-pointer shadow-2xs"
                 >
                   <option value={5}>5 đơn / trang</option>
                   <option value={10}>10 đơn / trang</option>
@@ -496,7 +496,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
               <button
                 onClick={() => handlePageChange(Math.max(1, adminPageNum - 1))}
                 disabled={adminPageNum === 1}
-                className="px-3.5 py-1.5 rounded-xl border border-cream-300 bg-white text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                className="px-3.5 py-1.5 rounded-xl border border-cream-300 dark:border-ink-700 bg-white dark:bg-ink-900 text-xs font-semibold text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
               >
                 ‹ Trước
               </button>
@@ -506,8 +506,8 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                   onClick={() => handlePageChange(pageNum)}
                   className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     adminPageNum === pageNum
-                      ? 'bg-ink-900 text-white shadow-xs'
-                      : 'bg-white text-ink-700 border border-cream-300 hover:bg-cream-100'
+                      ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
+                      : 'bg-white dark:bg-ink-900 text-ink-700 dark:text-cream-200 border border-cream-300 dark:border-ink-700 hover:bg-cream-100 dark:hover:bg-ink-800'
                   }`}
                 >
                   {pageNum}
@@ -516,7 +516,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
               <button
                 onClick={() => handlePageChange(Math.min(totalAdminPages, adminPageNum + 1))}
                 disabled={adminPageNum === totalAdminPages || totalAdminPages === 0}
-                className="px-3.5 py-1.5 rounded-xl border border-cream-300 bg-white text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                className="px-3.5 py-1.5 rounded-xl border border-cream-300 dark:border-ink-700 bg-white dark:bg-ink-900 text-xs font-semibold text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
               >
                 Sau ›
               </button>

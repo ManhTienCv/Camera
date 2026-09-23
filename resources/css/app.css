@@ -247,36 +247,40 @@ html.dark .bg-white {
 }
 
 html.dark .bg-cream-50,
-html.dark .bg-cream-50\/30,
-html.dark .bg-cream-50\/40,
-html.dark .bg-cream-50\/50,
-html.dark .bg-cream-50\/60,
-html.dark .bg-cream-50\/70,
-html.dark .bg-cream-50\/80 {
+html.dark [class*=" bg-cream-50"],
+html.dark [class^="bg-cream-50"] {
   background-color: #1d1d19 !important;
   border-color: #2b2b26 !important;
 }
 
 html.dark .bg-cream-100,
-html.dark .bg-cream-100\/50,
-html.dark .bg-cream-100\/70,
-html.dark .bg-cream-100\/80 {
+html.dark [class*=" bg-cream-100"],
+html.dark [class^="bg-cream-100"] {
   background-color: #242420 !important;
   border-color: #2b2b26 !important;
 }
 
 html.dark .bg-cream-200,
-html.dark .bg-cream-200\/60,
-html.dark .bg-cream-200\/80 {
+html.dark [class*=" bg-cream-200"],
+html.dark [class^="bg-cream-200"] {
   background-color: #2b2b26 !important;
   border-color: #383832 !important;
 }
 
 html.dark .border-cream-100,
+html.dark [class*=" border-cream-100"],
+html.dark [class^="border-cream-100"],
 html.dark .border-cream-200,
-html.dark .border-cream-200\/60,
-html.dark .border-cream-200\/80,
-html.dark .border-cream-300 {
+html.dark [class*=" border-cream-200"],
+html.dark [class^="border-cream-200"],
+html.dark .border-cream-300,
+html.dark [class*=" border-cream-300"],
+html.dark [class^="border-cream-300"] {
+  border-color: #2b2b26 !important;
+}
+
+html.dark .divide-cream-100 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-cream-200 > :not([hidden]) ~ :not([hidden]) {
   border-color: #2b2b26 !important;
 }
 

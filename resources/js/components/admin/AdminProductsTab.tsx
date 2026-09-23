@@ -195,40 +195,40 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-semibold">
             <button
               onClick={() => setStatusFilter('all')}
-              className={`px-3.5 py-1.5 rounded-xl transition-all ${
+              className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
                 statusFilter === 'all'
-                  ? 'bg-ink-900 text-white shadow-xs'
-                  : 'bg-cream-100/70 text-ink-600 hover:bg-cream-200'
+                  ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
+                  : 'bg-cream-100/70 text-ink-600 hover:bg-cream-200 dark:bg-ink-800 dark:text-cream-300 dark:hover:bg-ink-700'
               }`}
             >
               Tất cả ({products.length})
             </button>
             <button
               onClick={() => setStatusFilter('active')}
-              className={`px-3.5 py-1.5 rounded-xl transition-all ${
+              className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
                 statusFilter === 'active'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'bg-cream-100/70 text-emerald-700 hover:bg-cream-200'
+                  ? 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-xs'
+                  : 'bg-cream-100/70 text-emerald-700 hover:bg-cream-200 dark:bg-ink-800 dark:text-emerald-400 dark:hover:bg-ink-700'
               }`}
             >
               Đang bán ({activeCount})
             </button>
             <button
               onClick={() => setStatusFilter('outofstock')}
-              className={`px-3.5 py-1.5 rounded-xl transition-all ${
+              className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
                 statusFilter === 'outofstock'
-                  ? 'bg-rose-600 text-white shadow-xs'
-                  : 'bg-cream-100/70 text-rose-700 hover:bg-cream-200'
+                  ? 'bg-rose-600 dark:bg-rose-500 text-white shadow-xs'
+                  : 'bg-cream-100/70 text-rose-700 hover:bg-cream-200 dark:bg-ink-800 dark:text-rose-400 dark:hover:bg-ink-700'
               }`}
             >
               Hết hàng ({outOfStockCount})
             </button>
             <button
               onClick={() => setStatusFilter('inactive')}
-              className={`px-3.5 py-1.5 rounded-xl transition-all ${
+              className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
                 statusFilter === 'inactive'
-                  ? 'bg-amber-600 text-white shadow-xs'
-                  : 'bg-cream-100/70 text-amber-700 hover:bg-cream-200'
+                  ? 'bg-amber-600 dark:bg-amber-500 text-white shadow-xs'
+                  : 'bg-cream-100/70 text-amber-700 hover:bg-cream-200 dark:bg-ink-800 dark:text-amber-400 dark:hover:bg-ink-700'
               }`}
             >
               Tạm ẩn ({inactiveCount})
@@ -313,7 +313,7 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-cream-100/70 border-b border-cream-200 text-[11px] font-bold text-ink-500 uppercase tracking-wider whitespace-nowrap">
+              <tr className="bg-cream-100/70 dark:bg-ink-950/60 border-b border-cream-200 dark:border-ink-800 text-[11px] font-bold text-ink-500 dark:text-ink-400 uppercase tracking-wider whitespace-nowrap">
                 <th className="py-4 px-6">SẢN PHẨM</th>
                 <th className="py-4 px-6">DANH MỤC</th>
                 <th className="py-4 px-6">GIÁ BÁN</th>
@@ -322,7 +322,7 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
                 <th className="py-4 px-6 text-center">THAO TÁC</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-cream-100 text-sm">
+            <tbody className="divide-y divide-cream-100 dark:divide-ink-800 text-sm">
               {loading ? (
                 <tr>
                   <td colSpan={6} className="py-16 text-center text-ink-400">
@@ -358,19 +358,19 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
                       : 0;
 
                   return (
-                    <tr key={p.id} className="hover:bg-cream-50/80 transition-colors group">
+                    <tr key={p.id} className="hover:bg-cream-50/80 dark:hover:bg-ink-800/40 transition-colors group">
                       {/* Product details */}
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3.5 min-w-[260px]">
-                          <div className="relative w-14 h-14 rounded-2xl overflow-hidden border border-cream-300 bg-cream-50 shrink-0 group-hover:scale-105 transition-transform">
+                          <div className="relative w-14 h-14 rounded-2xl overflow-hidden border border-cream-300 dark:border-ink-700 bg-cream-50 dark:bg-ink-800 shrink-0 group-hover:scale-105 transition-transform">
                             <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="font-bold text-ink-900 group-hover:text-accent-600 transition-colors line-clamp-1">
+                            <p className="font-bold text-ink-900 dark:text-cream-50 group-hover:text-accent-600 dark:group-hover:text-accent-400 transition-colors line-clamp-1">
                               {p.name}
                             </p>
                             <div className="flex items-center gap-2 mt-1">
-                              <span className="text-[11px] font-bold text-accent-700 bg-accent-50 px-2 py-0.5 rounded-md uppercase">
+                              <span className="text-[11px] font-bold text-accent-700 dark:text-accent-400 bg-accent-50 dark:bg-accent-950/60 border border-accent-200/40 dark:border-accent-800/40 px-2 py-0.5 rounded-md uppercase">
                                 {p.brand}
                               </span>
                               <span className="text-[11px] text-ink-400 truncate">Mã: {p.slug.substring(0, 16)}</span>
@@ -381,7 +381,7 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
 
                       {/* Category */}
                       <td className="py-4 px-6 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1.5 bg-cream-100/90 text-ink-700 text-xs font-semibold px-3 py-1 rounded-xl border border-cream-200/80">
+                        <span className="inline-flex items-center gap-1.5 bg-cream-100/90 dark:bg-ink-800 text-ink-700 dark:text-cream-200 text-xs font-semibold px-3 py-1 rounded-xl border border-cream-200/80 dark:border-ink-700">
                           {(p as any).category_name || 'Camera'}
                         </span>
                       </td>
@@ -389,7 +389,7 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
                       {/* Price */}
                       <td className="py-4 px-6 whitespace-nowrap">
                         <div>
-                          <p className="font-display font-bold text-ink-900 text-base">
+                          <p className="font-display font-bold text-ink-900 dark:text-cream-50 text-base">
                             {formatCurrency(p.price)}
                           </p>
                           {discountPercent > 0 && p.original_price && (
@@ -397,7 +397,7 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
                               <span className="text-xs text-ink-400 line-through">
                                 {formatCurrency(p.original_price)}
                               </span>
-                              <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">
+                              <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-1.5 py-0.5 rounded">
                                 -{discountPercent}%
                               </span>
                             </div>
@@ -409,12 +409,12 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
                       <td className="py-4 px-6 whitespace-nowrap">
                         <div className="space-y-1.5 min-w-[110px]">
                           <div className="flex items-center justify-between text-xs font-bold">
-                            <span className={isOutOfStock ? 'text-rose-600' : isLowStock ? 'text-amber-600' : 'text-emerald-700'}>
+                            <span className={isOutOfStock ? 'text-rose-600 dark:text-rose-400' : isLowStock ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400'}>
                               {isOutOfStock ? 'Hết hàng (0)' : isLowStock ? `Sắp hết (${p.stock})` : `Còn hàng (${p.stock})`}
                             </span>
                           </div>
                           {/* Progress bar */}
-                          <div className="w-24 h-1.5 bg-cream-200 rounded-full overflow-hidden">
+                          <div className="w-24 h-1.5 bg-cream-200 dark:bg-ink-800 rounded-full overflow-hidden">
                             <div
                               style={{ width: `${Math.min(100, (p.stock / 20) * 100)}%` }}
                               className={`h-full rounded-full ${
@@ -431,10 +431,10 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
                           onClick={() => onToggleStatus(p)}
                           className={`inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-xl border transition-all shadow-2xs cursor-pointer ${
                             isOutOfStock
-                              ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
+                              ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-900/50 hover:bg-rose-100'
                               : p.status === 'active'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                              : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                              ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50 hover:bg-emerald-100'
+                              : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/50 hover:bg-amber-100'
                           }`}
                           title="Bấm để chuyển đổi trạng thái hiển thị"
                         >
@@ -452,21 +452,21 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
                         <div className="flex items-center justify-center gap-1.5">
                           <button
                             onClick={() => onViewProduct(p)}
-                            className="p-2 rounded-xl bg-cream-100 hover:bg-cream-200 text-ink-700 hover:text-ink-900 transition-colors cursor-pointer"
+                            className="p-2 rounded-xl bg-cream-100 hover:bg-cream-200 dark:bg-ink-800 dark:hover:bg-ink-700 text-ink-700 hover:text-ink-900 dark:text-cream-200 transition-colors cursor-pointer"
                             title="Xem chi tiết"
                           >
                             <Eye size={15} />
                           </button>
                           <button
                             onClick={() => onOpenEditModal(p)}
-                            className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 transition-colors cursor-pointer"
+                            className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-400 transition-colors cursor-pointer"
                             title="Chỉnh sửa sản phẩm"
                           >
                             <Edit3 size={15} />
                           </button>
                           <button
                             onClick={() => onDeleteProduct(p.id)}
-                            className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors cursor-pointer"
+                            className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-400 transition-colors cursor-pointer"
                             title="Xóa sản phẩm"
                           >
                             <Trash2 size={15} />
@@ -499,7 +499,7 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
                     setItemsPerPage(Number(e.target.value));
                     setAdminPageNum(1);
                   }}
-                  className="px-2 py-1 bg-white border border-cream-200 rounded-lg text-xs font-bold text-ink-800 focus:outline-none focus:border-accent-500 cursor-pointer shadow-2xs"
+                  className="px-2 py-1 bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-700 rounded-lg text-xs font-bold text-ink-800 dark:text-cream-100 focus:outline-none focus:border-accent-500 cursor-pointer shadow-2xs"
                 >
                   <option value={5}>5 sản phẩm / trang</option>
                   <option value={10}>10 sản phẩm / trang</option>
@@ -513,7 +513,7 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
               <button
                 onClick={() => handlePageChange(Math.max(1, adminPageNum - 1))}
                 disabled={adminPageNum === 1}
-                className="px-3.5 py-1.5 rounded-xl border border-cream-300 bg-white text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl border border-cream-300 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
               >
                 ‹ Trước
               </button>
@@ -524,8 +524,8 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
                   onClick={() => handlePageChange(pageNum)}
                   className={`w-8 h-8 rounded-xl font-bold text-xs transition-all cursor-pointer ${
                     adminPageNum === pageNum
-                      ? 'bg-ink-900 text-white shadow-xs'
-                      : 'bg-white text-ink-700 border border-cream-300 hover:bg-cream-100'
+                      ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
+                      : 'bg-white dark:bg-ink-900 text-ink-700 dark:text-cream-200 border border-cream-300 dark:border-ink-700 hover:bg-cream-100 dark:hover:bg-ink-800'
                   }`}
                 >
                   {pageNum}
@@ -535,7 +535,7 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
               <button
                 onClick={() => handlePageChange(Math.min(totalAdminPages, adminPageNum + 1))}
                 disabled={adminPageNum === totalAdminPages || totalAdminPages === 0}
-                className="px-3.5 py-1.5 rounded-xl border border-cream-300 bg-white text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl border border-cream-300 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
               >
                 Sau ›
               </button>
