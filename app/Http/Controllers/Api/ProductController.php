@@ -12,29 +12,37 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with(['category', 'images', 'specifications', 'features']);
+        // Tối ưu hóa: Chỉ load category, brandModel, images cho danh sách. Bỏ specs & features nặng
+        $query = Product::with([
+            'category:id,name,slug',
+            'brandModel:id,name,slug',
+            'images:id,product_id,image_url,is_primary,display_order',
+        ]);
 
         if (!$request->has('include_inactive')) {
             $query->where('status', 'active');
         }
 
-        if ($request->has('category') && !empty($request->category)) {
-            $query->whereHas('category', function ($q) use ($request) {
-                $q->where('slug', $request->category);
+        if ($request->filled('category')) {
+            $categorySlug = trim($request->category);
+            $query->whereHas('category', function ($q) use ($categorySlug) {
+                $q->where('slug', $categorySlug);
             });
         }
 
-        if ($request->has('brand') && !empty($request->brand)) {
-            $query->where(function ($q) use ($request) {
-                $q->where('brand', 'LIKE', '%' . $request->brand . '%')
-                  ->orWhereHas('brandModel', function ($bq) use ($request) {
-                      $bq->where('slug', $request->brand);
+        if ($request->filled('brand')) {
+            $brandTerm = trim($request->brand);
+            $query->where(function ($q) use ($brandTerm) {
+                $q->where('brand', 'LIKE', '%' . $brandTerm . '%')
+                  ->orWhereHas('brandModel', function ($bq) use ($brandTerm) {
+                      $bq->where('slug', $brandTerm)
+                        ->orWhere('name', 'LIKE', '%' . $brandTerm . '%');
                   });
             });
         }
 
-        if ($request->has('q') && !empty($request->q)) {
-            $searchTerm = $request->q;
+        if ($request->filled('q')) {
+            $searchTerm = trim($request->q);
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('name', 'LIKE', "%{$searchTerm}%")
                   ->orWhere('description', 'LIKE', "%{$searchTerm}%")
@@ -49,6 +57,11 @@ class ProductController extends Controller
                     break;
                 case 'price-desc':
                     $query->orderBy('price', 'desc');
+                    break;
+                case 'best-seller':
+                    $query->withCount(['orderItems as total_sold' => function ($q) {
+                        $q->select(\Illuminate\Support\Facades\DB::raw('COALESCE(SUM(quantity), 0)'));
+                    }])->orderByDesc('total_sold')->orderByDesc('rating');
                     break;
                 case 'rating':
                     $query->orderBy('rating', 'desc');
@@ -72,17 +85,21 @@ class ProductController extends Controller
     public function featured(Request $request)
     {
         $type = $request->get('type', 'featured');
+        $cacheKey = 'products_featured_' . $type;
 
-        $query = Product::where('status', 'active')->with(['images', 'specifications', 'features']);
+        $products = \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function () use ($type) {
+            $query = Product::where('status', 'active')
+                ->with(['category:id,name,slug', 'brandModel:id,name,slug', 'images:id,product_id,image_url,is_primary,display_order']);
 
-        if ($type === 'new') {
-            $query->where('is_new', true);
-        } else {
-            $query->where('is_featured', true);
-        }
+            if ($type === 'new') {
+                $query->where('is_new', true);
+            } else {
+                $query->where('is_featured', true);
+            }
 
-        $products = $query->take(8)->get()->map(function ($product) {
-            return $this->formatProduct($product);
+            return $query->take(8)->get()->map(function ($product) {
+                return $this->formatProduct($product);
+            })->toArray();
         });
 
         return response()->json($products);
@@ -101,7 +118,8 @@ class ProductController extends Controller
                       ->orWhere('description', 'LIKE', "%{$q}%")
                       ->orWhere('brand', 'LIKE', "%{$q}%");
             })
-            ->with(['images', 'specifications', 'features'])
+            ->with(['category:id,name,slug', 'brandModel:id,name,slug', 'images:id,product_id,image_url,is_primary,display_order'])
+            ->take(15)
             ->get()
             ->map(function ($product) {
                 return $this->formatProduct($product);
@@ -110,10 +128,65 @@ class ProductController extends Controller
         return response()->json($products);
     }
 
+    public function bestSellers(Request $request)
+    {
+        $limit = (int) $request->get('limit', 8);
+        $cacheKey = 'products_bestsellers_' . $limit;
+
+        $products = \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function () use ($limit) {
+            // Lấy danh sách ID các sản phẩm bán chạy nhất từ bảng order_items
+            $bestSellerIds = \Illuminate\Support\Facades\DB::table('order_items')
+                ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->where('orders.order_status', '!=', 'cancelled')
+                ->select('order_items.product_id', \Illuminate\Support\Facades\DB::raw('SUM(order_items.quantity) as total_sold'))
+                ->groupBy('order_items.product_id')
+                ->orderByDesc('total_sold')
+                ->limit($limit)
+                ->pluck('product_id')
+                ->toArray();
+
+            $query = Product::where('status', 'active')
+                ->with(['category:id,name,slug', 'brandModel:id,name,slug', 'images:id,product_id,image_url,is_primary,display_order']);
+
+            if (!empty($bestSellerIds)) {
+                $idsOrder = implode(',', $bestSellerIds);
+                $items = $query->whereIn('id', $bestSellerIds)
+                    ->orderByRaw("FIELD(id, {$idsOrder})")
+                    ->get();
+            } else {
+                $items = $query->orderBy('review_count', 'desc')->take($limit)->get();
+            }
+
+            return $items->map(fn ($p) => $this->formatProduct($p))->toArray();
+        });
+
+        return response()->json($products);
+    }
+
+    public function related(Request $request, $id)
+    {
+        $product = Product::where('slug', $id)->orWhere('id', $id)->firstOrFail();
+        $limit = (int) $request->get('limit', 4);
+
+        $related = Product::where('status', 'active')
+            ->where('id', '!=', $product->id)
+            ->where(function ($q) use ($product) {
+                $q->where('category_id', $product->category_id);
+                if ($product->brand) {
+                    $q->orWhere('brand', $product->brand);
+                }
+            })
+            ->with(['category:id,name,slug', 'brandModel:id,name,slug', 'images', 'specifications', 'features'])
+            ->take($limit)
+            ->get();
+
+        return response()->json($related->map(fn ($p) => $this->formatProduct($p)));
+    }
+
     public function show($slug)
     {
         $product = Product::where('slug', $slug)->orWhere('id', $slug)
-            ->with(['category', 'images', 'specifications', 'features', 'reviews'])
+            ->with(['category:id,name,slug', 'brandModel:id,name,slug', 'images', 'specifications', 'features', 'reviews'])
             ->firstOrFail();
 
         return response()->json($this->formatProduct($product));
@@ -275,6 +348,8 @@ class ProductController extends Controller
             }
         }
 
+        $this->clearCache();
+
         return response()->json([
             'message' => 'Cập nhật sản phẩm thành công!',
             'product' => $this->formatProduct($product->fresh(['images', 'specifications', 'features'])),
@@ -286,24 +361,41 @@ class ProductController extends Controller
         $product = Product::findOrFail($id);
         $product->delete();
 
+        $this->clearCache();
+
         return response()->json([
             'message' => 'Đã xóa sản phẩm thành công!',
         ]);
     }
 
+    private function clearCache()
+    {
+        \Illuminate\Support\Facades\Cache::forget('products_featured_featured');
+        \Illuminate\Support\Facades\Cache::forget('products_featured_new');
+        \Illuminate\Support\Facades\Cache::forget('products_bestsellers_8');
+    }
+
     private function formatProduct(Product $product)
     {
-        $gallery = $product->images->pluck('image_url')->toArray();
+        $gallery = [];
+        if ($product->relationLoaded('images')) {
+            $gallery = $product->images->pluck('image_url')->toArray();
+        }
         if (empty($gallery) && $product->image_url) {
             $gallery = [$product->image_url];
         }
 
         $specs = [];
-        foreach ($product->specifications as $spec) {
-            $specs[$spec->spec_key] = $spec->spec_value;
+        if ($product->relationLoaded('specifications')) {
+            foreach ($product->specifications as $spec) {
+                $specs[$spec->spec_key] = $spec->spec_value;
+            }
         }
 
-        $features = $product->features->pluck('feature_text')->toArray();
+        $features = [];
+        if ($product->relationLoaded('features')) {
+            $features = $product->features->pluck('feature_text')->toArray();
+        }
 
         return [
             'id' => (string) $product->id,

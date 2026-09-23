@@ -11,8 +11,10 @@ class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::withCount('products')->orderBy('display_order')->get();
-        return response()->json($categories);
+        $categories = \Illuminate\Support\Facades\Cache::remember('categories_all_cached', 600, function () {
+            return Category::withCount('products')->orderBy('display_order')->get()->toArray();
+        });
+        return response()->json(is_array($categories) ? $categories : []);
     }
 
     public function show($slug)
@@ -41,6 +43,8 @@ class CategoryController extends Controller
             'display_order' => Category::max('display_order') + 1,
         ]);
 
+        \Illuminate\Support\Facades\Cache::forget('categories_all_cached');
+
         return response()->json([
             'message' => 'Danh mục đã được tạo thành công!',
             'category' => $category,
@@ -60,6 +64,8 @@ class CategoryController extends Controller
 
         $category->save();
 
+        \Illuminate\Support\Facades\Cache::forget('categories_all_cached');
+
         return response()->json([
             'message' => 'Cập nhật danh mục thành công!',
             'category' => $category,
@@ -70,6 +76,8 @@ class CategoryController extends Controller
     {
         $category = Category::findOrFail($id);
         $category->delete();
+
+        \Illuminate\Support\Facades\Cache::forget('categories_all_cached');
 
         return response()->json([
             'message' => 'Đã xóa danh mục thành công!',

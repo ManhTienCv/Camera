@@ -10,7 +10,9 @@ class BrandController extends Controller
 {
     public function index()
     {
-        $brands = Brand::orderBy('name')->get();
-        return response()->json($brands);
+        $brands = \Illuminate\Support\Facades\Cache::remember('brands_all_cached', 600, function () {
+            return Brand::orderBy('name')->get()->toArray();
+        });
+        return response()->json(is_array($brands) ? $brands : []);
     }
 }
