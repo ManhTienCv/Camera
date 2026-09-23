@@ -36,7 +36,7 @@ export function ProductCard({ product, onView }: Props) {
       onClick={() => onView(product.slug)}
       className="group card overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
     >
-      <div className="relative aspect-square overflow-hidden bg-cream-100">
+      <div className="relative aspect-square overflow-hidden bg-cream-100 dark:bg-ink-900">
         <img
           src={product.image_url}
           alt={product.name}
@@ -51,7 +51,7 @@ export function ProductCard({ product, onView }: Props) {
           ) : (
             <>
               {product.is_new && (
-                <span className="px-2.5 py-1 bg-ink-800 text-cream-50 text-xs font-semibold rounded-full">
+                <span className="px-2.5 py-1 bg-ink-800 dark:bg-ink-700 text-cream-50 text-xs font-semibold rounded-full">
                   Mới
                 </span>
               )}
@@ -70,8 +70,8 @@ export function ProductCard({ product, onView }: Props) {
           title={inWishlist ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích'}
           className={`absolute top-3 right-3 z-20 w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
             inWishlist
-              ? 'bg-rose-50 text-rose-500 border border-rose-200'
-              : 'bg-white/80 backdrop-blur-md text-ink-500 hover:text-rose-500 hover:bg-white border border-cream-200'
+              ? 'bg-rose-50 text-rose-500 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-800'
+              : 'bg-white/80 dark:bg-ink-800/80 backdrop-blur-md text-ink-500 dark:text-ink-300 hover:text-rose-500 hover:bg-white dark:hover:bg-ink-700 border border-cream-200 dark:border-ink-700'
           }`}
         >
           <Heart size={16} className={inWishlist ? 'fill-rose-500 text-rose-500' : ''} />
@@ -85,23 +85,23 @@ export function ProductCard({ product, onView }: Props) {
       </div>
 
       <div className="p-4">
-        <p className="text-xs text-ink-400 font-medium uppercase tracking-wide mb-1">
+        <p className="text-xs text-ink-400 dark:text-ink-400 font-medium uppercase tracking-wide mb-1">
           {product.brand}
         </p>
-        <h3 className="font-display font-semibold text-ink-800 text-sm leading-snug mb-2 line-clamp-2 min-h-[2.5rem]">
+        <h3 className="font-display font-semibold text-ink-800 dark:text-ink-100 text-sm leading-snug mb-2 line-clamp-2 min-h-[2.5rem]">
           {product.name}
         </h3>
         <div className="flex items-center gap-1.5 mb-3">
           <StarRating rating={product.rating} />
-          <span className="text-xs text-ink-400">({product.review_count})</span>
+          <span className="text-xs text-ink-400 dark:text-ink-400">({product.review_count})</span>
         </div>
         <div className="flex items-end justify-between gap-2">
           <div>
-            <p className="font-display font-bold text-ink-900 text-base">
+            <p className="font-display font-bold text-ink-900 dark:text-ink-50 text-base">
               {formatCurrency(product.price)}
             </p>
             {product.original_price && (
-              <p className="text-xs text-ink-400 line-through">
+              <p className="text-xs text-ink-400 dark:text-ink-500 line-through">
                 {formatCurrency(product.original_price)}
               </p>
             )}
@@ -109,13 +109,13 @@ export function ProductCard({ product, onView }: Props) {
           {product.stock > 0 ? (
             <button
               onClick={handleAdd}
-              className="p-2.5 bg-ink-800 text-cream-50 rounded-xl hover:bg-accent-500 transition-all duration-200 active:scale-90"
+              className="p-2.5 bg-ink-800 text-cream-50 dark:bg-accent-600 dark:hover:bg-accent-500 rounded-xl hover:bg-accent-500 transition-all duration-200 active:scale-90"
               aria-label="Thêm vào giỏ hàng"
             >
               <ShoppingBag size={16} />
             </button>
           ) : (
-            <span className="px-2.5 py-1.5 bg-cream-200 text-ink-400 text-xs font-semibold rounded-xl cursor-not-allowed">
+            <span className="px-2.5 py-1.5 bg-cream-200 text-ink-400 dark:bg-ink-800 dark:text-ink-500 text-xs font-semibold rounded-xl cursor-not-allowed">
               Hết hàng
             </span>
           )}

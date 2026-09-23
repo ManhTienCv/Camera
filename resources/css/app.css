@@ -2,6 +2,8 @@
 
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-cream-50: #fdfbf7;
   --color-cream-100: #faf6ee;
@@ -24,6 +26,7 @@
   --color-ink-700: #33332e;
   --color-ink-800: #22221f;
   --color-ink-900: #151513;
+  --color-ink-950: #0f0f0d;
 
   --color-accent-50: #fef5ee;
   --color-accent-100: #fde6d3;
@@ -61,6 +64,15 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+  html.dark body {
+    background-color: var(--color-ink-950);
+    color: var(--color-cream-100);
   }
 }
 
@@ -152,11 +164,12 @@
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 0px;
 }
 ::-webkit-scrollbar:horizontal {
   height: 0px !important;
+  width: 0px !important;
   display: none !important;
 }
 ::-webkit-scrollbar-track {
@@ -168,4 +181,52 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #b89863;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-none {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Dark Mode Utilities */
+html.dark .card {
+  background-color: #171714;
+  border-color: #2b2b26;
+  color: var(--color-cream-100);
+}
+
+html.dark .input-field {
+  background-color: #1a1a17;
+  border-color: #383832;
+  color: #fdfbf7;
+}
+html.dark .input-field:focus {
+  border-color: var(--color-accent-500);
+  box-shadow: 0 0 0 2px rgba(232, 93, 27, 0.25);
+}
+
+html.dark .btn-secondary {
+  background-color: #22221f;
+  color: #fdfbf7;
+  border-color: #383832;
+}
+html.dark .btn-secondary:hover {
+  background-color: #2b2b26;
+  border-color: #4c4c44;
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: #171714;
+}
+html.dark ::-webkit-scrollbar-thumb {
+  background: #3e3e38;
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #54544d;
 }

@@ -3,6 +3,7 @@ import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider, useToast } from './context/ToastContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { AuthModal } from './components/AuthModal';
 import { LiveChatWidget } from './components/LiveChatWidget';
 import { Header } from './components/Header';
@@ -136,56 +137,59 @@ export default function App() {
     if (window.location.pathname + window.location.search !== targetUrl) {
       window.history.pushState({ page: p }, '', targetUrl);
     }
+    window.dispatchEvent(new Event('camerahub_route_change'));
   }, []);
 
   return (
-    <ToastProvider>
-      <AuthProvider>
-        <WishlistProvider>
-          <GoogleAuthHandler />
-          <CartProvider>
-            {page.name === 'admin' ? (
-              <AdminPage onNavigate={navigate} initialTab={page.tab || 'dashboard'} />
-            ) : (
-              <div className="min-h-screen flex flex-col bg-cream-50">
-                <Header onNavigate={navigate} currentPage={page} categories={categories} />
+    <ThemeProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <WishlistProvider>
+            <GoogleAuthHandler />
+            <CartProvider>
+              {page.name === 'admin' ? (
+                <AdminPage onNavigate={navigate} initialTab={page.tab || 'dashboard'} />
+              ) : (
+                <div className="min-h-screen flex flex-col bg-cream-50 dark:bg-ink-950 text-ink-800 dark:text-cream-100 transition-colors duration-200">
+                  <Header onNavigate={navigate} currentPage={page} categories={categories} />
 
-                <main className="flex-1">
-                  {page.name === 'home' && <HomePage onNavigate={navigate} categories={categories} />}
-                  {page.name === 'catalog' && (
-                    <CatalogPage
-                      onNavigate={navigate}
-                      categories={categories}
-                      categorySlug={page.categorySlug}
-                    />
-                  )}
-                  {page.name === 'product' && (
-                    <ProductDetailPage
-                      slug={page.slug}
-                      onNavigate={navigate}
-                      categories={categories}
-                    />
-                  )}
-                  {page.name === 'cart' && <CartPage onNavigate={navigate} />}
-                  {page.name === 'checkout' && <CheckoutPage onNavigate={navigate} />}
-                  {page.name === 'order-success' && (
-                    <OrderSuccessPage orderId={page.orderId} onNavigate={navigate} />
-                  )}
-                  {page.name === 'search' && <SearchPage query={page.query} onNavigate={navigate} />}
-                  {page.name === 'orders' && <OrdersPage onNavigate={navigate} />}
-                  {page.name === 'profile' && (
-                    <ProfilePage initialTab={page.tab || 'profile'} onNavigate={navigate} />
-                  )}
-                </main>
+                  <main className="flex-1">
+                    {page.name === 'home' && <HomePage onNavigate={navigate} categories={categories} />}
+                    {page.name === 'catalog' && (
+                      <CatalogPage
+                        onNavigate={navigate}
+                        categories={categories}
+                        categorySlug={page.categorySlug}
+                      />
+                    )}
+                    {page.name === 'product' && (
+                      <ProductDetailPage
+                        slug={page.slug}
+                        onNavigate={navigate}
+                        categories={categories}
+                      />
+                    )}
+                    {page.name === 'cart' && <CartPage onNavigate={navigate} />}
+                    {page.name === 'checkout' && <CheckoutPage onNavigate={navigate} />}
+                    {page.name === 'order-success' && (
+                      <OrderSuccessPage orderId={page.orderId} onNavigate={navigate} />
+                    )}
+                    {page.name === 'search' && <SearchPage query={page.query} onNavigate={navigate} />}
+                    {page.name === 'orders' && <OrdersPage onNavigate={navigate} />}
+                    {page.name === 'profile' && (
+                      <ProfilePage initialTab={page.tab || 'profile'} onNavigate={navigate} />
+                    )}
+                  </main>
 
-                <Footer onNavigate={navigate} categories={categories} />
-                <AuthModal />
-                <LiveChatWidget onNavigate={navigate} />
-              </div>
-            )}
-          </CartProvider>
-        </WishlistProvider>
-      </AuthProvider>
-    </ToastProvider>
+                  <Footer onNavigate={navigate} categories={categories} />
+                  <AuthModal />
+                  <LiveChatWidget onNavigate={navigate} />
+                </div>
+              )}
+            </CartProvider>
+          </WishlistProvider>
+        </AuthProvider>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }
