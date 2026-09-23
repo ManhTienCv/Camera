@@ -1,4 +1,4 @@
-import type { Category, Product, Cart, Order, User, Address, AuthResponse, ChatMessage, ChatUserItem, ReportSummaryData, ReportChartsData, AdminUserItem } from '../types';
+import type { Category, Product, Cart, Order, User, Address, AuthResponse, ChatMessage, ChatUserItem, ReportSummaryData, ReportChartsData, AdminUserItem, AdminVoucherItem, AdminReviewItem } from '../types';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '') + '/api/v1';
 
@@ -12,7 +12,10 @@ function getSessionId(): string {
   return id;
 }
 
-function getAuthToken(): string | null {
+function getAuthToken(url?: string): string | null {
+  if (url && (url.startsWith('/admin') || url.includes('/admin/'))) {
+    return localStorage.getItem('camera_admin_token');
+  }
   return localStorage.getItem('camera_auth_token');
 }
 
@@ -32,7 +35,7 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
     }
   }
 
-  const token = getAuthToken();
+  const token = getAuthToken(url);
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -130,6 +133,12 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  changePassword: (data: { currentPassword?: string; newPassword: string }) =>
+    request<{ message: string; user: User }>('/auth/password', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
   getAddresses: () => request<Address[]>('/auth/addresses'),
 
   createAddress: (data: {
@@ -189,11 +198,87 @@ export const api = {
   getFeaturedProducts: (type: 'featured' | 'new' = 'featured') =>
     request<Product[]>(`/products/featured?type=${type}`),
 
+  getBestSellers: (limit: number = 8) =>
+    request<Product[]>(`/products/best-sellers?limit=${limit}`),
+
   searchProducts: (q: string) =>
     request<Product[]>(`/products/search?q=${encodeURIComponent(q)}`),
 
   getProductBySlug: (slug: string) =>
     request<Product>(`/products/${slug}`),
+
+  getRelatedProducts: (id: string, limit: number = 4) =>
+    request<Product[]>(`/products/${id}/related?limit=${limit}`),
+
+  // Reviews (Database connected)
+  getProductReviews: (productId: string) =>
+    request<{
+      reviews: any[];
+      stats: {
+        average: number;
+        count: number;
+        breakdown: Record<number, number>;
+        breakdownPercent: Record<number, number>;
+        withImagesCount: number;
+      };
+    }>(`/products/${productId}/reviews`),
+
+  createProductReview: (
+    productId: string,
+    data: { rating: number; comment: string; variant?: string; images?: string[] }
+  ) =>
+    request<{ message: string; review: any; newProductStats: { rating: number; review_count: number } }>(
+      `/products/${productId}/reviews`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    ),
+
+  voteReviewHelpful: (reviewId: string) =>
+    request<{ success: boolean; helpful_count: number }>(`/reviews/${reviewId}/helpful`, {
+      method: 'POST',
+    }),
+
+  // Vouchers / Coupons
+  getAvailableVouchers: () =>
+    request<Array<{
+      id: number;
+      code: string;
+      name: string;
+      description: string;
+      discount_type: 'fixed' | 'percent';
+      discount_value: number;
+      min_order_amount: number;
+      max_discount_amount: number | null;
+      expires_at: string | null;
+    }>>('/vouchers/available'),
+
+  applyVoucher: (code: string, orderAmount: number) =>
+    request<{
+      valid: boolean;
+      message: string;
+      voucher?: {
+        code: string;
+        name: string;
+        discount_type: 'fixed' | 'percent';
+        discount_value: number;
+        discount_amount: number;
+        final_amount: number;
+      };
+    }>('/vouchers/apply', {
+      method: 'POST',
+      body: JSON.stringify({ code, order_amount: orderAmount }),
+    }),
+
+  // Wishlist
+  getWishlist: () => request<Product[]>('/wishlist'),
+  getWishlistIds: () => request<string[]>('/wishlist/ids'),
+  toggleWishlist: (productId: string) =>
+    request<{ in_wishlist: boolean; message: string }>('/wishlist/toggle', {
+      method: 'POST',
+      body: JSON.stringify({ product_id: productId }),
+    }),
 
   // Cart
   getCart: () => request<Cart>('/cart'),
@@ -228,6 +313,7 @@ export const api = {
     shipping_address: string;
     city: string;
     payment_method?: string;
+    voucher_code?: string;
     items: Array<{ product_id: string; name: string; price: number; quantity: number; image_url: string }>;
   }) =>
     request<Order>('/orders', {
@@ -242,11 +328,16 @@ export const api = {
       method: 'POST',
     }),
 
-  cancelOrder: (id: string, reason?: string) =>
-    request<{ message: string; order: Order }>(`/orders/${id}/cancel`, {
+  cancelOrder: (
+    id: string,
+    data?: string | { reason?: string; bank_name?: string; bank_account_number?: string; bank_account_holder?: string }
+  ) => {
+    const payload = typeof data === 'string' ? { reason: data } : data || {};
+    return request<{ message: string; order: Order }>(`/orders/${id}/cancel`, {
       method: 'POST',
-      body: JSON.stringify({ reason }),
-    }),
+      body: JSON.stringify(payload),
+    });
+  },
 
   // MoMo Payment Gateway
   createMomoPayment: (orderId: string, redirectUrl?: string) =>
@@ -375,11 +466,17 @@ export const api = {
       method: 'POST',
     }),
 
+  confirmAdminRefund: (orderId: string, refundRefCode: string) =>
+    request<{ message: string; order: Order }>(`/admin/orders/${orderId}/confirm-refund`, {
+      method: 'POST',
+      body: JSON.stringify({ refund_ref_code: refundRefCode }),
+    }),
+
   // ==========================================
   // Lab 07: Live Chat APIs (User & Admin)
   // ==========================================
-  getUserChatMessages: () =>
-    request<ChatMessage[]>('/user/chat/messages'),
+  getUserChatMessages: (afterId?: number) =>
+    request<ChatMessage[]>(`/user/chat/messages${afterId ? '?after_id=' + afterId : ''}`),
 
   sendUserChatMessage: (message: string) =>
     request<ChatMessage>('/user/chat/send', {
@@ -390,8 +487,8 @@ export const api = {
   getAdminChatUsers: () =>
     request<ChatUserItem[]>('/admin/chat/users'),
 
-  getAdminChatMessages: (userId: number | string) =>
-    request<ChatMessage[]>(`/admin/chat/messages/${userId}`),
+  getAdminChatMessages: (userId: number | string, afterId?: number) =>
+    request<ChatMessage[]>(`/admin/chat/messages/${userId}${afterId ? '?after_id=' + afterId : ''}`),
 
   sendAdminChatMessage: (userId: number | string, message: string) =>
     request<ChatMessage>('/admin/chat/send', {
@@ -435,5 +532,137 @@ export const api = {
     request<{ message?: string; error?: string }>(`/admin/users/${id}`, {
       method: 'DELETE',
     }),
+
+  // ==========================================
+  // Admin Voucher Management (media_1790099989435.png)
+  // ==========================================
+  getAdminVouchers: (params?: { q?: string; status?: string }) => {
+    const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
+    return request<{
+      vouchers: AdminVoucherItem[];
+      stats: {
+        total_vouchers: number;
+        active_vouchers: number;
+        total_used: number;
+      };
+    }>(`/admin/vouchers${query}`);
+  },
+
+  createAdminVoucher: (data: Partial<AdminVoucherItem>) =>
+    request<{ message: string; voucher: AdminVoucherItem }>('/admin/vouchers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateAdminVoucher: (id: number | string, data: Partial<AdminVoucherItem>) =>
+    request<{ message: string; voucher: AdminVoucherItem }>(`/admin/vouchers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  toggleAdminVoucherStatus: (id: number | string) =>
+    request<{ message: string; voucher: AdminVoucherItem }>(`/admin/vouchers/${id}/toggle-status`, {
+      method: 'PATCH',
+    }),
+
+  deleteAdminVoucher: (id: number | string) =>
+    request<{ message: string }>(`/admin/vouchers/${id}`, {
+      method: 'DELETE',
+    }),
+
+  // ==========================================
+  // Admin Review Management (media_1790132554619.png)
+  // ==========================================
+  getAdminReviews: (params?: { q?: string; status?: string; rating?: string }) => {
+    const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
+    return request<{
+      reviews: AdminReviewItem[];
+      stats: {
+        total: number;
+        average: number;
+        approved_count: number;
+        hidden_count: number;
+        five_star_count: number;
+      };
+    }>(`/admin/reviews${query}`);
+  },
+
+  toggleAdminReviewStatus: (id: number | string) =>
+    request<{ message: string; status: 'approved' | 'hidden' }>(`/admin/reviews/${id}/toggle-status`, {
+      method: 'PATCH',
+    }),
+
+  replyAdminReview: (id: number | string, reply: string) =>
+    request<{ message: string; admin_reply: string; replied_at: string }>(`/admin/reviews/${id}/reply`, {
+      method: 'POST',
+      body: JSON.stringify({ reply }),
+    }),
+
+  deleteAdminReview: (id: number | string) =>
+    request<{ message: string }>(`/admin/reviews/${id}`, {
+      method: 'DELETE',
+    }),
+
+  // ==========================================
+  // Admin Dedicated Authentication
+  // ==========================================
+  adminLogin: async (data: { email: string; password: string }): Promise<AuthResponse> => {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      let errMsg = 'Tài khoản hoặc mật khẩu Quản trị không chính xác.';
+      try {
+        const errData = await res.json();
+        if (errData.message) errMsg = errData.message;
+      } catch (_) {}
+      throw new Error(errMsg);
+    }
+    const resData: AuthResponse = await res.json();
+    if (!resData.user || resData.user.role !== 'admin') {
+      throw new Error('Tài khoản này không có quyền Quản trị viên (Admin).');
+    }
+    localStorage.setItem('camera_admin_token', resData.token);
+    localStorage.setItem('camera_admin_user', JSON.stringify(resData.user));
+    return resData;
+  },
+
+  getAdminProfile: async (): Promise<User> => {
+    const adminToken = localStorage.getItem('camera_admin_token');
+    if (!adminToken) {
+      throw new Error('Chưa đăng nhập Quản trị viên');
+    }
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${adminToken}`,
+      },
+    });
+    if (!res.ok) {
+      localStorage.removeItem('camera_admin_token');
+      localStorage.removeItem('camera_admin_user');
+      throw new Error('Phiên đăng nhập Admin đã hết hạn');
+    }
+    const json = await res.json();
+    const userData = (json.data || json) as User;
+    if (userData.role !== 'admin') {
+      localStorage.removeItem('camera_admin_token');
+      localStorage.removeItem('camera_admin_user');
+      throw new Error('Tài khoản không có quyền Admin');
+    }
+    localStorage.setItem('camera_admin_user', JSON.stringify(userData));
+    return userData;
+  },
+
+  adminLogout: () => {
+    localStorage.removeItem('camera_admin_token');
+    localStorage.removeItem('camera_admin_user');
+  },
 };
 

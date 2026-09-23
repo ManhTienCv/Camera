@@ -28,12 +28,6 @@ class AuthController extends Controller
             }
         }
 
-        // Fallback: If no token provided or expired, look up by session or first admin for testing if passed
-        $userId = $request->header('X-User-ID') ?: $request->input('user_id');
-        if ($userId) {
-            return User::find($userId);
-        }
-
         return null;
     }
 
@@ -55,11 +49,13 @@ class AuthController extends Controller
     {
         return [
             'id' => (string) $user->id,
+            'customerCode' => 'CAM-ACC-' . str_pad((string) $user->id, 5, '0', STR_PAD_LEFT),
             'email' => $user->email,
             'fullName' => $user->name,
             'phone' => $user->phone,
             'avatarUrl' => $user->avatar_url,
             'role' => $user->role ?? 'customer',
+            'hasPassword' => !empty($user->password),
             'createdAt' => $user->created_at ? $user->created_at->toISOString() : null,
             'totalOrders' => $user->orders()->count(),
             'addresses' => $user->addresses->map(function ($a) {
@@ -298,8 +294,10 @@ class AuthController extends Controller
         }
 
         if ($request->has('newPassword') && !empty($request->newPassword)) {
-            if (!$request->has('currentPassword') || !Hash::check($request->currentPassword, $user->password)) {
-                return response()->json(['message' => 'Mật khẩu hiện tại không chính xác.'], 400);
+            if (!empty($user->password)) {
+                if (!$request->has('currentPassword') || !Hash::check($request->currentPassword, $user->password)) {
+                    return response()->json(['message' => 'Mật khẩu hiện tại không chính xác.'], 400);
+                }
             }
             $user->password = Hash::make($request->newPassword);
         }
@@ -308,6 +306,34 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Cập nhật thông tin thành công!',
+            'user' => $this->formatUser($user->fresh()),
+        ]);
+    }
+
+    // 4.0 CHANGE PASSWORD
+    public function changePassword(Request $request)
+    {
+        $user = $this->getAuthUser($request);
+
+        if (!$user) {
+            return response()->json(['message' => 'Chưa đăng nhập.'], 401);
+        }
+
+        $request->validate([
+            'newPassword' => 'required|string|min:6',
+        ]);
+
+        if (!empty($user->password)) {
+            if (!$request->has('currentPassword') || !Hash::check($request->currentPassword, $user->password)) {
+                return response()->json(['message' => 'Mật khẩu hiện tại không chính xác.'], 400);
+            }
+        }
+
+        $user->password = Hash::make($request->newPassword);
+        $user->save();
+
+        return response()->json([
+            'message' => 'Đổi mật khẩu thành công!',
             'user' => $this->formatUser($user->fresh()),
         ]);
     }

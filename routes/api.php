@@ -20,6 +20,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/verify-change-email-otp', [AuthController::class, 'verifyChangeEmailOtp']);
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
+    Route::put('/auth/password', [AuthController::class, 'changePassword']);
     Route::get('/auth/addresses', [AuthController::class, 'getAddresses']);
     Route::post('/auth/addresses', [AuthController::class, 'createAddress']);
     Route::put('/auth/addresses/{id}', [AuthController::class, 'updateAddress']);
@@ -39,8 +40,24 @@ Route::prefix('v1')->group(function () {
     // 4. Products
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/featured', [ProductController::class, 'featured']);
+    Route::get('/products/best-sellers', [ProductController::class, 'bestSellers']);
     Route::get('/products/search', [ProductController::class, 'search']);
+    Route::get('/products/{slug}/related', [ProductController::class, 'related']);
     Route::get('/products/{slug}', [ProductController::class, 'show']);
+
+    // 4.1 Product Reviews (Real Database)
+    Route::get('/products/{id}/reviews', [\App\Http\Controllers\Api\ReviewController::class, 'index']);
+    Route::post('/products/{id}/reviews', [\App\Http\Controllers\Api\ReviewController::class, 'store']);
+    Route::post('/reviews/{id}/helpful', [\App\Http\Controllers\Api\ReviewController::class, 'helpful']);
+
+    // 4.2 Vouchers / Coupons
+    Route::get('/vouchers/available', [\App\Http\Controllers\Api\VoucherController::class, 'available']);
+    Route::post('/vouchers/apply', [\App\Http\Controllers\Api\VoucherController::class, 'apply']);
+
+    // 4.3 Wishlists (Danh sách yêu thích)
+    Route::get('/wishlist', [\App\Http\Controllers\Api\WishlistController::class, 'index']);
+    Route::get('/wishlist/ids', [\App\Http\Controllers\Api\WishlistController::class, 'ids']);
+    Route::post('/wishlist/toggle', [\App\Http\Controllers\Api\WishlistController::class, 'toggle']);
 
     // 5. Cart
     Route::get('/cart', [CartController::class, 'show']);
@@ -52,7 +69,6 @@ Route::prefix('v1')->group(function () {
     // 6. Orders
     Route::post('/orders', [OrderController::class, 'store']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);
-    Route::post('/orders/{id}/confirm-payment', [OrderController::class, 'confirmPayment']);
     Route::post('/orders/{id}/cancel', [OrderController::class, 'cancelOrder']);
 
     // 7. MoMo Payment Gateway
@@ -65,39 +81,61 @@ Route::prefix('v1')->group(function () {
     Route::get('/shipping/ghn/districts/{provinceId}', [\App\Http\Controllers\Api\ShippingController::class, 'getDistricts']);
     Route::get('/shipping/ghn/wards/{districtId}', [\App\Http\Controllers\Api\ShippingController::class, 'getWards']);
     Route::post('/shipping/ghn/fee', [\App\Http\Controllers\Api\ShippingController::class, 'calculateFee']);
-    Route::post('/admin/orders/{id}/ghn', [\App\Http\Controllers\Api\ShippingController::class, 'createGhnOrder']);
     Route::post('/shipping/ghn/sync/{id}', [\App\Http\Controllers\Api\ShippingController::class, 'syncGhnOrder']);
     Route::post('/shipping/ghn/webhook', [\App\Http\Controllers\Api\ShippingController::class, 'handleGhnWebhook']);
 
-    // 9. Admin APIs
-    Route::post('/admin/products', [ProductController::class, 'store']);
-    Route::put('/admin/products/{id}', [ProductController::class, 'update']);
-    Route::delete('/admin/products/{id}', [ProductController::class, 'destroy']);
-    
-    Route::post('/admin/categories', [CategoryController::class, 'store']);
-    Route::put('/admin/categories/{id}', [CategoryController::class, 'update']);
-    Route::delete('/admin/categories/{id}', [CategoryController::class, 'destroy']);
-
-    Route::get('/admin/orders', [\App\Http\Controllers\Admin\OrderController::class, 'index']);
-    Route::get('/admin/orders/{id}', [\App\Http\Controllers\Admin\OrderController::class, 'show']);
-    Route::put('/admin/orders/{id}', [\App\Http\Controllers\Admin\OrderController::class, 'updateStatus']);
-
-    // 10. Lab 07: Live Chat APIs (User & Admin)
+    // 9. Live Chat APIs (Customer side)
     Route::post('/user/chat/send', [\App\Http\Controllers\User\ChatController::class, 'send']);
     Route::get('/user/chat/messages', [\App\Http\Controllers\User\ChatController::class, 'getMessages']);
-    Route::get('/admin/chat/users', [\App\Http\Controllers\Admin\ChatController::class, 'getUsers']);
-    Route::get('/admin/chat/messages/{userId}', [\App\Http\Controllers\Admin\ChatController::class, 'getMessages']);
-    Route::post('/admin/chat/send', [\App\Http\Controllers\Admin\ChatController::class, 'send']);
 
-    // 11. Lab 08: Admin Reports & Charts APIs
-    Route::get('/admin/reports', [\App\Http\Controllers\Admin\ReportController::class, 'index']);
-    Route::get('/admin/reports/summary', [\App\Http\Controllers\Admin\ReportController::class, 'index']);
-    Route::get('/admin/reports/charts', [\App\Http\Controllers\Admin\ReportController::class, 'charts']);
+    // 10. PROTECTED ADMIN APIS (Requires auth.token and admin role)
+    Route::middleware(['auth.token', 'admin'])->group(function () {
+        // Products Management
+        Route::post('/admin/products', [ProductController::class, 'store']);
+        Route::put('/admin/products/{id}', [ProductController::class, 'update']);
+        Route::delete('/admin/products/{id}', [ProductController::class, 'destroy']);
+        
+        // Categories Management
+        Route::post('/admin/categories', [CategoryController::class, 'store']);
+        Route::put('/admin/categories/{id}', [CategoryController::class, 'update']);
+        Route::delete('/admin/categories/{id}', [CategoryController::class, 'destroy']);
 
-    // 12. Lab 08: Admin User Management APIs
-    Route::get('/admin/users', [\App\Http\Controllers\Admin\UserController::class, 'index']);
-    Route::post('/admin/users', [\App\Http\Controllers\Admin\UserController::class, 'store']);
-    Route::get('/admin/users/{id}', [\App\Http\Controllers\Admin\UserController::class, 'show']);
-    Route::put('/admin/users/{id}', [\App\Http\Controllers\Admin\UserController::class, 'update']);
-    Route::delete('/admin/users/{id}', [\App\Http\Controllers\Admin\UserController::class, 'destroy']);
+        // Orders Management
+        Route::get('/admin/orders', [\App\Http\Controllers\Admin\OrderController::class, 'index']);
+        Route::get('/admin/orders/{id}', [\App\Http\Controllers\Admin\OrderController::class, 'show']);
+        Route::put('/admin/orders/{id}', [\App\Http\Controllers\Admin\OrderController::class, 'updateStatus']);
+        Route::post('/admin/orders/{id}/confirm-payment', [OrderController::class, 'confirmPayment']);
+        Route::post('/admin/orders/{id}/confirm-refund', [\App\Http\Controllers\Admin\OrderController::class, 'confirmRefund']);
+        Route::post('/admin/orders/{id}/ghn', [\App\Http\Controllers\Api\ShippingController::class, 'createGhnOrder']);
+
+        // Admin Chat
+        Route::get('/admin/chat/users', [\App\Http\Controllers\Admin\ChatController::class, 'getUsers']);
+        Route::get('/admin/chat/messages/{userId}', [\App\Http\Controllers\Admin\ChatController::class, 'getMessages']);
+        Route::post('/admin/chat/send', [\App\Http\Controllers\Admin\ChatController::class, 'send']);
+
+        // Reports & Charts
+        Route::get('/admin/reports', [\App\Http\Controllers\Admin\ReportController::class, 'index']);
+        Route::get('/admin/reports/summary', [\App\Http\Controllers\Admin\ReportController::class, 'index']);
+        Route::get('/admin/reports/charts', [\App\Http\Controllers\Admin\ReportController::class, 'charts']);
+
+        // User Management
+        Route::get('/admin/users', [\App\Http\Controllers\Admin\UserController::class, 'index']);
+        Route::post('/admin/users', [\App\Http\Controllers\Admin\UserController::class, 'store']);
+        Route::get('/admin/users/{id}', [\App\Http\Controllers\Admin\UserController::class, 'show']);
+        Route::put('/admin/users/{id}', [\App\Http\Controllers\Admin\UserController::class, 'update']);
+        Route::delete('/admin/users/{id}', [\App\Http\Controllers\Admin\UserController::class, 'destroy']);
+
+        // Vouchers Management (media_1790099989435.png)
+        Route::get('/admin/vouchers', [\App\Http\Controllers\Api\VoucherController::class, 'adminIndex']);
+        Route::post('/admin/vouchers', [\App\Http\Controllers\Api\VoucherController::class, 'store']);
+        Route::put('/admin/vouchers/{id}', [\App\Http\Controllers\Api\VoucherController::class, 'update']);
+        Route::patch('/admin/vouchers/{id}/toggle-status', [\App\Http\Controllers\Api\VoucherController::class, 'toggleStatus']);
+        Route::delete('/admin/vouchers/{id}', [\App\Http\Controllers\Api\VoucherController::class, 'destroy']);
+
+        // Reviews & Feedback Management (media_1790132554619.png)
+        Route::get('/admin/reviews', [\App\Http\Controllers\Api\ReviewController::class, 'adminIndex']);
+        Route::patch('/admin/reviews/{id}/toggle-status', [\App\Http\Controllers\Api\ReviewController::class, 'adminToggleStatus']);
+        Route::post('/admin/reviews/{id}/reply', [\App\Http\Controllers\Api\ReviewController::class, 'adminReply']);
+        Route::delete('/admin/reviews/{id}', [\App\Http\Controllers\Api\ReviewController::class, 'adminDestroy']);
+    });
 });

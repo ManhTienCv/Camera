@@ -67,6 +67,13 @@ export interface Order {
   ghn_order_code?: string;
   expected_delivery_time?: string;
   status: string;
+  order_status?: string;
+  cancel_reason?: string;
+  bank_name?: string;
+  bank_account_number?: string;
+  bank_account_holder?: string;
+  refund_ref_code?: string;
+  refunded_at?: string;
   items: OrderItem[];
   created_at?: string;
 }
@@ -81,11 +88,13 @@ export interface OrderItem {
 
 export interface User {
   id: string;
+  customerCode?: string;
   email: string;
   fullName: string;
   phone?: string | null;
   avatarUrl?: string | null;
   role: string;
+  hasPassword?: boolean;
   createdAt?: string;
   totalOrders?: number;
   addresses?: Address[];
@@ -202,6 +211,44 @@ export interface AdminUserItem {
   created_at?: string;
 }
 
+export interface AdminVoucherItem {
+  id: number;
+  code: string;
+  name: string;
+  description: string | null;
+  discount_type: 'fixed' | 'percent';
+  discount_value: number;
+  min_order_amount: number;
+  max_discount_amount: number | null;
+  usage_limit: number;
+  used_count: number;
+  expires_at: string | null;
+  status: 'active' | 'inactive';
+  created_at?: string;
+}
+
+export interface AdminReviewItem {
+  id: string;
+  customer_name: string;
+  customer_email?: string | null;
+  customer_avatar?: string | null;
+  product_id: string;
+  product_name: string;
+  product_slug: string;
+  product_image: string;
+  product_sku?: string | null;
+  rating: number;
+  variant: string;
+  comment: string;
+  images: string[];
+  is_verified_purchase: boolean;
+  helpful_count: number;
+  status: 'approved' | 'hidden';
+  admin_reply?: string | null;
+  replied_at?: string | null;
+  created_at: string;
+}
+
 export type Page =
   | { name: 'home' }
   | { name: 'catalog'; categorySlug?: string }
@@ -211,6 +258,6 @@ export type Page =
   | { name: 'order-success'; orderId: string }
   | { name: 'search'; query: string }
   | { name: 'orders' }
-  | { name: 'profile'; tab?: 'profile' | 'addresses' }
-  | { name: 'admin'; tab?: 'dashboard' | 'products' | 'categories' | 'orders' | 'reviews' | 'settings' | 'reports' | 'users' | 'chat' };
+  | { name: 'profile'; tab?: 'profile' | 'addresses' | 'orders' }
+  | { name: 'admin'; tab?: 'dashboard' | 'products' | 'categories' | 'orders' | 'vouchers' | 'reviews' | 'settings' | 'reports' | 'users' | 'chat' };
 
