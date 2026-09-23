@@ -412,60 +412,60 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-accent-200/30 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-10 right-10 w-[350px] h-[350px] bg-cream-300/40 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="relative w-full max-w-md bg-white border border-cream-200 rounded-[28px] p-8 sm:p-10 shadow-xl space-y-6 animate-scale-up">
+        <div className="relative w-full max-w-[400px] bg-white border border-cream-200 rounded-[22px] p-6 sm:p-7 shadow-lg space-y-4 animate-scale-up">
           {/* Brand Header */}
-          <div className="text-center space-y-2">
-            <div className="w-14 h-14 rounded-2xl bg-accent-50 border border-accent-200 text-accent-600 flex items-center justify-center mx-auto shadow-2xs">
-              <ShieldCheck size={28} />
+          <div className="text-center space-y-1.5">
+            <div className="w-11 h-11 rounded-2xl bg-accent-50 border border-accent-200 text-accent-600 flex items-center justify-center mx-auto shadow-2xs">
+              <ShieldCheck size={22} />
             </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-cream-100 border border-cream-200 rounded-full text-[11px] font-bold text-ink-700 mt-1">
-              <Camera size={13} className="text-accent-500" />
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-cream-100 border border-cream-200 rounded-full text-[10px] font-bold text-ink-700 mt-0.5">
+              <Camera size={12} className="text-accent-500" />
               <span>CameraHub Security Portal</span>
             </div>
-            <h2 className="text-2xl font-display font-bold text-ink-900 tracking-tight">
+            <h2 className="text-xl font-display font-bold text-ink-900 tracking-tight">
               Đăng Nhập Quản Trị
             </h2>
-            <p className="text-xs text-ink-500">
+            <p className="text-[11px] text-ink-500">
               Vui lòng xác thực tài khoản Admin để truy cập Bảng điều khiển
             </p>
           </div>
 
           {/* Error Banner with Auto-Dismiss */}
           {loginError && (
-            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2 animate-fade-in shadow-2xs">
-              <AlertCircle size={16} className="shrink-0 text-rose-500" />
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-[11px] flex items-center gap-2 animate-fade-in shadow-2xs">
+              <AlertCircle size={15} className="shrink-0 text-rose-500" />
               <span className="font-medium">{loginError}</span>
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={handleAdminLoginSubmit} className="space-y-4">
+          <form onSubmit={handleAdminLoginSubmit} className="space-y-3.5">
             <div>
-              <label className="block text-xs font-bold text-ink-700 mb-1.5">Email Quản Trị</label>
+              <label className="block text-[11px] font-bold text-ink-700 mb-1">Email Quản Trị</label>
               <div className="relative">
-                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-400" />
+                <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
                 <input
                   type="email"
                   required
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
                   placeholder="admin@camerahub.vn"
-                  className="w-full pl-11 pr-4 py-3 bg-cream-50/70 border border-cream-200 rounded-2xl text-sm text-ink-900 focus:outline-none focus:border-accent-500 focus:bg-white focus:ring-2 focus:ring-accent-500/15 transition-all font-medium"
+                  className="w-full pl-10 pr-3.5 py-2.5 bg-cream-50/70 border border-cream-200 rounded-xl text-xs sm:text-sm text-ink-900 focus:outline-none focus:border-accent-500 focus:bg-white focus:ring-2 focus:ring-accent-500/15 transition-all font-medium"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-ink-700 mb-1.5">Mật Khẩu</label>
+              <label className="block text-[11px] font-bold text-ink-700 mb-1">Mật Khẩu</label>
               <div className="relative">
-                <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-400" />
+                <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
                 <input
                   type="password"
                   required
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
                   placeholder="Nhập mật khẩu quản trị..."
-                  className="w-full pl-11 pr-4 py-3 bg-cream-50/70 border border-cream-200 rounded-2xl text-sm text-ink-900 focus:outline-none focus:border-accent-500 focus:bg-white focus:ring-2 focus:ring-accent-500/15 transition-all font-medium"
+                  className="w-full pl-10 pr-3.5 py-2.5 bg-cream-50/70 border border-cream-200 rounded-xl text-xs sm:text-sm text-ink-900 focus:outline-none focus:border-accent-500 focus:bg-white focus:ring-2 focus:ring-accent-500/15 transition-all font-medium"
                 />
               </div>
             </div>
@@ -474,27 +474,27 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
             <button
               type="submit"
               disabled={isSubmittingLogin}
-              className="w-full btn-accent py-3.5 rounded-2xl font-bold text-sm shadow-md hover:shadow-lg active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-3"
+              className="w-full btn-accent py-2.5 rounded-xl font-bold text-xs sm:text-sm shadow-sm hover:shadow-md active:scale-98 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 mt-2"
             >
               {isSubmittingLogin ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
                   <span>Truy Cập Dashboard</span>
-                  <ArrowRight size={17} />
+                  <ArrowRight size={15} />
                 </>
               )}
             </button>
           </form>
 
           {/* Return to storefront */}
-          <div className="pt-2 text-center border-t border-cream-100">
+          <div className="pt-1.5 text-center border-t border-cream-100">
             <button
               type="button"
               onClick={() => onNavigate({ name: 'home' })}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-500 hover:text-ink-900 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-ink-500 hover:text-ink-900 transition-colors cursor-pointer"
             >
-              <ArrowLeft size={14} />
+              <ArrowLeft size={13} />
               <span>Quay lại trang mua sắm</span>
             </button>
           </div>

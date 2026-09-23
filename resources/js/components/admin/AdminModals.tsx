@@ -541,7 +541,7 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
 
   return createPortal(
     <div className="fixed inset-0 w-screen h-screen min-h-[100dvh] z-[9999] bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 cursor-pointer" onClick={onClose}>
-      <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl animate-scale-in border border-cream-200 cursor-default" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl max-w-[400px] w-full p-5 shadow-2xl animate-scale-in border border-cream-200 cursor-default" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between pb-4 border-b border-cream-200">
           <h3 className="text-xl font-display font-bold text-ink-900">
             {editingCategory ? 'Sửa danh mục' : 'Thêm danh mục mới'}
