@@ -100,19 +100,19 @@ export function CartPage({ onNavigate }: Props) {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center border border-ink-200 rounded-lg overflow-hidden">
+                  <div className="flex items-center border border-ink-200 dark:border-ink-700 rounded-lg overflow-hidden bg-white dark:bg-ink-800">
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className="p-1.5 hover:bg-cream-100 transition-colors"
+                      className="p-1.5 hover:bg-cream-100 dark:hover:bg-ink-700 text-ink-700 dark:text-cream-200 transition-colors"
                     >
                       <Minus size={14} />
                     </button>
-                    <span className="px-3 text-sm font-semibold text-ink-800 min-w-[2rem] text-center">
+                    <span className="px-3 text-sm font-semibold text-ink-800 dark:text-cream-100 min-w-[2rem] text-center">
                       {item.quantity}
                     </span>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="p-1.5 hover:bg-cream-100 transition-colors"
+                      className="p-1.5 hover:bg-cream-100 dark:hover:bg-ink-700 text-ink-700 dark:text-cream-200 transition-colors"
                     >
                       <Plus size={14} />
                     </button>
@@ -145,7 +145,7 @@ export function CartPage({ onNavigate }: Props) {
                 <span>Phí vận chuyển</span>
                 <span className="font-semibold text-accent-600">Miễn phí</span>
               </div>
-              <div className="border-t border-ink-100 pt-3 flex justify-between text-base font-bold text-ink-900">
+              <div className="border-t border-ink-100 dark:border-ink-700 pt-3 flex justify-between text-base font-bold text-ink-900">
                 <span>Tổng cộng</span>
                 <span className="font-display text-xl text-accent-600">{formatCurrency(subtotal)}</span>
               </div>

@@ -231,94 +231,125 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   background: #54544d;
 }
 
-/* Dark Mode Admin Portal Universal High-Contrast Rules */
-html.dark .admin-content-area .bg-white {
+/* Universal Dark Mode High-Contrast Rules (Client & Admin) */
+html.dark .btn-primary {
+  background-color: #fdfbf7;
+  color: #151513;
+}
+html.dark .btn-primary:hover {
+  background-color: #ecdfc8;
+}
+
+html.dark .bg-white {
   background-color: #171714 !important;
   border-color: #2b2b26 !important;
   color: #fdfbf7 !important;
 }
 
-html.dark .admin-content-area .bg-cream-50,
-html.dark .admin-content-area .bg-cream-50\/70,
-html.dark .admin-content-area .bg-cream-50\/80 {
+html.dark .bg-cream-50,
+html.dark .bg-cream-50\/30,
+html.dark .bg-cream-50\/40,
+html.dark .bg-cream-50\/50,
+html.dark .bg-cream-50\/60,
+html.dark .bg-cream-50\/70,
+html.dark .bg-cream-50\/80 {
   background-color: #1d1d19 !important;
   border-color: #2b2b26 !important;
 }
 
-html.dark .admin-content-area .bg-cream-100,
-html.dark .admin-content-area .bg-cream-100\/70 {
+html.dark .bg-cream-100,
+html.dark .bg-cream-100\/50,
+html.dark .bg-cream-100\/70,
+html.dark .bg-cream-100\/80 {
   background-color: #242420 !important;
   border-color: #2b2b26 !important;
 }
 
-html.dark .admin-content-area .bg-cream-200 {
+html.dark .bg-cream-200,
+html.dark .bg-cream-200\/60,
+html.dark .bg-cream-200\/80 {
   background-color: #2b2b26 !important;
+  border-color: #383832 !important;
 }
 
-html.dark .admin-content-area .border-cream-100,
-html.dark .admin-content-area .border-cream-200,
-html.dark .admin-content-area .border-cream-200\/80,
-html.dark .admin-content-area .border-cream-300 {
+html.dark .border-cream-100,
+html.dark .border-cream-200,
+html.dark .border-cream-200\/60,
+html.dark .border-cream-200\/80,
+html.dark .border-cream-300 {
   border-color: #2b2b26 !important;
 }
 
-/* High-Contrast Typography for Headings & Text in Dark Admin */
-html.dark .admin-content-area .text-ink-900,
-html.dark .admin-content-area .text-ink-800 {
+/* High-Contrast Typography for Headings & Text in Dark Mode */
+html.dark .text-ink-900,
+html.dark .text-ink-800 {
   color: #fdfbf7 !important;
 }
 
-html.dark .admin-content-area .text-ink-700,
-html.dark .admin-content-area .text-ink-600 {
+html.dark .text-ink-700,
+html.dark .text-ink-600 {
   color: #dcd6cd !important;
 }
 
-html.dark .admin-content-area .text-ink-500,
-html.dark .admin-content-area .text-ink-400 {
+html.dark .text-ink-500,
+html.dark .text-ink-400 {
   color: #a8a29e !important;
 }
 
 /* Colored soft badge backgrounds in Dark Mode */
-html.dark .admin-content-area .bg-accent-50 {
+html.dark .bg-accent-50,
+html.dark .bg-accent-50\/40,
+html.dark .bg-accent-50\/60 {
   background-color: rgba(232, 93, 27, 0.16) !important;
 }
-html.dark .admin-content-area .bg-emerald-50 {
+html.dark .bg-emerald-50,
+html.dark .bg-emerald-50\/80 {
   background-color: rgba(16, 185, 129, 0.16) !important;
 }
-html.dark .admin-content-area .bg-amber-50 {
+html.dark .bg-amber-50,
+html.dark .bg-amber-50\/60,
+html.dark .bg-amber-50\/80 {
   background-color: rgba(245, 158, 11, 0.16) !important;
 }
-html.dark .admin-content-area .bg-rose-50,
-html.dark .admin-content-area .bg-rose-50\/60 {
+html.dark .bg-rose-50,
+html.dark .bg-rose-50\/50,
+html.dark .bg-rose-50\/60 {
   background-color: rgba(244, 63, 94, 0.16) !important;
 }
-html.dark .admin-content-area .bg-purple-50 {
+html.dark .bg-purple-50 {
   background-color: rgba(168, 85, 247, 0.16) !important;
 }
-html.dark .admin-content-area .bg-blue-50 {
+html.dark .bg-blue-50 {
   background-color: rgba(59, 130, 246, 0.16) !important;
 }
 
 /* Bright text for colored badges in Dark Mode */
-html.dark .admin-content-area .text-emerald-700 {
+html.dark .text-emerald-700,
+html.dark .text-emerald-800 {
   color: #34d399 !important;
 }
-html.dark .admin-content-area .text-rose-700,
-html.dark .admin-content-area .text-rose-800 {
+html.dark .text-rose-700,
+html.dark .text-rose-800 {
   color: #fb7185 !important;
 }
-html.dark .admin-content-area .text-amber-700 {
+html.dark .text-amber-700,
+html.dark .text-amber-800,
+html.dark .text-amber-900 {
   color: #fbbf24 !important;
 }
-html.dark .admin-content-area .text-accent-700 {
+html.dark .text-accent-700,
+html.dark .text-accent-800 {
   color: #fb923c !important;
 }
 
-/* Inputs, Selects & Tables in Dark Admin */
-html.dark .admin-content-area select,
-html.dark .admin-content-area input[type="text"],
-html.dark .admin-content-area input[type="search"],
-html.dark .admin-content-area input[type="number"] {
+/* Inputs, Selects & Tables in Dark Mode */
+html.dark select,
+html.dark input[type="text"],
+html.dark input[type="search"],
+html.dark input[type="number"],
+html.dark input[type="email"],
+html.dark input[type="tel"],
+html.dark textarea {
   background-color: #1a1a17 !important;
   border-color: #383832 !important;
   color: #fdfbf7 !important;

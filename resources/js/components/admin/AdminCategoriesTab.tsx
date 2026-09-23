@@ -131,37 +131,37 @@ export const AdminCategoriesTab: React.FC<AdminCategoriesTabProps> = ({
                   <div className={`w-12 h-12 ${theme.bg} ${theme.text} rounded-2xl flex items-center justify-center shadow-2xs group-hover:scale-110 transition-transform`}>
                     <Icon size={24} />
                   </div>
-                  <span className="text-xs font-bold text-ink-700 bg-cream-100/80 px-3 py-1 rounded-full border border-cream-200">
+                  <span className="text-xs font-bold text-ink-700 dark:text-cream-200 bg-cream-100/80 dark:bg-ink-800 px-3 py-1 rounded-full border border-cream-200 dark:border-ink-700">
                     {c.products_count !== undefined ? c.products_count : 0} sản phẩm
                   </span>
                 </div>
 
                 {/* Title & Description */}
-                <h3 className="font-display font-bold text-ink-900 text-lg group-hover:text-accent-600 transition-colors mb-1.5">
+                <h3 className="font-display font-bold text-ink-900 dark:text-cream-50 text-lg group-hover:text-accent-600 transition-colors mb-1.5">
                   {c.name}
                 </h3>
-                <p className="text-xs text-ink-500 leading-relaxed line-clamp-3 mb-6">
+                <p className="text-xs text-ink-500 dark:text-ink-400 leading-relaxed line-clamp-3 mb-6">
                   {c.description || 'Chưa có mô tả chi tiết cho danh mục này.'}
                 </p>
               </div>
 
               {/* Card Footer Actions */}
-              <div className="pt-4 border-t border-cream-100 flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-ink-400">
-                  Slug: <code className="bg-cream-100 px-1.5 py-0.5 rounded text-ink-700">{c.slug}</code>
+              <div className="pt-4 border-t border-cream-100 dark:border-ink-800 flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-ink-400 dark:text-ink-500">
+                  Slug: <code className="bg-cream-100 dark:bg-ink-800 px-1.5 py-0.5 rounded text-ink-700 dark:text-cream-300 font-mono text-[11px]">{c.slug}</code>
                 </span>
 
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => onOpenEditCategory(c)}
-                    className="p-2 rounded-xl bg-cream-100 hover:bg-amber-50 text-ink-600 hover:text-amber-700 transition-colors cursor-pointer"
+                    className="p-2 rounded-xl bg-cream-100 dark:bg-ink-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-ink-600 dark:text-cream-300 hover:text-amber-700 dark:hover:text-amber-400 transition-colors cursor-pointer"
                     title="Chỉnh sửa danh mục"
                   >
                     <Edit3 size={15} />
                   </button>
                   <button
                     onClick={() => onDeleteCategory(c.id)}
-                    className="p-2 rounded-xl bg-cream-100 hover:bg-rose-50 text-ink-600 hover:text-rose-700 transition-colors cursor-pointer"
+                    className="p-2 rounded-xl bg-cream-100 dark:bg-ink-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-ink-600 dark:text-cream-300 hover:text-rose-700 dark:hover:text-rose-400 transition-colors cursor-pointer"
                     title="Xóa danh mục"
                   >
                     <Trash2 size={15} />
@@ -175,16 +175,16 @@ export const AdminCategoriesTab: React.FC<AdminCategoriesTabProps> = ({
         {/* 4. ADD NEW CATEGORY PLACEHOLDER CARD */}
         <button
           onClick={onOpenAddCategory}
-          className="border-2 border-dashed border-cream-300 hover:border-accent-400 bg-cream-50/50 hover:bg-accent-50/20 rounded-3xl p-8 flex flex-col items-center justify-center text-center gap-3 transition-all group cursor-pointer min-h-[220px]"
+          className="border-2 border-dashed border-cream-300 dark:border-ink-700 hover:border-accent-400 dark:hover:border-accent-400 bg-cream-50/50 dark:bg-ink-900/60 hover:bg-accent-50/20 dark:hover:bg-accent-500/10 rounded-3xl p-8 flex flex-col items-center justify-center text-center gap-3 transition-all group cursor-pointer min-h-[220px]"
         >
-          <div className="w-14 h-14 rounded-2xl bg-white border border-cream-300 group-hover:border-accent-400 flex items-center justify-center text-accent-500 shadow-2xs group-hover:scale-110 transition-transform">
+          <div className="w-14 h-14 rounded-2xl bg-white dark:bg-ink-800 border border-cream-300 dark:border-ink-700 group-hover:border-accent-400 flex items-center justify-center text-accent-500 shadow-2xs group-hover:scale-110 transition-transform">
             <Plus size={24} />
           </div>
           <div>
-            <p className="font-display font-bold text-ink-900 text-base group-hover:text-accent-600 transition-colors">
+            <p className="font-display font-bold text-ink-900 dark:text-cream-50 text-base group-hover:text-accent-600 transition-colors">
               Thêm danh mục mới
             </p>
-            <p className="text-xs text-ink-400 mt-1 max-w-[200px]">
+            <p className="text-xs text-ink-400 dark:text-ink-400 mt-1 max-w-[200px]">
               Tạo mới phân loại máy ảnh, ống kính hoặc thiết bị phụ trợ
             </p>
           </div>
@@ -193,15 +193,15 @@ export const AdminCategoriesTab: React.FC<AdminCategoriesTabProps> = ({
 
       {/* Pagination Toolbar */}
       {categories.length > itemsPerPage && (
-        <div className="bg-white rounded-2xl border border-cream-200 p-4 px-6 flex flex-wrap items-center justify-between gap-4 shadow-xs">
-          <div className="flex items-center gap-3 text-xs text-ink-600 font-medium">
+        <div className="bg-white dark:bg-ink-900 rounded-2xl border border-cream-200 dark:border-ink-800 p-4 px-6 flex flex-wrap items-center justify-between gap-4 shadow-xs">
+          <div className="flex items-center gap-3 text-xs text-ink-600 dark:text-ink-400 font-medium">
             <div>
-              Hiển thị <span className="font-bold text-ink-900">{(currentPage - 1) * itemsPerPage + 1}</span> -{' '}
-              <span className="font-bold text-ink-900">{Math.min(currentPage * itemsPerPage, categories.length)}</span> trên{' '}
-              <span className="font-bold text-ink-900">{categories.length}</span> danh mục
+              Hiển thị <span className="font-bold text-ink-900 dark:text-cream-50">{(currentPage - 1) * itemsPerPage + 1}</span> -{' '}
+              <span className="font-bold text-ink-900 dark:text-cream-50">{Math.min(currentPage * itemsPerPage, categories.length)}</span> trên{' '}
+              <span className="font-bold text-ink-900 dark:text-cream-50">{categories.length}</span> danh mục
             </div>
 
-            <div className="flex items-center gap-1.5 border-l border-cream-200 pl-3">
+            <div className="flex items-center gap-1.5 border-l border-cream-200 dark:border-ink-800 pl-3">
               <span className="text-[11px] text-ink-400">Hiển thị:</span>
               <select
                 value={itemsPerPage}
@@ -209,7 +209,7 @@ export const AdminCategoriesTab: React.FC<AdminCategoriesTabProps> = ({
                   setItemsPerPage(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="px-2 py-1 bg-white border border-cream-200 rounded-lg text-xs font-bold text-ink-800 focus:outline-none focus:border-accent-500 cursor-pointer shadow-2xs"
+                className="px-2 py-1 bg-white dark:bg-ink-800 border border-cream-200 dark:border-ink-700 rounded-lg text-xs font-bold text-ink-800 dark:text-cream-100 focus:outline-none focus:border-accent-500 cursor-pointer shadow-2xs"
               >
                 <option value={6}>6 mục / trang</option>
                 <option value={12}>12 mục / trang</option>
@@ -223,7 +223,7 @@ export const AdminCategoriesTab: React.FC<AdminCategoriesTabProps> = ({
               <button
                 onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="px-3.5 py-1.5 rounded-xl border border-cream-300 bg-white text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                className="px-3.5 py-1.5 rounded-xl border border-cream-300 dark:border-ink-700 bg-white dark:bg-ink-800 text-xs font-semibold text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
               >
                 ‹ Trước
               </button>
@@ -234,7 +234,7 @@ export const AdminCategoriesTab: React.FC<AdminCategoriesTabProps> = ({
                   className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     currentPage === pageNum
                       ? 'bg-accent-600 text-white shadow-xs'
-                      : 'bg-white text-ink-700 border border-cream-300 hover:bg-cream-100'
+                      : 'bg-white dark:bg-ink-800 text-ink-700 dark:text-cream-200 border border-cream-300 dark:border-ink-700 hover:bg-cream-100 dark:hover:bg-ink-700'
                   }`}
                 >
                   {pageNum}
@@ -243,7 +243,7 @@ export const AdminCategoriesTab: React.FC<AdminCategoriesTabProps> = ({
               <button
                 onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3.5 py-1.5 rounded-xl border border-cream-300 bg-white text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                className="px-3.5 py-1.5 rounded-xl border border-cream-300 dark:border-ink-700 bg-white dark:bg-ink-800 text-xs font-semibold text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
               >
                 Sau ›
               </button>

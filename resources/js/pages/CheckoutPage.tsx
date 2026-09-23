@@ -372,13 +372,13 @@ export function CheckoutPage({ onNavigate }: Props) {
         </div>
 
         {/* 15-min Countdown Timer Header Badge */}
-        <div className="flex items-center gap-3 bg-white px-4 py-2.5 rounded-2xl border border-cream-200 shadow-xs">
-          <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200">
+        <div className="flex items-center gap-3 bg-white dark:bg-ink-900 px-4 py-2.5 rounded-2xl border border-cream-200 dark:border-ink-800 shadow-xs">
+          <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-200 dark:border-amber-800">
             <Flame size={18} className="text-amber-500 animate-pulse" />
           </div>
           <div>
-            <div className="text-[11px] font-bold text-ink-500 uppercase tracking-wider">Thời gian giữ hàng</div>
-            <div className="font-display font-bold text-base text-accent-600 flex items-center gap-1.5">
+            <div className="text-[11px] font-bold text-ink-500 dark:text-ink-400 uppercase tracking-wider">Thời gian giữ hàng</div>
+            <div className="font-display font-bold text-base text-accent-600 dark:text-accent-400 flex items-center gap-1.5">
               <Clock size={14} className="text-accent-500" />
               <span>{formattedTime}</span>
             </div>
@@ -387,21 +387,21 @@ export function CheckoutPage({ onNavigate }: Props) {
       </div>
 
       {/* Urgency Progress Bar */}
-      <div className="mb-8 bg-amber-50/80 border border-amber-200/80 rounded-2xl p-3.5 space-y-2">
-        <div className="flex items-center justify-between text-xs text-amber-900">
+      <div className="mb-8 bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 rounded-2xl p-3.5 space-y-2">
+        <div className="flex items-center justify-between text-xs text-amber-900 dark:text-amber-200">
           <span className="font-semibold flex items-center gap-1.5">
-            <Sparkles size={14} className="text-amber-600" />
+            <Sparkles size={14} className="text-amber-600 dark:text-amber-400" />
             Giỏ hàng của bạn đang được giữ chỗ trong 15 phút
           </span>
           <span className="font-bold font-mono">{formattedTime}</span>
         </div>
-        <div className="w-full bg-amber-200/70 h-1.5 rounded-full overflow-hidden">
+        <div className="w-full bg-amber-200/70 dark:bg-amber-900/60 h-1.5 rounded-full overflow-hidden">
           <div
             className="bg-amber-500 h-full transition-all duration-1000 ease-linear rounded-full"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-        <p className="text-[11px] text-amber-800/80">
+        <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
           Nếu cần chọn thêm sản phẩm, bạn có thể quay lại giỏ hàng. Khi quay lại trang thanh toán, thời gian 15:00 sẽ tự động bắt đầu lại từ đầu.
         </p>
       </div>
@@ -422,16 +422,16 @@ export function CheckoutPage({ onNavigate }: Props) {
                     key={addr.id}
                     onClick={() => handleSelectSavedAddress(addr)}
                     className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${selectedAddressId === addr.id
-                        ? 'border-accent-500 bg-accent-50/40 shadow-2xs'
-                        : 'border-cream-200 hover:border-cream-300 bg-white'
+                        ? 'border-accent-500 bg-accent-50/40 dark:bg-accent-500/10 shadow-2xs'
+                        : 'border-cream-200 dark:border-ink-700 hover:border-cream-300 dark:hover:border-ink-600 bg-white dark:bg-ink-800'
                       }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="px-2 py-0.5 bg-cream-100 text-ink-800 rounded-md text-[11px] font-bold">
+                      <span className="px-2 py-0.5 bg-cream-100 dark:bg-ink-700 text-ink-800 dark:text-cream-200 rounded-md text-[11px] font-bold">
                         {addr.label || 'Nhà riêng'}
                       </span>
                       {addr.isDefault && (
-                        <span className="text-[10px] font-bold text-accent-600 bg-accent-50 px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] font-bold text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-950/60 border border-accent-200 dark:border-accent-800 px-2 py-0.5 rounded-full">
                           Mặc định
                         </span>
                       )}
@@ -586,8 +586,8 @@ export function CheckoutPage({ onNavigate }: Props) {
                   <label
                     key={carrier.id}
                     className={`flex items-start justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all ${isSelected
-                        ? 'border-accent-500 bg-accent-50/40 shadow-xs'
-                        : 'border-cream-200 hover:border-cream-300 bg-white'
+                        ? 'border-accent-500 bg-accent-50/40 dark:bg-accent-500/10 shadow-xs'
+                        : 'border-cream-200 dark:border-ink-700 hover:border-cream-300 dark:hover:border-ink-600 bg-white dark:bg-ink-800'
                       }`}
                   >
                     <div className="flex items-start gap-3">
@@ -601,15 +601,15 @@ export function CheckoutPage({ onNavigate }: Props) {
                       />
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="font-bold text-sm text-ink-900">{carrier.name}</p>
+                          <p className="font-bold text-sm text-ink-900 dark:text-cream-50">{carrier.name}</p>
                           {carrier.badgeText && (
-                            <span className="px-2 py-0.5 bg-cream-100 text-ink-700 text-[10px] font-bold rounded-full border border-cream-300">
+                            <span className="px-2 py-0.5 bg-cream-100 dark:bg-ink-700 text-ink-700 dark:text-cream-200 text-[10px] font-bold rounded-full border border-cream-300 dark:border-ink-600">
                               {carrier.badgeText}
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-ink-500 mt-0.5">{carrier.tagline}</p>
-                        <p className="text-[11px] text-accent-600 font-semibold mt-1 flex items-center gap-1">
+                        <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">{carrier.tagline}</p>
+                        <p className="text-[11px] text-accent-600 dark:text-accent-400 font-semibold mt-1 flex items-center gap-1">
                           <Clock size={12} />
                           <span>Thời gian giao dự kiến: {carrier.estimatedTime}</span>
                         </p>
@@ -622,10 +622,10 @@ export function CheckoutPage({ onNavigate }: Props) {
                           <span className="text-xs text-ink-400 line-through mr-1.5">
                             {formatCurrency(calc.originalFee)}
                           </span>
-                          <span className="font-bold text-sm text-accent-600">Miễn phí</span>
+                          <span className="font-bold text-sm text-accent-600 dark:text-accent-400">Miễn phí</span>
                         </div>
                       ) : (
-                        <span className="font-bold text-sm text-ink-900">
+                        <span className="font-bold text-sm text-ink-900 dark:text-cream-50">
                           {formatCurrency(calc.fee)}
                         </span>
                       )}
@@ -643,7 +643,7 @@ export function CheckoutPage({ onNavigate }: Props) {
                 <QrCode size={18} className="text-accent-500" />
                 <span>Phương thức thanh toán</span>
               </h2>
-              <span className="text-xs font-semibold text-accent-700 bg-accent-50 border border-accent-200 px-2.5 py-0.5 rounded-full">
+              <span className="text-xs font-semibold text-accent-700 dark:text-accent-300 bg-accent-50 dark:bg-accent-950/60 border border-accent-200 dark:border-accent-800 px-2.5 py-0.5 rounded-full">
                 Miễn phí giao dịch
               </span>
             </div>
@@ -677,8 +677,8 @@ export function CheckoutPage({ onNavigate }: Props) {
                   <div
                     key={method.id}
                     className={`rounded-2xl border-2 transition-all overflow-hidden ${isSelected
-                        ? 'border-accent-500 bg-accent-50/40 shadow-xs'
-                        : 'border-cream-200 hover:border-cream-300 bg-white'
+                        ? 'border-accent-500 bg-accent-50/40 dark:bg-accent-500/10 shadow-xs'
+                        : 'border-cream-200 dark:border-ink-700 hover:border-cream-300 dark:hover:border-ink-600 bg-white dark:bg-ink-800'
                       }`}
                   >
                     <label className="flex items-start gap-3 p-4 cursor-pointer">
@@ -692,14 +692,14 @@ export function CheckoutPage({ onNavigate }: Props) {
                       />
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-bold text-sm text-ink-900">{method.label}</p>
+                          <p className="font-bold text-sm text-ink-900 dark:text-cream-50">{method.label}</p>
                           {method.badge && (
-                            <span className="px-2 py-0.5 bg-accent-50 text-accent-700 text-[10px] font-bold rounded-full border border-accent-200">
+                            <span className="px-2 py-0.5 bg-accent-50 dark:bg-accent-950/60 text-accent-700 dark:text-accent-300 text-[10px] font-bold rounded-full border border-accent-200 dark:border-accent-800">
                               {method.badge}
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-ink-500 mt-0.5">{method.desc}</p>
+                        <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">{method.desc}</p>
                       </div>
                     </label>
                   </div>
@@ -789,14 +789,14 @@ export function CheckoutPage({ onNavigate }: Props) {
                       value={voucherCodeInput}
                       onChange={(e) => setVoucherCodeInput(e.target.value.toUpperCase())}
                       placeholder="NHẬP MÃ..."
-                      className="w-full px-3 py-2 text-xs font-mono font-bold uppercase tracking-wider border border-cream-300 rounded-xl focus:border-accent-500 focus:outline-hidden bg-white"
+                      className="w-full px-3 py-2 text-xs font-mono font-bold uppercase tracking-wider border border-cream-300 dark:border-ink-700 rounded-xl focus:border-accent-500 focus:outline-hidden bg-white dark:bg-ink-800 dark:text-cream-100 placeholder:text-ink-400 dark:placeholder:text-ink-500"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={() => handleApplyVoucher()}
                     disabled={voucherLoading || !voucherCodeInput.trim()}
-                    className="px-4 py-2 bg-ink-800 hover:bg-accent-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-40 cursor-pointer shadow-2xs active:scale-95"
+                    className="px-4 py-2 bg-ink-800 dark:bg-accent-600 hover:bg-accent-500 dark:hover:bg-accent-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-40 cursor-pointer shadow-2xs active:scale-95"
                   >
                     {voucherLoading ? 'Đang áp dụng...' : 'Áp dụng'}
                   </button>

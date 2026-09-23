@@ -209,14 +209,14 @@ export function ProductReviewsSection({ product }: Props) {
               const count = stats.breakdown[star] || 0;
               return (
                 <div key={star} className="flex items-center gap-3 text-xs">
-                  <span className="w-10 font-bold text-ink-700 text-right">{star} sao</span>
-                  <div className="flex-1 h-2.5 bg-cream-100 rounded-full overflow-hidden">
+                  <span className="w-10 font-bold text-ink-700 dark:text-cream-200 text-right">{star} sao</span>
+                  <div className="flex-1 h-2.5 bg-cream-100 dark:bg-ink-800 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-amber-400 rounded-full transition-all duration-500"
                       style={{ width: `${percent}%` }}
                     />
                   </div>
-                  <span className="w-10 font-medium text-ink-400 text-right">{percent}%</span>
+                  <span className="w-10 font-medium text-ink-400 dark:text-ink-500 text-right">{percent}%</span>
                 </div>
               );
             })}
@@ -241,14 +241,14 @@ export function ProductReviewsSection({ product }: Props) {
 
       {/* 2. Inline Review Form (Matches Image 3 & 4) */}
       {isWriting && (
-        <div className="bg-white border-2 border-accent-500/30 rounded-3xl p-6 sm:p-8 shadow-lg animate-scale-up space-y-5">
-          <div className="border-b border-cream-100 pb-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-accent-50 text-accent-700 rounded-full text-xs font-bold mb-1.5 border border-accent-200">
+        <div className="bg-white dark:bg-ink-900 border-2 border-accent-500/30 rounded-3xl p-6 sm:p-8 shadow-lg animate-scale-up space-y-5">
+          <div className="border-b border-cream-100 dark:border-ink-800 pb-4">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-accent-50 dark:bg-accent-950/60 text-accent-700 dark:text-accent-300 rounded-full text-xs font-bold mb-1.5 border border-accent-200 dark:border-accent-800">
               <Sparkles size={13} className="text-accent-500" />
               <span>Chia Sẻ Đánh Giá Thực Tế</span>
             </div>
-            <h3 className="font-display font-bold text-lg sm:text-xl text-ink-900">
-              Gửi nhận xét về sản phẩm: <span className="text-accent-600">{product.name}</span>
+            <h3 className="font-display font-bold text-lg sm:text-xl text-ink-900 dark:text-cream-50">
+              Gửi nhận xét về sản phẩm: <span className="text-accent-600 dark:text-accent-400">{product.name}</span>
             </h3>
             <p className="text-xs text-ink-500 mt-0.5">
               Đánh giá của bạn sẽ giúp cộng đồng người yêu nhiếp ảnh lựa chọn đúng thiết bị phù hợp
@@ -431,7 +431,7 @@ export function ProductReviewsSection({ product }: Props) {
               className={`relative px-4 py-2 rounded-full text-xs font-bold transition-colors cursor-pointer border flex items-center gap-1.5 ${
                 isActive
                   ? 'border-accent-500 text-white shadow-xs'
-                  : 'border-cream-200 text-ink-700 hover:border-cream-300 hover:bg-cream-50 bg-white'
+                  : 'border-cream-200 dark:border-ink-700 text-ink-700 dark:text-cream-200 hover:border-cream-300 dark:hover:border-ink-600 hover:bg-cream-50 dark:hover:bg-ink-800 bg-white dark:bg-ink-900'
               }`}
             >
               {isActive && (
@@ -451,17 +451,17 @@ export function ProductReviewsSection({ product }: Props) {
       {/* 4. Review Cards List (Matches Image 2) */}
       <div className="space-y-4">
         {filteredReviews.length === 0 ? (
-          <div className="bg-white p-12 rounded-3xl border border-cream-200 text-center space-y-2">
-            <MessageSquare size={36} className="text-cream-300 mx-auto mb-1" />
-            <p className="font-bold text-sm text-ink-800">Chưa có đánh giá nào trong mục này</p>
-            <p className="text-xs text-ink-400">Hãy là người đầu tiên chia sẻ cảm nhận về sản phẩm này!</p>
+          <div className="bg-white dark:bg-ink-900 p-12 rounded-3xl border border-cream-200 dark:border-ink-800 text-center space-y-2">
+            <MessageSquare size={36} className="text-cream-300 dark:text-ink-600 mx-auto mb-1" />
+            <p className="font-bold text-sm text-ink-800 dark:text-cream-100">Chưa có đánh giá nào trong mục này</p>
+            <p className="text-xs text-ink-400 dark:text-ink-500">Hãy là người đầu tiên chia sẻ cảm nhận về sản phẩm này!</p>
           </div>
         ) : (
           <>
-            <div className="text-xs text-ink-500 font-medium">
-              Hiển thị <strong className="text-ink-900">{(currentPage - 1) * itemsPerPage + 1}</strong> -{' '}
-              <strong className="text-ink-900">{Math.min(currentPage * itemsPerPage, filteredReviews.length)}</strong> trên tổng số{' '}
-              <strong className="text-ink-900">{filteredReviews.length}</strong> đánh giá
+            <div className="text-xs text-ink-500 dark:text-ink-400 font-medium">
+              Hiển thị <strong className="text-ink-900 dark:text-cream-50">{(currentPage - 1) * itemsPerPage + 1}</strong> -{' '}
+              <strong className="text-ink-900 dark:text-cream-50">{Math.min(currentPage * itemsPerPage, filteredReviews.length)}</strong> trên tổng số{' '}
+              <strong className="text-ink-900 dark:text-cream-50">{filteredReviews.length}</strong> đánh giá
             </div>
 
             {paginatedReviews.map((rev) => {
@@ -469,29 +469,29 @@ export function ProductReviewsSection({ product }: Props) {
               return (
                 <div
                   key={rev.id}
-                  className="card p-6 bg-white border border-cream-200 rounded-3xl space-y-3.5 shadow-2xs hover:shadow-xs transition-shadow"
+                  className="card p-6 bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-800 rounded-3xl space-y-3.5 shadow-2xs hover:shadow-xs transition-shadow"
                 >
                   {/* User Header */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       {/* User Avatar Initial */}
-                      <div className="w-10 h-10 rounded-2xl bg-accent-100 text-accent-700 font-display font-bold text-base flex items-center justify-center shrink-0 border border-accent-200/60 shadow-2xs">
+                      <div className="w-10 h-10 rounded-2xl bg-accent-100 dark:bg-accent-950/60 text-accent-700 dark:text-accent-300 font-display font-bold text-base flex items-center justify-center shrink-0 border border-accent-200/60 dark:border-accent-800 shadow-2xs">
                         {rev.userName ? rev.userName.charAt(0).toUpperCase() : 'U'}
                       </div>
 
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-bold text-sm text-ink-900">{rev.userName}</h4>
+                          <h4 className="font-bold text-sm text-ink-900 dark:text-cream-50">{rev.userName}</h4>
                           {rev.isVerifiedPurchase && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-accent-50 text-accent-700 border border-accent-200/80 rounded-md text-[10px] font-bold">
-                              <ShieldCheck size={11} className="text-accent-600" />
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-accent-50 dark:bg-accent-950/60 text-accent-700 dark:text-accent-300 border border-accent-200/80 dark:border-accent-800 rounded-md text-[10px] font-bold">
+                              <ShieldCheck size={11} className="text-accent-600 dark:text-accent-400" />
                               <span>Đã mua hàng tại CameraHub</span>
                             </span>
                           )}
                         </div>
 
                         {/* Stars & Meta */}
-                        <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-ink-400">
+                        <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-ink-400 dark:text-ink-500">
                           <div className="flex text-amber-400">
                             {[1, 2, 3, 4, 5].map((s) => (
                               <Star
@@ -500,7 +500,7 @@ export function ProductReviewsSection({ product }: Props) {
                                 className={
                                   s <= Math.round(rev.rating)
                                     ? 'fill-amber-400 text-amber-400'
-                                    : 'text-cream-300'
+                                    : 'text-cream-300 dark:text-ink-700'
                                 }
                               />
                             ))}
@@ -510,7 +510,7 @@ export function ProductReviewsSection({ product }: Props) {
                           {rev.variant && (
                             <>
                               <span>•</span>
-                              <span className="font-medium text-ink-600">Phân loại: {rev.variant}</span>
+                              <span className="font-medium text-ink-600 dark:text-cream-300">Phân loại: {rev.variant}</span>
                             </>
                           )}
                         </div>
@@ -536,8 +536,8 @@ export function ProductReviewsSection({ product }: Props) {
                       }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer shrink-0 ${
                         isVoted
-                          ? 'bg-accent-50 border-accent-300 text-accent-700'
-                          : 'border-cream-200 text-ink-500 hover:bg-cream-100'
+                          ? 'bg-accent-50 dark:bg-accent-950/60 border-accent-300 dark:border-accent-700 text-accent-700 dark:text-accent-300'
+                          : 'border-cream-200 dark:border-ink-700 text-ink-500 dark:text-cream-300 hover:bg-cream-100 dark:hover:bg-ink-800'
                       }`}
                     >
                       <ThumbsUp size={13} className={isVoted ? 'text-accent-500 fill-accent-500' : ''} />
@@ -546,7 +546,7 @@ export function ProductReviewsSection({ product }: Props) {
                   </div>
 
                   {/* Comment */}
-                  <p className="text-xs sm:text-sm text-ink-700 leading-relaxed font-normal">
+                  <p className="text-xs sm:text-sm text-ink-700 dark:text-cream-200 leading-relaxed font-normal">
                     {rev.comment}
                   </p>
 
@@ -557,7 +557,7 @@ export function ProductReviewsSection({ product }: Props) {
                         <div
                           key={i}
                           onClick={() => setLightboxImage(img)}
-                          className="w-20 h-20 rounded-2xl overflow-hidden border border-cream-200 cursor-zoom-in hover:opacity-90 hover:scale-105 transition-all shrink-0 shadow-2xs"
+                          className="w-20 h-20 rounded-2xl overflow-hidden border border-cream-200 dark:border-ink-700 cursor-zoom-in hover:opacity-90 hover:scale-105 transition-all shrink-0 shadow-2xs"
                         >
                           <img src={img} alt="Đánh giá" className="w-full h-full object-cover" />
                         </div>
@@ -574,7 +574,7 @@ export function ProductReviewsSection({ product }: Props) {
                 <button
                   onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  className="px-4 py-2 bg-white border border-cream-200 rounded-xl text-xs font-bold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                  className="px-4 py-2 bg-white dark:bg-ink-800 border border-cream-200 dark:border-ink-700 rounded-xl text-xs font-bold text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                 >
                   ‹ Đánh giá trước
                 </button>
@@ -586,7 +586,7 @@ export function ProductReviewsSection({ product }: Props) {
                     className={`w-9 h-9 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       currentPage === pageNum
                         ? 'bg-accent-500 text-white shadow-xs'
-                        : 'bg-white text-ink-700 border border-cream-200 hover:border-cream-300'
+                        : 'bg-white dark:bg-ink-800 text-ink-700 dark:text-cream-200 border border-cream-200 dark:border-ink-700 hover:border-cream-300 dark:hover:border-ink-600'
                     }`}
                   >
                     {pageNum}
@@ -596,7 +596,7 @@ export function ProductReviewsSection({ product }: Props) {
                 <button
                   onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-4 py-2 bg-white border border-cream-200 rounded-xl text-xs font-bold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                  className="px-4 py-2 bg-white dark:bg-ink-800 border border-cream-200 dark:border-ink-700 rounded-xl text-xs font-bold text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                 >
                   Đánh giá sau ›
                 </button>
