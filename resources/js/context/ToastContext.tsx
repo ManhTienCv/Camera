@@ -83,31 +83,31 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             switch (t.type) {
               case 'success':
                 return {
-                  border: 'border-emerald-200 bg-white/95 text-emerald-900 shadow-emerald-500/10',
+                  border: 'border-emerald-200 dark:border-emerald-800/80 bg-white/95 dark:bg-ink-900/95 text-emerald-900 dark:text-emerald-100 shadow-emerald-500/10',
                   icon: <CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5" />,
-                  bgIcon: 'bg-emerald-50 text-emerald-600 border border-emerald-200/70',
+                  bgIcon: 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/70 dark:border-emerald-800/60',
                   defaultTitle: 'Thành công',
                 };
               case 'error':
                 return {
-                  border: 'border-rose-200 bg-white/95 text-rose-900 shadow-rose-500/10',
+                  border: 'border-rose-200 dark:border-rose-800/80 bg-white/95 dark:bg-ink-900/95 text-rose-900 dark:text-rose-100 shadow-rose-500/10',
                   icon: <AlertCircle size={18} className="text-rose-500 shrink-0 mt-0.5" />,
-                  bgIcon: 'bg-rose-50 text-rose-600 border border-rose-200/70',
+                  bgIcon: 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200/70 dark:border-rose-800/60',
                   defaultTitle: 'Lỗi',
                 };
               case 'warning':
                 return {
-                  border: 'border-amber-200 bg-white/95 text-amber-900 shadow-amber-500/10',
+                  border: 'border-amber-200 dark:border-amber-800/80 bg-white/95 dark:bg-ink-900/95 text-amber-900 dark:text-amber-100 shadow-amber-500/10',
                   icon: <AlertTriangle size={18} className="text-amber-500 shrink-0 mt-0.5" />,
-                  bgIcon: 'bg-amber-50 text-amber-600 border border-amber-200/70',
+                  bgIcon: 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200/70 dark:border-amber-800/60',
                   defaultTitle: 'Lưu ý',
                 };
               case 'info':
               default:
                 return {
-                  border: 'border-blue-200 bg-white/95 text-blue-900 shadow-blue-500/10',
+                  border: 'border-blue-200 dark:border-blue-800/80 bg-white/95 dark:bg-ink-900/95 text-blue-900 dark:text-blue-100 shadow-blue-500/10',
                   icon: <Info size={18} className="text-blue-500 shrink-0 mt-0.5" />,
-                  bgIcon: 'bg-blue-50 text-blue-600 border border-blue-200/70',
+                  bgIcon: 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/70 dark:border-blue-800/60',
                   defaultTitle: 'Thông báo',
                 };
             }
@@ -125,10 +125,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               </div>
 
               <div className="flex-1 min-w-0 pr-1">
-                <p className="font-bold text-xs text-ink-900">
+                <p className="font-bold text-xs text-ink-900 dark:text-cream-50">
                   {t.title || theme.defaultTitle}
                 </p>
-                <p className="text-xs text-ink-600 mt-0.5 leading-relaxed break-words">
+                <p className="text-xs text-ink-600 dark:text-cream-200/80 mt-0.5 leading-relaxed break-words">
                   {t.message}
                 </p>
               </div>
@@ -136,7 +136,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               <button
                 type="button"
                 onClick={() => removeToast(t.id)}
-                className="text-ink-400 hover:text-ink-700 p-1 rounded-lg hover:bg-cream-100 transition-colors shrink-0 cursor-pointer"
+                className="text-ink-400 hover:text-ink-700 dark:hover:text-cream-100 p-1 rounded-lg hover:bg-cream-100 dark:hover:bg-ink-800 transition-colors shrink-0 cursor-pointer"
                 title="Đóng"
               >
                 <X size={14} />

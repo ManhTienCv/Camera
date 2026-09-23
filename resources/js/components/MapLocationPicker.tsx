@@ -357,33 +357,33 @@ export function MapLocationPicker({
       }}
     >
       <div
-        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-cream-200 overflow-hidden my-auto flex flex-col cursor-default animate-scale-up"
+        className="relative w-full max-w-2xl bg-white dark:bg-ink-900 rounded-3xl shadow-2xl border border-cream-200 dark:border-ink-800 overflow-hidden my-auto flex flex-col cursor-default animate-scale-up"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header - Compact */}
-        <div className="px-6 py-3.5 border-b border-cream-100 flex items-center justify-between bg-cream-50/60 shrink-0">
+        <div className="px-6 py-3.5 border-b border-cream-100 dark:border-ink-800 flex items-center justify-between bg-cream-50/60 dark:bg-ink-950/60 shrink-0">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 bg-accent-50 text-accent-700 rounded-full text-[11px] font-bold mb-0.5 border border-accent-200/70">
+            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 bg-accent-50 dark:bg-accent-950/60 text-accent-700 dark:text-accent-400 rounded-full text-[11px] font-bold mb-0.5 border border-accent-200/70 dark:border-accent-800/60">
               <MapPin size={12} className="text-accent-500" />
               <span>Định Vị Vận Chuyển Số</span>
             </div>
-            <h2 className="font-display font-bold text-lg text-ink-900 leading-tight">
+            <h2 className="font-display font-bold text-lg text-ink-900 dark:text-cream-50 leading-tight">
               Chọn Vị Trí Nhận Hàng Trên Bản Đồ
             </h2>
-            <p className="text-[11px] text-ink-500">
+            <p className="text-[11px] text-ink-500 dark:text-ink-400">
               Kéo thả ghim đỏ hoặc click trên bản đồ để lấy toạ độ & số nhà tự động
             </p>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-cream-200 text-ink-400 hover:text-ink-900 transition-colors cursor-pointer"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-cream-200 dark:hover:bg-ink-800 text-ink-400 hover:text-ink-900 dark:hover:text-cream-100 transition-colors cursor-pointer"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Search & Map Toolbar - Compact */}
-        <div className="p-3 bg-white border-b border-cream-100 space-y-2 shrink-0">
+        <div className="p-3 bg-white dark:bg-ink-900 border-b border-cream-100 dark:border-ink-800 space-y-2 shrink-0">
           <div className="flex items-center gap-2">
             {/* Search Input */}
             <form onSubmit={handleSearch} className="flex-1 relative">
@@ -392,9 +392,9 @@ export function MapLocationPicker({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Tìm kiếm địa chỉ, tên đường, toà nhà..."
-                className="w-full pl-9 pr-8 py-2 bg-cream-50/90 border border-cream-200 rounded-xl text-xs focus:outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20 focus:bg-white text-ink-800 placeholder:text-ink-400"
+                className="w-full pl-9 pr-8 py-2 bg-cream-50/90 dark:bg-ink-950 border border-cream-200 dark:border-ink-700 rounded-xl text-xs focus:outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20 text-ink-800 dark:text-cream-50 placeholder:text-ink-400 dark:placeholder:text-ink-500"
               />
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400 dark:text-ink-500" />
               {isSearching && (
                 <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-accent-500 animate-spin" />
               )}
@@ -405,10 +405,10 @@ export function MapLocationPicker({
               type="button"
               onClick={handleGetCurrentLocation}
               disabled={isLocating}
-              className="flex items-center gap-1 px-3 py-2 bg-accent-50 text-accent-700 border border-accent-200 rounded-xl text-xs font-bold hover:bg-accent-100 transition-all cursor-pointer shadow-2xs shrink-0"
+              className="flex items-center gap-1 px-3 py-2 bg-accent-50 dark:bg-accent-950/60 text-accent-700 dark:text-accent-400 border border-accent-200 dark:border-accent-800/80 rounded-xl text-xs font-bold hover:bg-accent-100 dark:hover:bg-accent-900/60 transition-all cursor-pointer shadow-2xs shrink-0"
             >
               {isLocating ? (
-                <Loader2 size={13} className="animate-spin text-accent-600" />
+                <Loader2 size={13} className="animate-spin text-accent-600 dark:text-accent-400" />
               ) : (
                 <Crosshair size={13} className="text-accent-500" />
               )}
@@ -419,27 +419,27 @@ export function MapLocationPicker({
             <button
               type="button"
               onClick={toggleMapType}
-              className="flex items-center gap-1 px-3 py-2 bg-cream-100 text-ink-700 border border-cream-200 rounded-xl text-xs font-bold hover:bg-cream-200 transition-all cursor-pointer shadow-2xs shrink-0"
+              className="flex items-center gap-1 px-3 py-2 bg-cream-100 dark:bg-ink-800 text-ink-700 dark:text-cream-200 border border-cream-200 dark:border-ink-700 rounded-xl text-xs font-bold hover:bg-cream-200 dark:hover:bg-ink-700 transition-all cursor-pointer shadow-2xs shrink-0"
             >
-              <Layers size={13} className="text-ink-500" />
+              <Layers size={13} className="text-ink-500 dark:text-cream-300" />
               <span>{mapType === 'street' ? 'Vệ tinh' : 'Bản đồ'}</span>
             </button>
           </div>
 
           {/* Autocomplete Suggestions Dropdown */}
           {searchResults.length > 0 && (
-            <div className="bg-white border border-cream-200 rounded-xl shadow-xl p-1.5 max-h-40 overflow-y-auto space-y-1">
+            <div className="bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-700 rounded-xl shadow-xl p-1.5 max-h-40 overflow-y-auto space-y-1">
               {searchResults.map((res, i) => (
                 <button
                   key={i}
                   type="button"
                   onClick={() => handleSelectSearchResult(res)}
-                  className="w-full flex items-start gap-2 p-1.5 rounded-lg text-left hover:bg-cream-100 transition-colors"
+                  className="w-full flex items-start gap-2 p-1.5 rounded-lg text-left hover:bg-cream-100 dark:hover:bg-ink-800 transition-colors"
                 >
                   <MapPin size={14} className="text-accent-500 shrink-0 mt-0.5" />
                   <div className="truncate">
-                    <p className="text-xs font-bold text-ink-800 truncate">{res.name}</p>
-                    <p className="text-[10px] text-ink-400 truncate">{res.area}</p>
+                    <p className="text-xs font-bold text-ink-800 dark:text-cream-100 truncate">{res.name}</p>
+                    <p className="text-[10px] text-ink-400 dark:text-ink-400 truncate">{res.area}</p>
                   </div>
                 </button>
               ))}
@@ -448,42 +448,42 @@ export function MapLocationPicker({
         </div>
 
         {/* Leaflet Map Area with Floating Badge and Coordinates */}
-        <div className="relative h-[220px] sm:h-[250px] w-full bg-cream-100 shrink-0">
+        <div className="relative h-[220px] sm:h-[250px] w-full bg-cream-100 dark:bg-ink-950 shrink-0">
           <div ref={mapContainerRef} className="w-full h-full" />
 
           {/* Floating Instruction Pill Top-Left */}
-          <div className="absolute top-2.5 left-12 z-[400] bg-white/95 backdrop-blur-xs px-3 py-1 rounded-full shadow-sm border border-cream-200 flex items-center gap-1.5 text-[11px] font-bold text-ink-800 pointer-events-none">
+          <div className="absolute top-2.5 left-12 z-[400] bg-white/95 dark:bg-ink-900/95 backdrop-blur-xs px-3 py-1 rounded-full shadow-sm border border-cream-200 dark:border-ink-700 flex items-center gap-1.5 text-[11px] font-bold text-ink-800 dark:text-cream-100 pointer-events-none">
             <Navigation size={12} className="text-accent-500 animate-pulse" />
             <span>Kéo ghim hoặc click trên bản đồ để chọn vị trí</span>
           </div>
 
           {/* Floating Coordinates Badge Bottom-Right */}
-          <div className="absolute bottom-2.5 right-2.5 z-[400] bg-white/90 backdrop-blur-xs px-2.5 py-0.5 rounded-full shadow-2xs border border-cream-200 flex items-center gap-1 text-[10px] font-mono text-ink-600 pointer-events-none">
+          <div className="absolute bottom-2.5 right-2.5 z-[400] bg-white/90 dark:bg-ink-900/90 backdrop-blur-xs px-2.5 py-0.5 rounded-full shadow-2xs border border-cream-200 dark:border-ink-700 flex items-center gap-1 text-[10px] font-mono text-ink-600 dark:text-cream-200 pointer-events-none">
             <span className="w-1.5 h-1.5 rounded-full bg-accent-500"></span>
             <span>📍 {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}</span>
           </div>
         </div>
 
         {/* Selected Location Info Panel - Compact & Symmetrical */}
-        <div className="p-4 bg-white border-t border-cream-200 space-y-3 shrink-0">
-          <div className="bg-accent-50/50 border border-accent-200/70 rounded-2xl p-3.5 space-y-2.5">
+        <div className="p-4 bg-white dark:bg-ink-900 border-t border-cream-200 dark:border-ink-800 space-y-3 shrink-0">
+          <div className="bg-accent-50/50 dark:bg-ink-800/80 border border-accent-200/70 dark:border-ink-700 rounded-2xl p-3.5 space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <div className="w-4 h-4 bg-accent-500 text-white rounded-full flex items-center justify-center text-[10px] shadow-xs">
                   ✓
                 </div>
-                <span className="text-[11px] font-bold text-ink-900 tracking-wide uppercase">
+                <span className="text-[11px] font-bold text-ink-900 dark:text-cream-50 tracking-wide uppercase">
                   THÔNG TIN VỊ TRÍ GIAO HÀNG ĐÃ CHỌN
                 </span>
               </div>
-              <span className="px-2 py-0.5 bg-accent-50 text-accent-700 border border-accent-300 rounded-full text-[10px] font-bold">
+              <span className="px-2 py-0.5 bg-accent-50 dark:bg-accent-950/60 text-accent-700 dark:text-accent-400 border border-accent-300 dark:border-accent-800 rounded-full text-[10px] font-bold">
                 {isGeocoding ? 'Đang định vị toạ độ...' : 'Vị trí chuẩn xác'}
               </span>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-2.5">
               <div>
-                <label className="flex items-center gap-1 text-[10px] font-bold text-ink-700 uppercase tracking-wide mb-1">
+                <label className="flex items-center gap-1 text-[10px] font-bold text-ink-700 dark:text-cream-200 uppercase tracking-wide mb-1">
                   <Home size={12} className="text-accent-500" />
                   <span>ĐỊA CHỈ CHI TIẾT (SỐ NHÀ, TÊN ĐƯỜNG):</span>
                 </label>
@@ -491,13 +491,13 @@ export function MapLocationPicker({
                   type="text"
                   value={detailAddress}
                   onChange={(e) => setDetailAddress(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-white border border-cream-300 rounded-xl text-xs font-semibold text-ink-900 focus:outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20"
+                  className="w-full px-3 py-1.5 bg-white dark:bg-ink-950 border border-cream-300 dark:border-ink-600 rounded-xl text-xs font-semibold text-ink-900 dark:text-cream-50 focus:outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20"
                   placeholder="Ví dụ: Số 12, Ngõ 139 Phú Diễn"
                 />
               </div>
 
               <div>
-                <label className="flex items-center gap-1 text-[10px] font-bold text-ink-700 uppercase tracking-wide mb-1">
+                <label className="flex items-center gap-1 text-[10px] font-bold text-ink-700 dark:text-cream-200 uppercase tracking-wide mb-1">
                   <Building size={12} className="text-accent-500" />
                   <span>KHU VỰC HÀNH CHÍNH:</span>
                 </label>
@@ -505,13 +505,13 @@ export function MapLocationPicker({
                   type="text"
                   value={administrativeArea}
                   onChange={(e) => setAdministrativeArea(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-white border border-cream-300 rounded-xl text-xs font-semibold text-ink-900 focus:outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20"
+                  className="w-full px-3 py-1.5 bg-white dark:bg-ink-950 border border-cream-300 dark:border-ink-600 rounded-xl text-xs font-semibold text-ink-900 dark:text-cream-50 focus:outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20"
                   placeholder="Ví dụ: Phường Phú Diễn, Quận Bắc Từ Liêm, Hà Nội"
                 />
               </div>
             </div>
 
-            <p className="text-[10px] text-accent-800 font-medium italic flex items-center gap-1">
+            <p className="text-[10px] text-accent-800 dark:text-accent-400 font-medium italic flex items-center gap-1">
               👉 Bấm <strong>"Xác Nhận Dùng Địa Chỉ Này"</strong> để áp dụng thông tin vị trí vào biểu mẫu.
             </p>
           </div>
@@ -521,7 +521,7 @@ export function MapLocationPicker({
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2 rounded-full text-xs font-bold text-ink-700 bg-cream-100 hover:bg-cream-200 transition-colors cursor-pointer"
+              className="px-5 py-2 rounded-full text-xs font-bold text-ink-700 dark:text-cream-200 bg-cream-100 dark:bg-ink-800 hover:bg-cream-200 dark:hover:bg-ink-700 transition-colors cursor-pointer"
             >
               Hủy Bỏ
             </button>

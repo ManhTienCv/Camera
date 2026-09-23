@@ -45,15 +45,15 @@ export function HomePage({ onNavigate, categories }: Props) {
   return (
     <div className="animate-fade-in">
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-cream-100 via-cream-50 to-cream-200">
+      <section className="relative overflow-hidden bg-gradient-to-br from-cream-100 via-cream-50 to-cream-200 dark:from-[#191916] dark:via-[#141411] dark:to-[#171714] border-b border-cream-200/60 dark:border-ink-800 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="animate-slide-up">
-              <h1 className="font-display font-bold text-4xl lg:text-6xl text-ink-900 leading-tight mb-6">
+              <h1 className="font-display font-bold text-4xl lg:text-6xl text-ink-900 dark:text-cream-50 leading-tight mb-6">
                 Bắt trọn khoảnh khắc<br />
                 <span className="text-accent-500">Tạo nên nghệ thuật</span>
               </h1>
-              <p className="text-lg text-ink-500 leading-relaxed mb-8 max-w-lg">
+              <p className="text-lg text-ink-500 dark:text-cream-200/80 leading-relaxed mb-8 max-w-lg">
                 Khám phá bộ sưu tập máy ảnh, ống kính và phụ kiện chuyên nghiệp từ các thương hiệu
                 hàng đầu thế giới. Canon, Nikon, Sony, Fujifilm, DJI và hơn thế nữa.
               </p>
@@ -74,7 +74,7 @@ export function HomePage({ onNavigate, categories }: Props) {
               </div>
             </div>
             <div className="relative animate-fade-in">
-              <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl">
+              <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl dark:border dark:border-ink-800">
                 <img
                   src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=1000"
                   alt="Máy ảnh chuyên nghiệp"
@@ -87,7 +87,7 @@ export function HomePage({ onNavigate, categories }: Props) {
       </section>
 
       {/* Features bar */}
-      <section className="bg-white border-y border-ink-100">
+      <section className="bg-white dark:bg-ink-900 border-y border-ink-100 dark:border-ink-800 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {[
@@ -97,12 +97,12 @@ export function HomePage({ onNavigate, categories }: Props) {
               { icon: CreditCard, title: 'Thanh toán linh hoạt', desc: 'VNPAY / MoMo / COD' },
             ].map((f, i) => (
               <div key={i} className="flex items-center gap-3">
-                <div className="w-11 h-11 bg-cream-100 rounded-xl flex items-center justify-center shrink-0">
-                  <f.icon size={20} className="text-ink-700" />
+                <div className="w-11 h-11 bg-cream-100 dark:bg-ink-800 rounded-xl flex items-center justify-center shrink-0 transition-colors">
+                  <f.icon size={20} className="text-ink-700 dark:text-cream-200" />
                 </div>
                 <div>
-                  <p className="font-semibold text-sm text-ink-800">{f.title}</p>
-                  <p className="text-xs text-ink-400">{f.desc}</p>
+                  <p className="font-semibold text-sm text-ink-800 dark:text-cream-100">{f.title}</p>
+                  <p className="text-xs text-ink-400 dark:text-ink-400">{f.desc}</p>
                 </div>
               </div>
             ))}
@@ -114,10 +114,10 @@ export function HomePage({ onNavigate, categories }: Props) {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <h2 className="font-display font-bold text-2xl lg:text-3xl text-ink-900 mb-2">
+            <h2 className="font-display font-bold text-2xl lg:text-3xl text-ink-900 dark:text-cream-50 mb-2">
               Danh mục nổi bật
             </h2>
-            <p className="text-ink-400">Khám phá theo loại sản phẩm</p>
+            <p className="text-ink-400 dark:text-ink-400">Khám phá theo loại sản phẩm</p>
           </div>
           <button
             onClick={() => onNavigate({ name: 'catalog' })}
@@ -135,10 +135,10 @@ export function HomePage({ onNavigate, categories }: Props) {
                 onClick={() => onNavigate({ name: 'catalog', categorySlug: cat.slug })}
                 className="group card p-6 text-center hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
               >
-                <div className="w-14 h-14 mx-auto bg-cream-100 rounded-2xl flex items-center justify-center mb-3 group-hover:bg-accent-500 transition-colors duration-300">
-                  <Icon size={24} className="text-ink-700 group-hover:text-white transition-colors" />
+                <div className="w-14 h-14 mx-auto bg-cream-100 dark:bg-ink-800 rounded-2xl flex items-center justify-center mb-3 group-hover:bg-accent-500 transition-colors duration-300">
+                  <Icon size={24} className="text-ink-700 dark:text-cream-200 group-hover:text-white transition-colors" />
                 </div>
-                <p className="font-display font-semibold text-sm text-ink-800">{cat.name}</p>
+                <p className="font-display font-semibold text-sm text-ink-800 dark:text-cream-100">{cat.name}</p>
               </button>
             );
           })}
@@ -149,10 +149,10 @@ export function HomePage({ onNavigate, categories }: Props) {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <h2 className="font-display font-bold text-2xl lg:text-3xl text-ink-900 mb-2">
+            <h2 className="font-display font-bold text-2xl lg:text-3xl text-ink-900 dark:text-cream-50 mb-2">
               Sản phẩm nổi bật
             </h2>
-            <p className="text-ink-400">Được đánh giá cao nhất bởi khách hàng</p>
+            <p className="text-ink-400 dark:text-ink-400">Được đánh giá cao nhất bởi khách hàng</p>
           </div>
           <button
             onClick={() => onNavigate({ name: 'catalog' })}
@@ -165,10 +165,10 @@ export function HomePage({ onNavigate, categories }: Props) {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="card p-4 animate-pulse">
-                <div className="aspect-square bg-cream-200 rounded-xl mb-4" />
-                <div className="h-3 bg-cream-200 rounded mb-2" />
-                <div className="h-3 bg-cream-200 rounded w-2/3 mb-4" />
-                <div className="h-4 bg-cream-200 rounded w-1/2" />
+                <div className="aspect-square bg-cream-200 dark:bg-ink-800 rounded-xl mb-4" />
+                <div className="h-3 bg-cream-200 dark:bg-ink-800 rounded mb-2" />
+                <div className="h-3 bg-cream-200 dark:bg-ink-800 rounded w-2/3 mb-4" />
+                <div className="h-4 bg-cream-200 dark:bg-ink-800 rounded w-1/2" />
               </div>
             ))}
           </div>
@@ -186,14 +186,14 @@ export function HomePage({ onNavigate, categories }: Props) {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-end justify-between mb-8">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-bold mb-2 border border-amber-200">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 rounded-full text-xs font-bold mb-2 border border-amber-200 dark:border-amber-800/60">
                 <Flame size={13} className="text-amber-500 fill-amber-500" />
                 <span>Bán Chạy Nhất Tuần Qua</span>
               </div>
-              <h2 className="font-display font-bold text-2xl lg:text-3xl text-ink-900 mb-2">
+              <h2 className="font-display font-bold text-2xl lg:text-3xl text-ink-900 dark:text-cream-50 mb-2">
                 Top máy ảnh & thiết bị bán chạy
               </h2>
-              <p className="text-ink-400">Được đông đảo nhiếp ảnh gia và nhà sáng tạo nội dung tin dùng</p>
+              <p className="text-ink-400 dark:text-ink-400">Được đông đảo nhiếp ảnh gia và nhà sáng tạo nội dung tin dùng</p>
             </div>
             <button
               onClick={() => onNavigate({ name: 'catalog' })}
@@ -245,20 +245,20 @@ export function HomePage({ onNavigate, categories }: Props) {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <h2 className="font-display font-bold text-2xl lg:text-3xl text-ink-900 mb-2">
+            <h2 className="font-display font-bold text-2xl lg:text-3xl text-ink-900 dark:text-cream-50 mb-2">
               Hàng mới về
             </h2>
-            <p className="text-ink-400">Các sản phẩm vừa được ra mắt</p>
+            <p className="text-ink-400 dark:text-ink-400">Các sản phẩm vừa được ra mắt</p>
           </div>
         </div>
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="card p-4 animate-pulse">
-                <div className="aspect-square bg-cream-200 rounded-xl mb-4" />
-                <div className="h-3 bg-cream-200 rounded mb-2" />
-                <div className="h-3 bg-cream-200 rounded w-2/3 mb-4" />
-                <div className="h-4 bg-cream-200 rounded w-1/2" />
+                <div className="aspect-square bg-cream-200 dark:bg-ink-800 rounded-xl mb-4" />
+                <div className="h-3 bg-cream-200 dark:bg-ink-800 rounded mb-2" />
+                <div className="h-3 bg-cream-200 dark:bg-ink-800 rounded w-2/3 mb-4" />
+                <div className="h-4 bg-cream-200 dark:bg-ink-800 rounded w-1/2" />
               </div>
             ))}
           </div>

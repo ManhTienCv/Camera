@@ -82,7 +82,7 @@ export function SearchPage({ query, onNavigate }: Props) {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 disabled={currentPage === 1}
-                className="px-4 py-2 bg-white border border-ink-200 rounded-xl text-sm font-medium text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                className="px-4 py-2 bg-white dark:bg-ink-800 border border-ink-200 dark:border-ink-700 rounded-xl text-sm font-medium text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
               >
                 ‹ Trước
               </button>
@@ -96,8 +96,8 @@ export function SearchPage({ query, onNavigate }: Props) {
                   }}
                   className={`w-10 h-10 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                     currentPage === pageNum
-                      ? 'bg-ink-800 text-cream-50 shadow-xs'
-                      : 'bg-white text-ink-700 border border-ink-200 hover:border-ink-300'
+                      ? 'bg-ink-800 dark:bg-accent-500 text-white shadow-xs'
+                      : 'bg-white dark:bg-ink-800 text-ink-700 dark:text-cream-200 border border-ink-200 dark:border-ink-700 hover:border-ink-300 dark:hover:border-ink-600'
                   }`}
                 >
                   {pageNum}
@@ -110,7 +110,7 @@ export function SearchPage({ query, onNavigate }: Props) {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 bg-white border border-ink-200 rounded-xl text-sm font-medium text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                className="px-4 py-2 bg-white dark:bg-ink-800 border border-ink-200 dark:border-ink-700 rounded-xl text-sm font-medium text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
               >
                 Sau ›
               </button>

@@ -297,30 +297,41 @@ html.dark .text-ink-400 {
 }
 
 /* Colored soft badge backgrounds in Dark Mode */
-html.dark .bg-accent-50,
-html.dark .bg-accent-50\/40,
-html.dark .bg-accent-50\/60 {
+html.dark [class*="bg-accent-50"] {
   background-color: rgba(232, 93, 27, 0.16) !important;
 }
-html.dark .bg-emerald-50,
-html.dark .bg-emerald-50\/80 {
+html.dark [class*="bg-emerald-50"] {
   background-color: rgba(16, 185, 129, 0.16) !important;
 }
-html.dark .bg-amber-50,
-html.dark .bg-amber-50\/60,
-html.dark .bg-amber-50\/80 {
+html.dark [class*="bg-amber-50"] {
   background-color: rgba(245, 158, 11, 0.16) !important;
 }
-html.dark .bg-rose-50,
-html.dark .bg-rose-50\/50,
-html.dark .bg-rose-50\/60 {
+html.dark [class*="bg-rose-50"] {
   background-color: rgba(244, 63, 94, 0.16) !important;
 }
-html.dark .bg-purple-50 {
+html.dark [class*="bg-purple-50"] {
   background-color: rgba(168, 85, 247, 0.16) !important;
 }
-html.dark .bg-blue-50 {
+html.dark [class*="bg-blue-50"] {
   background-color: rgba(59, 130, 246, 0.16) !important;
+}
+
+/* Tinted soft badge borders in Dark Mode */
+html.dark [class*="border-accent-200"],
+html.dark [class*="border-accent-300"] {
+  border-color: rgba(232, 93, 27, 0.35) !important;
+}
+html.dark [class*="border-emerald-200"],
+html.dark [class*="border-emerald-300"] {
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+html.dark [class*="border-amber-200"],
+html.dark [class*="border-amber-300"] {
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+html.dark [class*="border-rose-200"],
+html.dark [class*="border-rose-300"] {
+  border-color: rgba(244, 63, 94, 0.35) !important;
 }
 
 /* Bright text for colored badges in Dark Mode */

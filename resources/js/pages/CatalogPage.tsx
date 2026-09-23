@@ -170,13 +170,13 @@ export function CatalogPage({ onNavigate, categories, categorySlug }: Props) {
           className={`relative px-5 py-2.5 rounded-full text-sm font-bold border transition-colors duration-200 cursor-pointer ${
             !selectedCategory
               ? 'text-white border-transparent'
-              : 'bg-white text-ink-700 border-cream-200 hover:border-cream-300 hover:bg-cream-50 shadow-2xs'
+              : 'bg-white dark:bg-ink-900 text-ink-700 dark:text-cream-200 border-cream-200 dark:border-ink-800 hover:border-cream-300 dark:hover:border-ink-700 hover:bg-cream-50 dark:hover:bg-ink-800 shadow-2xs'
           }`}
         >
           {!selectedCategory && (
             <motion.div
               layoutId="category-pills-active-capsule"
-              className="absolute inset-0 bg-ink-900 rounded-full shadow-xs z-0"
+              className="absolute inset-0 bg-ink-900 dark:bg-accent-500 rounded-full shadow-xs z-0"
               transition={{
                 type: 'spring',
                 stiffness: 380,
@@ -195,13 +195,13 @@ export function CatalogPage({ onNavigate, categories, categorySlug }: Props) {
             className={`relative px-5 py-2.5 rounded-full text-sm font-bold border transition-colors duration-200 cursor-pointer ${
               selectedCategory === cat.slug
                 ? 'text-white border-transparent'
-                : 'bg-white text-ink-700 border-cream-200 hover:border-cream-300 hover:bg-cream-50 shadow-2xs'
+                : 'bg-white dark:bg-ink-900 text-ink-700 dark:text-cream-200 border-cream-200 dark:border-ink-800 hover:border-cream-300 dark:hover:border-ink-700 hover:bg-cream-50 dark:hover:bg-ink-800 shadow-2xs'
             }`}
           >
             {selectedCategory === cat.slug && (
               <motion.div
                 layoutId="category-pills-active-capsule"
-                className="absolute inset-0 bg-ink-900 rounded-full shadow-xs z-0"
+                className="absolute inset-0 bg-ink-900 dark:bg-accent-500 rounded-full shadow-xs z-0"
                 transition={{
                   type: 'spring',
                   stiffness: 380,
@@ -368,7 +368,7 @@ export function CatalogPage({ onNavigate, categories, categorySlug }: Props) {
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
                         disabled={currentPage === 1}
-                        className="px-3.5 py-1.5 bg-white border border-cream-300 rounded-xl text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                        className="px-3.5 py-1.5 bg-white dark:bg-ink-800 border border-cream-300 dark:border-ink-700 rounded-xl text-xs font-semibold text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                       >
                         ‹ Trước
                       </button>
@@ -382,8 +382,8 @@ export function CatalogPage({ onNavigate, categories, categorySlug }: Props) {
                           }}
                           className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                             currentPage === pageNum
-                              ? 'bg-ink-900 text-white shadow-xs'
-                              : 'bg-white text-ink-700 border border-cream-300 hover:bg-cream-100'
+                              ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
+                              : 'bg-white dark:bg-ink-800 text-ink-700 dark:text-cream-200 border border-cream-300 dark:border-ink-700 hover:bg-cream-100 dark:hover:bg-ink-700'
                           }`}
                         >
                           {pageNum}
@@ -396,7 +396,7 @@ export function CatalogPage({ onNavigate, categories, categorySlug }: Props) {
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
                         disabled={currentPage === totalPages}
-                        className="px-3.5 py-1.5 bg-white border border-cream-300 rounded-xl text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                        className="px-3.5 py-1.5 bg-white dark:bg-ink-800 border border-cream-300 dark:border-ink-700 rounded-xl text-xs font-semibold text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                       >
                         Sau ›
                       </button>
