@@ -24,11 +24,8 @@ class ChatController extends Controller
         $authHeader = $request->header('Authorization');
         if ($authHeader && Str::startsWith($authHeader, 'Bearer ')) {
             $token = Str::substr($authHeader, 7);
-            $userId = Cache::get('auth_token_' . $token);
-            if ($userId) {
-                $user = User::find($userId);
-                if ($user) return $user;
-            }
+            $user = User::resolveByToken($token);
+            if ($user) return $user;
         }
 
         // Fallback to default admin in database

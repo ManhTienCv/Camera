@@ -22,10 +22,7 @@ class WishlistController extends Controller
         $authHeader = $request->header('Authorization');
         if ($authHeader && Str::startsWith($authHeader, 'Bearer ')) {
             $token = Str::substr($authHeader, 7);
-            $userId = Cache::get('auth_token_' . $token);
-            if ($userId) {
-                return User::find($userId);
-            }
+            return User::resolveByToken($token);
         }
 
         return null;
