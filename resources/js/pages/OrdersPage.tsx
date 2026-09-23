@@ -28,7 +28,7 @@ interface OrdersPageProps {
   onNavigate: (page: Page) => void;
 }
 
-type OrderStatusTab = 'pending' | 'shipping' | 'delivered' | 'cancelled';
+type OrderStatusTab = 'pending' | 'shipping' | 'delivered' | 'refund_pending' | 'cancelled';
 
 interface MockJourneyStep {
   time: string;
@@ -42,8 +42,15 @@ interface EnhancedOrder {
   id: string;
   order_code: string;
   date: string;
-  status: 'pending' | 'shipping' | 'delivered' | 'cancelled';
+  status: 'pending' | 'shipping' | 'delivered' | 'refund_pending' | 'cancelled';
   statusLabel: string;
+  paymentStatus?: string;
+  paymentMethodCode?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankAccountHolder?: string;
+  refundRefCode?: string;
+  refundedAt?: string;
   items: Array<{
     categoryTag: string;
     name: string;
@@ -77,6 +84,9 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
   const [cancellingOrder, setCancellingOrder] = useState<EnhancedOrder | null>(null);
   const [cancelReason, setCancelReason] = useState('Muốn thay đổi địa chỉ nhận hàng');
   const [customReason, setCustomReason] = useState('');
+  const [refundBankName, setRefundBankName] = useState('Vietcombank');
+  const [refundAccountNumber, setRefundAccountNumber] = useState('');
+  const [refundAccountHolder, setRefundAccountHolder] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
 
   const [, setRefreshKey] = useState(0);
@@ -104,17 +114,23 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
         .then((realOrders) => {
           if (realOrders && realOrders.length > 0) {
             const mappedReal: EnhancedOrder[] = realOrders.map((o) => {
-              let statusType: 'pending' | 'shipping' | 'delivered' | 'cancelled' = 'pending';
+              let statusType: 'pending' | 'shipping' | 'delivered' | 'refund_pending' | 'cancelled' = 'pending';
               let statusLabel = 'Chờ Duyệt & Đóng Gói';
-              if (o.status === 'shipping') {
+              const rawStatus = (o as any).order_status || o.status;
+              const payStatus = o.payment_status;
+
+              if (rawStatus === 'shipping' || rawStatus === 'delivering') {
                 statusType = 'shipping';
                 statusLabel = 'Đang Giao (GHN Express)';
-              } else if (o.status === 'delivered') {
+              } else if (rawStatus === 'delivered' || rawStatus === 'completed') {
                 statusType = 'delivered';
                 statusLabel = 'Đã Giao Thành Công';
-              } else if (o.status === 'cancelled') {
+              } else if (rawStatus === 'refund_pending' || payStatus === 'refund_pending') {
+                statusType = 'refund_pending';
+                statusLabel = 'Chờ Hoàn Tiền';
+              } else if (rawStatus === 'cancelled') {
                 statusType = 'cancelled';
-                statusLabel = 'Đã Hủy Đơn';
+                statusLabel = payStatus === 'refunded' ? 'Đã Hủy & Đã Hoàn Tiền' : 'Đã Hủy Đơn';
               }
 
               return {
@@ -123,6 +139,14 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                 date: o.created_at ? new Date(o.created_at).toLocaleDateString('vi-VN') : 'Hôm nay',
                 status: statusType,
                 statusLabel,
+                paymentStatus: payStatus,
+                paymentMethodCode: o.payment_method,
+                bankName: o.bank_name,
+                bankAccountNumber: o.bank_account_number,
+                bankAccountHolder: o.bank_account_holder,
+                refundRefCode: o.refund_ref_code,
+                refundedAt: o.refunded_at,
+                cancelReason: o.cancel_reason,
                 items: (o.items || []).map((i) => ({
                   categoryTag: 'Sản phẩm',
                   name: i.name,
@@ -193,10 +217,11 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
   const pendingOrdersCount = orders.filter((o) => o.status === 'pending').length;
   const shippingOrdersCount = orders.filter((o) => o.status === 'shipping').length;
   const deliveredOrdersCount = orders.filter((o) => o.status === 'delivered').length;
+  const refundOrdersCount = orders.filter((o) => o.status === 'refund_pending').length;
   const cancelledOrdersCount = orders.filter((o) => o.status === 'cancelled').length;
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
   // Reset page when switching status tab
   useEffect(() => {
@@ -258,36 +283,83 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
     setCancellingOrder(order);
     setCancelReason('Muốn thay đổi địa chỉ nhận hàng');
     setCustomReason('');
+    setRefundBankName('Vietcombank');
+    setRefundAccountNumber('');
+    setRefundAccountHolder(user?.fullName ? user.fullName.toUpperCase() : '');
   };
 
   // Confirm Order Cancellation
   const handleConfirmCancelOrder = async () => {
     if (!cancellingOrder) return;
-    setIsCancelling(true);
 
+    const isPaidOnline =
+      cancellingOrder.paymentMethodCode !== 'cod' &&
+      (cancellingOrder.paymentStatus === 'paid' || cancellingOrder.paymentStatus === 'completed');
+
+    if (isPaidOnline) {
+      if (!refundBankName.trim()) {
+        toast.error('Vui lòng chọn hoặc nhập tên ngân hàng nhận tiền hoàn.');
+        return;
+      }
+      if (!refundAccountNumber.trim()) {
+        toast.error('Vui lòng nhập số tài khoản nhận tiền hoàn.');
+        return;
+      }
+      if (!refundAccountHolder.trim()) {
+        toast.error('Vui lòng nhập họ tên chủ tài khoản nhận tiền hoàn.');
+        return;
+      }
+    }
+
+    setIsCancelling(true);
     const finalReason = cancelReason === 'Lý do khác' ? customReason || 'Lý do khác' : cancelReason;
 
     try {
-      // Call backend API if it's a real order
-      await api.cancelOrder(cancellingOrder.id, finalReason).catch(() => {});
+      await api.cancelOrder(cancellingOrder.id, {
+        reason: finalReason,
+        bank_name: isPaidOnline ? refundBankName.trim() : undefined,
+        bank_account_number: isPaidOnline ? refundAccountNumber.trim() : undefined,
+        bank_account_holder: isPaidOnline ? refundAccountHolder.trim().toUpperCase() : undefined,
+      });
 
-      // Update state locally
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.id === cancellingOrder.id
-            ? {
-                ...o,
-                status: 'cancelled',
-                statusLabel: 'Đã Hủy Đơn',
-                cancelReason: finalReason,
-              }
-            : o
-        )
-      );
-
-      toast.success(`Đã hủy thành công đơn hàng ${cancellingOrder.order_code}. Sản phẩm đã được hoàn lại kho!`);
-      setCancellingOrder(null);
-      setOrderStatusTab('cancelled');
+      if (isPaidOnline) {
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.id === cancellingOrder.id
+              ? {
+                  ...o,
+                  status: 'refund_pending',
+                  statusLabel: 'Chờ Hoàn Tiền',
+                  cancelReason: finalReason,
+                  bankName: refundBankName.trim(),
+                  bankAccountNumber: refundAccountNumber.trim(),
+                  bankAccountHolder: refundAccountHolder.trim().toUpperCase(),
+                }
+              : o
+          )
+        );
+        toast.success(
+          `Đã gửi yêu cầu hủy và hoàn tiền cho đơn ${cancellingOrder.order_code}! Cửa hàng sẽ hoàn tiền về tài khoản của bạn.`
+        );
+        setCancellingOrder(null);
+        setOrderStatusTab('refund_pending');
+      } else {
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.id === cancellingOrder.id
+              ? {
+                  ...o,
+                  status: 'cancelled',
+                  statusLabel: 'Đã Hủy Đơn',
+                  cancelReason: finalReason,
+                }
+              : o
+          )
+        );
+        toast.success(`Đã hủy thành công đơn hàng ${cancellingOrder.order_code}. Sản phẩm đã được hoàn lại kho!`);
+        setCancellingOrder(null);
+        setOrderStatusTab('cancelled');
+      }
     } catch (err: any) {
       toast.error(err.message || 'Lỗi khi hủy đơn hàng.');
     } finally {
@@ -360,6 +432,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
           { id: 'pending', label: `Chờ đóng gói (${pendingOrdersCount})` },
           { id: 'shipping', label: `Đang giao hàng (${shippingOrdersCount})` },
           { id: 'delivered', label: `Đã nhận hàng (${deliveredOrdersCount})` },
+          { id: 'refund_pending', label: `Chờ hoàn tiền (${refundOrdersCount})` },
           { id: 'cancelled', label: `Đã hủy (${cancelledOrdersCount})` },
         ].map((tab) => {
           const isActive = orderStatusTab === tab.id;
@@ -432,6 +505,13 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                     {ord.status === 'delivered' && (
                       <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-accent-600 px-3.5 py-1 rounded-full shadow-2xs">
                         <CheckCircle2 size={14} />
+                        <span>{ord.statusLabel}</span>
+                      </span>
+                    )}
+
+                    {ord.status === 'refund_pending' && (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-100/90 border border-amber-300 px-3.5 py-1 rounded-full shadow-2xs">
+                        <RotateCcw size={14} className="text-amber-600" />
                         <span>{ord.statusLabel}</span>
                       </span>
                     )}
@@ -602,6 +682,18 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                     </div>
                   )}
 
+                  {ord.status === 'refund_pending' && (
+                    <div className="p-3.5 bg-amber-50/90 border border-amber-300/80 rounded-xl text-xs text-amber-900 flex items-start gap-2.5">
+                      <RotateCcw size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <strong>Yêu cầu hoàn tiền đang được xử lý:</strong> Đơn hàng {ord.order_code} đã được tiếp nhận yêu cầu hủy và toàn bộ tồn kho đã được hoàn lại. Cửa hàng đang xử lý chuyển khoản hoàn tiền vào số tài khoản <strong>{ord.bankAccountNumber} ({ord.bankName} - {ord.bankAccountHolder})</strong> trong vòng 24h làm việc.
+                        {ord.cancelReason && (
+                          <div className="mt-1 text-amber-800 font-medium">Lý do hủy: {ord.cancelReason}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {ord.status === 'cancelled' && (
                     <div className="p-3.5 bg-rose-50/90 border border-rose-200/80 rounded-xl text-xs text-rose-900 flex items-start gap-2.5">
                       <AlertCircle size={16} className="text-rose-600 shrink-0 mt-0.5" />
@@ -609,6 +701,11 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                         <strong>Đơn hàng đã được hủy:</strong> Đơn hàng {ord.order_code} đã dừng xử lý và số lượng sản phẩm đã được tự động hoàn lại kho.
                         {ord.cancelReason && (
                           <div className="mt-1 text-rose-700 font-medium">Lý do hủy: {ord.cancelReason}</div>
+                        )}
+                        {ord.refundRefCode && (
+                          <div className="mt-1 text-emerald-700 font-bold">
+                            ✓ Đã hoàn tiền qua ngân hàng. Mã GD: {ord.refundRefCode}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -678,46 +775,74 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
           </div>
 
           {/* Orders Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="mt-8 flex items-center justify-center gap-2 pt-4">
-              <button
-                onClick={() => {
-                  setCurrentPage((p) => Math.max(1, p - 1));
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                disabled={currentPage === 1}
-                className="px-4 py-2 bg-white border border-cream-200 rounded-xl text-xs font-bold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-              >
-                ‹ Trang trước
-              </button>
+          {filteredOrders.length > 0 && (
+            <div className="mt-8 bg-white border border-cream-200 rounded-2xl p-4 px-6 flex flex-wrap items-center justify-between gap-4 shadow-xs">
+              <div className="flex items-center gap-3 text-xs text-ink-600 font-medium">
+                <div>
+                  Hiển thị <span className="font-bold text-ink-900">{(currentPage - 1) * itemsPerPage + 1}</span> -{' '}
+                  <span className="font-bold text-ink-900">{Math.min(currentPage * itemsPerPage, filteredOrders.length)}</span> trên{' '}
+                  <span className="font-bold text-ink-900">{filteredOrders.length}</span> đơn hàng
+                </div>
 
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                <button
-                  key={pageNum}
-                  onClick={() => {
-                    setCurrentPage(pageNum);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className={`w-9 h-9 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    currentPage === pageNum
-                      ? 'bg-ink-900 text-white shadow-xs'
-                      : 'bg-white text-ink-700 border border-cream-200 hover:border-cream-300'
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              ))}
+                <div className="flex items-center gap-1.5 border-l border-cream-200 pl-3">
+                  <span className="text-[11px] text-ink-400">Hiển thị:</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="px-2 py-1 bg-white border border-cream-200 rounded-lg text-xs font-bold text-ink-800 focus:outline-none focus:border-accent-500 cursor-pointer shadow-2xs"
+                  >
+                    <option value={5}>5 đơn / trang</option>
+                    <option value={10}>10 đơn / trang</option>
+                    <option value={20}>20 đơn / trang</option>
+                  </select>
+                </div>
+              </div>
 
-              <button
-                onClick={() => {
-                  setCurrentPage((p) => Math.min(totalPages, p + 1));
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 bg-white border border-cream-200 rounded-xl text-xs font-bold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
-              >
-                Trang sau ›
-              </button>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => {
+                      setCurrentPage((p) => Math.max(1, p - 1));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    disabled={currentPage === 1}
+                    className="px-3.5 py-1.5 bg-white border border-cream-300 rounded-xl text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                  >
+                    ‹ Trước
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      onClick={() => {
+                        setCurrentPage(pageNum);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        currentPage === pageNum
+                          ? 'bg-ink-900 text-white shadow-xs'
+                          : 'bg-white text-ink-700 border border-cream-300 hover:bg-cream-100'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => {
+                      setCurrentPage((p) => Math.min(totalPages, p + 1));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    disabled={currentPage === totalPages}
+                    className="px-3.5 py-1.5 bg-white border border-cream-300 rounded-xl text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                  >
+                    Sau ›
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </>
@@ -793,88 +918,160 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
             className="fixed inset-0 w-screen h-screen min-h-[100dvh] z-[9999] flex items-center justify-center p-4 bg-black/65 backdrop-blur-xs animate-fade-in overflow-y-auto cursor-pointer"
             onClick={() => !isCancelling && setCancellingOrder(null)}
           >
-            <div
-              className="relative w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-cream-200 space-y-5 animate-scale-up"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="text-center space-y-2">
-                <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto shadow-2xs">
-                  <AlertTriangle size={28} />
-                </div>
-                <h3 className="font-display font-bold text-xl text-ink-900">Xác Nhận Hủy Đơn Hàng</h3>
-                <p className="text-xs text-ink-500">
-                  Bạn có chắc chắn muốn hủy đơn hàng <strong>{cancellingOrder.order_code}</strong>?
-                </p>
-              </div>
+            {(() => {
+              const isPaidOnline =
+                cancellingOrder.paymentMethodCode !== 'cod' &&
+                (cancellingOrder.paymentStatus === 'paid' || cancellingOrder.paymentStatus === 'completed');
 
-              <div className="p-3.5 bg-cream-50 border border-cream-200 rounded-2xl text-xs text-ink-700 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-ink-400">Tổng giá trị:</span>
-                  <strong className="text-accent-600 font-bold font-display">{formatCurrency(cancellingOrder.totalAmount)}</strong>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-ink-400">Số sản phẩm:</span>
-                  <span className="font-semibold text-ink-800">{cancellingOrder.items.length} món</span>
-                </div>
-                <p className="text-[11px] text-amber-700 pt-1 font-medium border-t border-cream-200">
-                  ⚠️ Sau khi hủy, toàn bộ số lượng sản phẩm trong đơn sẽ tự động được hoàn lại kho.
-                </p>
-              </div>
-
-              {/* Reason selector */}
-              <div className="space-y-2">
-                <label className="block text-xs font-bold text-ink-700">Vui lòng chọn lý do hủy:</label>
-                <select
-                  value={cancelReason}
-                  onChange={(e) => setCancelReason(e.target.value)}
-                  className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-xs text-ink-900 focus:outline-none focus:border-accent-500 font-medium"
+              return (
+                <div
+                  className={`relative w-full ${isPaidOnline ? 'max-w-lg' : 'max-w-md'} bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-cream-200 space-y-5 animate-scale-up`}
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <option value="Muốn thay đổi địa chỉ nhận hàng">Muốn thay đổi địa chỉ nhận hàng</option>
-                  <option value="Đặt nhầm sản phẩm / số lượng">Đặt nhầm sản phẩm / số lượng</option>
-                  <option value="Tìm thấy mức giá hoặc khuyến mãi tốt hơn">Tìm thấy mức giá hoặc khuyến mãi tốt hơn</option>
-                  <option value="Thay đổi ý định, không còn nhu cầu">Thay đổi ý định, không còn nhu cầu</option>
-                  <option value="Lý do khác">Lý do khác</option>
-                </select>
+                  <div className="text-center space-y-2">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto shadow-2xs ${
+                      isPaidOnline ? 'bg-amber-50 border border-amber-200 text-amber-600' : 'bg-rose-50 border border-rose-200 text-rose-600'
+                    }`}>
+                      {isPaidOnline ? <RotateCcw size={28} /> : <AlertTriangle size={28} />}
+                    </div>
+                    <h3 className="font-display font-bold text-xl text-ink-900">
+                      {isPaidOnline ? 'Yêu Cầu Hủy Đơn & Hoàn Tiền' : 'Xác Nhận Hủy Đơn Hàng'}
+                    </h3>
+                    <p className="text-xs text-ink-500">
+                      Đơn hàng <strong>{cancellingOrder.order_code}</strong> ({formatCurrency(cancellingOrder.totalAmount)})
+                    </p>
+                  </div>
 
-                {cancelReason === 'Lý do khác' && (
-                  <input
-                    type="text"
-                    value={customReason}
-                    onChange={(e) => setCustomReason(e.target.value)}
-                    placeholder="Nhập lý do của bạn..."
-                    className="w-full p-2.5 bg-cream-50 border border-cream-200 rounded-xl text-xs text-ink-900 focus:outline-none focus:border-accent-500 mt-2"
-                  />
-                )}
-              </div>
+                  {isPaidOnline ? (
+                    <div className="p-4 bg-amber-50/90 border border-amber-300/80 rounded-2xl text-xs space-y-3">
+                      <p className="text-amber-900 leading-relaxed font-medium">
+                        Đơn hàng đã thanh toán qua <strong>{cancellingOrder.paymentMethod}</strong>. Sau khi bạn gửi yêu cầu, số lượng máy ảnh sẽ hoàn lại kho và cửa hàng sẽ chuyển khoản hoàn trả <strong>{formatCurrency(cancellingOrder.totalAmount)}</strong> vào tài khoản dưới đây:
+                      </p>
 
-              {/* Actions */}
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  type="button"
-                  disabled={isCancelling}
-                  onClick={() => setCancellingOrder(null)}
-                  className="w-1/2 py-2.5 rounded-2xl border border-cream-200 bg-white hover:bg-cream-50 text-xs font-bold text-ink-700 transition-colors cursor-pointer"
-                >
-                  Giữ lại đơn
-                </button>
+                      <div className="space-y-3 pt-1">
+                        <div>
+                          <label className="block text-[11px] font-bold text-ink-800 mb-1">Ngân hàng / Ví nhận tiền (*):</label>
+                          <select
+                            value={refundBankName}
+                            onChange={(e) => setRefundBankName(e.target.value)}
+                            className="w-full p-2.5 bg-white border border-cream-200 rounded-xl text-xs text-ink-900 focus:outline-none focus:border-accent-500 font-medium"
+                          >
+                            <option value="Vietcombank">Vietcombank (VCB)</option>
+                            <option value="MB Bank">MB Bank (Quân Đội)</option>
+                            <option value="Techcombank">Techcombank (TCB)</option>
+                            <option value="VPBank">VPBank</option>
+                            <option value="ACB">ACB (Á Châu)</option>
+                            <option value="BIDV">BIDV</option>
+                            <option value="VietinBank">VietinBank</option>
+                            <option value="TPBank">TPBank</option>
+                            <option value="Sacombank">Sacombank</option>
+                            <option value="MoMo">Ví MoMo</option>
+                            <option value="ZaloPay">Ví ZaloPay</option>
+                          </select>
+                        </div>
 
-                <button
-                  type="button"
-                  disabled={isCancelling}
-                  onClick={handleConfirmCancelOrder}
-                  className="w-1/2 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
-                >
-                  {isCancelling ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <div>
+                          <label className="block text-[11px] font-bold text-ink-800 mb-1">Số tài khoản / Số điện thoại ví (*):</label>
+                          <input
+                            type="text"
+                            value={refundAccountNumber}
+                            onChange={(e) => setRefundAccountNumber(e.target.value)}
+                            placeholder="Ví dụ: 0988888888 hoặc 1023456789"
+                            className="w-full p-2.5 bg-white border border-cream-200 rounded-xl text-xs text-ink-900 focus:outline-none focus:border-accent-500 font-medium"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-ink-800 mb-1">Họ và tên chủ tài khoản (*):</label>
+                          <input
+                            type="text"
+                            value={refundAccountHolder}
+                            onChange={(e) => setRefundAccountHolder(e.target.value.toUpperCase())}
+                            placeholder="Ví dụ: NGUYEN VAN A"
+                            className="w-full p-2.5 bg-white border border-cream-200 rounded-xl text-xs text-ink-900 focus:outline-none focus:border-accent-500 font-bold uppercase tracking-wide"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   ) : (
-                    <>
-                      <XCircle size={15} />
-                      <span>Xác nhận hủy</span>
-                    </>
+                    <div className="p-3.5 bg-cream-50 border border-cream-200 rounded-2xl text-xs text-ink-700 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-ink-400">Tổng giá trị:</span>
+                        <strong className="text-accent-600 font-bold font-display">{formatCurrency(cancellingOrder.totalAmount)}</strong>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-ink-400">Số sản phẩm:</span>
+                        <span className="font-semibold text-ink-800">{cancellingOrder.items.length} món</span>
+                      </div>
+                      <p className="text-[11px] text-amber-700 pt-1 font-medium border-t border-cream-200">
+                        ⚠️ Sau khi hủy, toàn bộ số lượng sản phẩm trong đơn sẽ tự động được hoàn lại kho.
+                      </p>
+                    </div>
                   )}
-                </button>
-              </div>
-            </div>
+
+                  {/* Reason selector */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-ink-700">Lý do hủy đơn:</label>
+                    <select
+                      value={cancelReason}
+                      onChange={(e) => setCancelReason(e.target.value)}
+                      className="w-full p-3 bg-cream-50 border border-cream-200 rounded-2xl text-xs text-ink-900 focus:outline-none focus:border-accent-500 font-medium"
+                    >
+                      <option value="Muốn thay đổi địa chỉ nhận hàng">Muốn thay đổi địa chỉ nhận hàng</option>
+                      <option value="Đặt nhầm sản phẩm / số lượng">Đặt nhầm sản phẩm / số lượng</option>
+                      <option value="Tìm thấy mức giá hoặc khuyến mãi tốt hơn">Tìm thấy mức giá hoặc khuyến mãi tốt hơn</option>
+                      <option value="Thay đổi ý định, không còn nhu cầu">Thay đổi ý định, không còn nhu cầu</option>
+                      <option value="Lý do khác">Lý do khác</option>
+                    </select>
+
+                    {cancelReason === 'Lý do khác' && (
+                      <input
+                        type="text"
+                        value={customReason}
+                        onChange={(e) => setCustomReason(e.target.value)}
+                        placeholder="Nhập lý do của bạn..."
+                        className="w-full p-2.5 bg-cream-50 border border-cream-200 rounded-xl text-xs text-ink-900 focus:outline-none focus:border-accent-500 mt-2"
+                      />
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-3 pt-2">
+                    <button
+                      type="button"
+                      disabled={isCancelling}
+                      onClick={() => setCancellingOrder(null)}
+                      className="w-1/2 py-2.5 rounded-2xl border border-cream-200 bg-white hover:bg-cream-50 text-xs font-bold text-ink-700 transition-colors cursor-pointer"
+                    >
+                      Giữ lại đơn
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={isCancelling}
+                      onClick={handleConfirmCancelOrder}
+                      className={`w-1/2 py-2.5 rounded-2xl text-white text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 ${
+                        isPaidOnline ? 'bg-amber-600 hover:bg-amber-700' : 'bg-rose-600 hover:bg-rose-700'
+                      }`}
+                    >
+                      {isCancelling ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : isPaidOnline ? (
+                        <>
+                          <RotateCcw size={15} />
+                          <span>Gửi Yêu Cầu Hoàn Tiền</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle size={15} />
+                          <span>Xác nhận hủy</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>,
           document.body
         )}

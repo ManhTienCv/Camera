@@ -139,7 +139,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
           {/* SECTION 1: THÔNG TIN CƠ BẢN */}
           <div className="space-y-4">
             <h4 className="text-xs font-bold text-accent-500 uppercase tracking-wider">1. Thông tin cơ bản & Phân loại</h4>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-ink-700 uppercase mb-1">Tên máy ảnh / Ống kính *</label>
@@ -221,7 +221,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-ink-700 uppercase mb-1">Giá gốc / Giá niêm yết (VNĐ)</label>
+                <label className="block text-xs font-bold text-ink-700 uppercase mb-1">Giá gốc(VNĐ)</label>
                 <input
                   type="number"
                   value={formData.original_price}
@@ -247,7 +247,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
           {/* SECTION 3: HÌNH ẢNH & BỘ SƯU TẬP */}
           <div className="space-y-4 pt-4 border-t border-cream-200">
             <h4 className="text-xs font-bold text-accent-500 uppercase tracking-wider">3. Hình ảnh sản phẩm (Upload hoặc URL)</h4>
-            
+
             {/* Ảnh đại diện chính */}
             <div>
               <label className="block text-xs font-bold text-ink-700 mb-1">Ảnh đại diện chính (Cover Image) *</label>
@@ -651,8 +651,8 @@ export const OrderViewModal: React.FC<OrderViewModalProps> = ({ order, onClose }
                 {order.payment_method === 'momo'
                   ? 'Ví điện tử MoMo'
                   : order.payment_method === 'vietqr'
-                  ? 'VietQR (Vietcombank)'
-                  : 'COD (Tiền mặt)'}
+                    ? 'VietQR (Vietcombank)'
+                    : 'COD (Tiền mặt)'}
               </p>
               <span className={`inline-block text-[11px] font-bold ${order.payment_status === 'completed' ? 'text-emerald-600' : 'text-amber-600'}`}>
                 {order.payment_status === 'completed' ? '● Đã thanh toán' : '○ Chờ thanh toán'}
@@ -665,16 +665,51 @@ export const OrderViewModal: React.FC<OrderViewModalProps> = ({ order, onClose }
                 {order.status === 'shipping'
                   ? 'Đang giao hàng'
                   : order.status === 'completed'
-                  ? 'Hoàn thành'
-                  : order.status === 'cancelled'
-                  ? 'Đã hủy'
-                  : 'Chờ xử lý'}
+                    ? 'Hoàn thành'
+                    : order.status === 'refund_pending'
+                      ? 'Chờ hoàn tiền'
+                      : order.status === 'cancelled'
+                        ? 'Đã hủy'
+                        : 'Chờ xử lý'}
               </p>
               <span className="text-[11px] text-ink-400">
                 {order.tracking_code ? `GHN: #${order.tracking_code}` : 'Đơn vị: GHN Express'}
               </span>
             </div>
           </div>
+
+          {/* Bank & Refund Information */}
+          {(order.bank_name || order.refund_ref_code || order.status === 'refund_pending' || order.payment_status === 'refund_pending' || order.payment_status === 'refunded') && (
+            <div className="p-3.5 bg-amber-50/70 rounded-2xl border border-amber-200/80 space-y-2">
+              <h4 className="font-bold text-ink-900 text-xs uppercase tracking-wide flex items-center justify-between">
+                <span>Thông tin hoàn tiền & Tài khoản nhận</span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${order.payment_status === 'refunded' ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-800'}`}>
+                  {order.payment_status === 'refunded' ? 'Đã hoàn tất' : 'Chờ Admin xử lý'}
+                </span>
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-ink-700 text-xs">
+                <p>
+                  <span className="text-ink-400">Ngân hàng:</span> <strong className="text-ink-900">{order.bank_name || 'Chưa cung cấp'}</strong>
+                </p>
+                <p>
+                  <span className="text-ink-400">Số tài khoản:</span> <strong className="text-ink-900 font-mono">{order.bank_account_number || 'Chưa cung cấp'}</strong>
+                </p>
+                <p>
+                  <span className="text-ink-400">Chủ tài khoản:</span> <strong className="text-ink-900 uppercase">{order.bank_account_holder || 'Chưa cung cấp'}</strong>
+                </p>
+                {order.refund_ref_code && (
+                  <p>
+                    <span className="text-ink-400">Mã giao dịch (Ref):</span> <strong className="text-emerald-700 font-mono">{order.refund_ref_code}</strong>
+                  </p>
+                )}
+                {order.refunded_at && (
+                  <p className="sm:col-span-2">
+                    <span className="text-ink-400">Ngày hoàn tiền:</span> <span className="text-ink-800">{new Date(order.refunded_at).toLocaleString('vi-VN')}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Ordered Products List */}
           <div>

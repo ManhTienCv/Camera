@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Plus,
   Camera,
@@ -46,6 +46,17 @@ export const AdminCategoriesTab: React.FC<AdminCategoriesTabProps> = ({
   onDeleteCategory,
   onViewCategoryProducts,
 }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(6);
+
+  const totalPages = Math.max(1, Math.ceil(categories.length / itemsPerPage));
+  const paginatedCategories = categories.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    document.querySelector('main')?.parentElement?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const totalProducts = categories.reduce((sum, c) => sum + (c.products_count || 0), 0);
 
   return (
@@ -105,7 +116,7 @@ export const AdminCategoriesTab: React.FC<AdminCategoriesTabProps> = ({
 
       {/* 3. CATEGORIES CARDS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {categories.map((c, idx) => {
+        {paginatedCategories.map((c, idx) => {
           const Icon = getCategoryIcon(c.slug, c.icon);
           const theme = getCategoryTheme(idx);
 
@@ -179,6 +190,67 @@ export const AdminCategoriesTab: React.FC<AdminCategoriesTabProps> = ({
           </div>
         </button>
       </div>
+
+      {/* Pagination Toolbar */}
+      {categories.length > itemsPerPage && (
+        <div className="bg-white rounded-2xl border border-cream-200 p-4 px-6 flex flex-wrap items-center justify-between gap-4 shadow-xs">
+          <div className="flex items-center gap-3 text-xs text-ink-600 font-medium">
+            <div>
+              Hiển thị <span className="font-bold text-ink-900">{(currentPage - 1) * itemsPerPage + 1}</span> -{' '}
+              <span className="font-bold text-ink-900">{Math.min(currentPage * itemsPerPage, categories.length)}</span> trên{' '}
+              <span className="font-bold text-ink-900">{categories.length}</span> danh mục
+            </div>
+
+            <div className="flex items-center gap-1.5 border-l border-cream-200 pl-3">
+              <span className="text-[11px] text-ink-400">Hiển thị:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1 bg-white border border-cream-200 rounded-lg text-xs font-bold text-ink-800 focus:outline-none focus:border-accent-500 cursor-pointer shadow-2xs"
+              >
+                <option value={6}>6 mục / trang</option>
+                <option value={12}>12 mục / trang</option>
+                <option value={24}>24 mục / trang</option>
+              </select>
+            </div>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="px-3.5 py-1.5 rounded-xl border border-cream-300 bg-white text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+              >
+                ‹ Trước
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  onClick={() => handlePageChange(pageNum)}
+                  className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    currentPage === pageNum
+                      ? 'bg-accent-600 text-white shadow-xs'
+                      : 'bg-white text-ink-700 border border-cream-300 hover:bg-cream-100'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+              <button
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3.5 py-1.5 rounded-xl border border-cream-300 bg-white text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+              >
+                Sau ›
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

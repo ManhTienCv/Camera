@@ -12,15 +12,17 @@ import {
   BarChart3,
   Users,
   MessageSquare,
+  Ticket,
 } from 'lucide-react';
-import type { Page } from '../../types';
+import type { Page, User } from '../../types';
 
-export type AdminTab = 'dashboard' | 'products' | 'categories' | 'orders' | 'reports' | 'users' | 'chat' | 'reviews' | 'settings';
+export type AdminTab = 'dashboard' | 'products' | 'categories' | 'orders' | 'vouchers' | 'reports' | 'users' | 'chat' | 'reviews' | 'settings';
 
 interface AdminSidebarProps {
   activeTab: AdminTab;
   setActiveTab: (tab: AdminTab) => void;
   onNavigate: (page: Page) => void;
+  adminUser?: User | null;
   collapsed?: boolean;
   onToggleCollapse?: (collapsed: boolean) => void;
   orderCount?: number;
@@ -30,6 +32,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   activeTab,
   setActiveTab,
   onNavigate,
+  adminUser,
   collapsed: externalCollapsed,
   onToggleCollapse,
   orderCount = 0,
@@ -55,6 +58,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     { id: 'products' as AdminTab, label: 'Sản phẩm', icon: Package },
     { id: 'categories' as AdminTab, label: 'Danh mục', icon: FolderTree },
     { id: 'orders' as AdminTab, label: 'Đơn hàng', icon: ShoppingCart, badge: orderCount > 0 ? orderCount : undefined },
+    { id: 'vouchers' as AdminTab, label: 'Mã Giảm Giá', icon: Ticket },
   ];
 
   const navItemsSection2 = [
@@ -64,21 +68,19 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   ];
 
   const navItemsSection3 = [
-    { id: 'reviews' as AdminTab, label: 'Đánh giá', icon: Star },
+    { id: 'reviews' as AdminTab, label: 'Đánh giá & Phản hồi', icon: Star },
     { id: 'settings' as AdminTab, label: 'Cài đặt', icon: Settings },
   ];
 
   return (
     <aside
-      className={`bg-white text-ink-800 flex flex-col flex-shrink-0 border-r border-cream-200 h-screen sticky top-0 select-none transition-all duration-300 ease-in-out z-30 ${
-        isCollapsed ? 'w-[72px]' : 'w-64'
-      }`}
+      className={`bg-white text-ink-800 flex flex-col flex-shrink-0 border-r border-cream-200 h-screen sticky top-0 select-none transition-all duration-300 ease-in-out z-30 ${isCollapsed ? 'w-[72px]' : 'w-64'
+        }`}
     >
       {/* Top Header */}
       <div
-        className={`flex items-center flex-shrink-0 h-16 border-b border-cream-200/80 transition-all ${
-          isCollapsed ? 'justify-center px-3' : 'justify-between px-4'
-        }`}
+        className={`flex items-center flex-shrink-0 h-16 border-b border-cream-200/80 transition-all ${isCollapsed ? 'justify-center px-3' : 'justify-between px-4'
+          }`}
       >
         {isCollapsed ? (
           <div className="relative group flex items-center justify-center">
@@ -102,9 +104,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               </div>
               <div className="truncate">
                 <h1 className="font-display font-bold text-ink-900 text-sm leading-tight">CameraHub</h1>
-                <span className="text-[10px] font-bold text-accent-700 bg-accent-50 px-1.5 py-0.5 rounded-md uppercase tracking-wider">
-                  Admin Portal
-                </span>
+
               </div>
             </div>
 
@@ -143,18 +143,30 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 <div key={item.id} className="relative group flex items-center">
                   <button
                     onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center rounded-2xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${
-                      isCollapsed
-                        ? 'w-10 h-10 mx-auto justify-center'
-                        : 'w-full gap-3 px-3.5 py-2.5'
-                    } ${
-                      isActive
+                    className={`flex items-center rounded-2xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${isCollapsed
+                      ? 'w-10 h-10 mx-auto justify-center'
+                      : 'w-full gap-3 px-3.5 py-2.5'
+                      } ${isActive
                         ? 'bg-accent-500 text-white font-bold shadow-xs'
                         : 'text-ink-700 hover:bg-cream-100 hover:text-ink-900'
-                    }`}
+                      }`}
                   >
                     <Icon size={18} className="shrink-0" />
-                    {!isCollapsed && <span className="truncate">{item.label}</span>}
+                    {!isCollapsed && (
+                      <div className="flex items-center justify-between flex-1 min-w-0">
+                        <span className="truncate">{item.label}</span>
+                        {item.badge !== undefined && (
+                          <span
+                            className={`px-2 py-0.5 text-[11px] font-bold rounded-full transition-colors ${isActive
+                              ? 'bg-white text-accent-700'
+                              : 'bg-red-500 text-white'
+                              }`}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </button>
 
                   {isCollapsed && (
@@ -186,15 +198,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 <div key={item.id} className="relative group flex items-center">
                   <button
                     onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center rounded-2xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${
-                      isCollapsed
-                        ? 'w-10 h-10 mx-auto justify-center'
-                        : 'w-full gap-3 px-3.5 py-2.5'
-                    } ${
-                      isActive
+                    className={`flex items-center rounded-2xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${isCollapsed
+                      ? 'w-10 h-10 mx-auto justify-center'
+                      : 'w-full gap-3 px-3.5 py-2.5'
+                      } ${isActive
                         ? 'bg-accent-500 text-white font-bold shadow-xs'
                         : 'text-ink-700 hover:bg-cream-100 hover:text-ink-900'
-                    }`}
+                      }`}
                   >
                     <Icon size={18} className="shrink-0" />
                     {!isCollapsed && <span className="truncate">{item.label}</span>}
@@ -229,15 +239,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 <div key={item.id} className="relative group flex items-center">
                   <button
                     onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center rounded-2xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${
-                      isCollapsed
-                        ? 'w-10 h-10 mx-auto justify-center'
-                        : 'w-full gap-3 px-3.5 py-2.5'
-                    } ${
-                      isActive
+                    className={`flex items-center rounded-2xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${isCollapsed
+                      ? 'w-10 h-10 mx-auto justify-center'
+                      : 'w-full gap-3 px-3.5 py-2.5'
+                      } ${isActive
                         ? 'bg-accent-500 text-white font-bold shadow-xs'
                         : 'text-ink-700 hover:bg-cream-100 hover:text-ink-900'
-                    }`}
+                      }`}
                   >
                     <Icon size={18} className="shrink-0" />
                     {!isCollapsed && <span className="truncate">{item.label}</span>}
@@ -257,24 +265,23 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
       {/* User profile at bottom */}
       <div
-        className={`p-3 border-t border-cream-200 flex flex-shrink-0 bg-cream-50/70 transition-all ${
-          isCollapsed ? 'flex-col items-center gap-2' : 'items-center justify-between px-3.5'
-        }`}
+        className={`p-3 border-t border-cream-200 flex flex-shrink-0 bg-cream-50/70 transition-all ${isCollapsed ? 'flex-col items-center gap-2' : 'items-center justify-between px-3.5'
+          }`}
       >
         <div className="relative group flex items-center gap-2.5 overflow-hidden">
           <div className="w-9 h-9 bg-accent-500 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-xs shrink-0 cursor-pointer">
-            A
+            {adminUser?.fullName?.charAt(0) || 'A'}
           </div>
           {!isCollapsed && (
             <div className="truncate animate-fade-in">
-              <p className="text-xs font-bold text-ink-900 truncate">Admin</p>
-              <p className="text-[10px] text-ink-400 truncate">admin@camerahub.vn</p>
+              <p className="text-xs font-bold text-ink-900 truncate">{adminUser?.fullName || 'Admin'}</p>
+              <p className="text-[10px] text-ink-400 truncate">{adminUser?.email || 'admin@camerahub.vn'}</p>
             </div>
           )}
 
           {isCollapsed && (
             <div className="absolute left-full ml-3 px-3 py-1.5 bg-ink-900 text-white text-xs font-semibold rounded-full opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 whitespace-nowrap shadow-lg z-50 transform -translate-y-1/2 top-1/2">
-              Admin (admin@camerahub.vn)
+              {adminUser?.fullName || 'Admin'} ({adminUser?.email || 'admin@camerahub.vn'})
             </div>
           )}
         </div>
@@ -282,9 +289,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         <div className="relative group">
           <button
             onClick={() => onNavigate({ name: 'home' })}
-            className={`text-ink-400 hover:text-ink-900 rounded-xl hover:bg-cream-200/60 transition-colors flex items-center justify-center cursor-pointer ${
-              isCollapsed ? 'w-8 h-8' : 'p-1.5'
-            }`}
+            className={`text-ink-400 hover:text-ink-900 rounded-xl hover:bg-cream-200/60 transition-colors flex items-center justify-center cursor-pointer ${isCollapsed ? 'w-8 h-8' : 'p-1.5'
+              }`}
             aria-label="Quay về trang cửa hàng"
           >
             <LogOut size={16} />

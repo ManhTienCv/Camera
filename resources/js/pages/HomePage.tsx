@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, Truck, Shield, Headphones, CreditCard, Camera, Aperture, Video, Circle, Package } from 'lucide-react';
+import { ArrowRight, Truck, Shield, Headphones, CreditCard, Camera, Aperture, Video, Circle, Package, Flame } from 'lucide-react';
 import type { Page, Product, Category } from '../types';
 import { ProductCard } from '../components/ProductCard';
 import { api } from '../lib/api';
@@ -20,17 +20,20 @@ const iconMap: Record<string, typeof Camera> = {
 export function HomePage({ onNavigate, categories }: Props) {
   const [featured, setFeatured] = useState<Product[]>([]);
   const [newProducts, setNewProducts] = useState<Product[]>([]);
+  const [bestSellers, setBestSellers] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       try {
-        const [feat, news] = await Promise.all([
+        const [feat, news, best] = await Promise.all([
           api.getFeaturedProducts('featured'),
           api.getFeaturedProducts('new'),
+          api.getBestSellers(4),
         ]);
         setFeatured(feat || []);
         setNewProducts(news || []);
+        setBestSellers(best || []);
       } catch (e) {
         console.error('Error fetching home products:', e);
       } finally {
@@ -47,8 +50,8 @@ export function HomePage({ onNavigate, categories }: Props) {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="animate-slide-up">
               <h1 className="font-display font-bold text-4xl lg:text-6xl text-ink-900 leading-tight mb-6">
-                Bắt trọn khoảnh khắc,<br />
-                <span className="text-accent-500">tạo nên nghệ thuật</span>
+                Bắt trọn khoảnh khắc<br />
+                <span className="text-accent-500">Tạo nên nghệ thuật</span>
               </h1>
               <p className="text-lg text-ink-500 leading-relaxed mb-8 max-w-lg">
                 Khám phá bộ sưu tập máy ảnh, ống kính và phụ kiện chuyên nghiệp từ các thương hiệu
@@ -177,6 +180,35 @@ export function HomePage({ onNavigate, categories }: Props) {
           </div>
         )}
       </section>
+
+      {/* Best Sellers Section */}
+      {bestSellers.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-bold mb-2 border border-amber-200">
+                <Flame size={13} className="text-amber-500 fill-amber-500" />
+                <span>Bán Chạy Nhất Tuần Qua</span>
+              </div>
+              <h2 className="font-display font-bold text-2xl lg:text-3xl text-ink-900 mb-2">
+                Top máy ảnh & thiết bị bán chạy
+              </h2>
+              <p className="text-ink-400">Được đông đảo nhiếp ảnh gia và nhà sáng tạo nội dung tin dùng</p>
+            </div>
+            <button
+              onClick={() => onNavigate({ name: 'catalog' })}
+              className="hidden md:flex items-center gap-1.5 text-sm font-medium text-accent-500 hover:gap-2.5 transition-all"
+            >
+              Xem tất cả <ArrowRight size={16} />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+            {bestSellers.map((p) => (
+              <ProductCard key={p.id} product={p} onView={(slug) => onNavigate({ name: 'product', slug })} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Promo Banner */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

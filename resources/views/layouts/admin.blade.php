@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin Dashboard') - CameraHub</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png?v=2">
+    <link rel="shortcut icon" href="/favicon.ico?v=2">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2">
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -147,17 +151,31 @@ if (document.getElementById("chat-toggle")) {
         fetch(`/admin/chat/messages/${currentUserId}`)
             .then(res => res.json())
             .then(messages => {
-                let html = "";
+                chatMessages.innerHTML = "";
+                if (!messages || messages.length === 0) {
+                    chatMessages.innerHTML = '<div class="text-center text-muted mt-4">Chưa có tin nhắn</div>';
+                    return;
+                }
                 const currentAdminId = {{ Auth::id() ?? 1 }};
                 messages.forEach(msg => {
                     let isMe = msg.sender_id == currentAdminId;
                     let senderName = isMe ? "Bạn" : (msg.sender ? msg.sender.name : "Khách hàng");
                     let color = isMe ? "#2563eb" : "#0f172a";
-                    html += `<div class="msg-row" style="color: ${color}">
-                                <strong>${senderName}:</strong> ${msg.content}
-                            </div>`;
+
+                    const row = document.createElement('div');
+                    row.className = 'msg-row';
+                    row.style.color = color;
+
+                    const strong = document.createElement('strong');
+                    strong.textContent = senderName + ': ';
+                    row.appendChild(strong);
+
+                    const contentSpan = document.createElement('span');
+                    contentSpan.textContent = msg.content;
+                    row.appendChild(contentSpan);
+
+                    chatMessages.appendChild(row);
                 });
-                chatMessages.innerHTML = html || '<div class="text-center text-muted mt-4">Chưa có tin nhắn</div>';
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             })
             .catch(err => console.error("Lỗi tải tin nhắn:", err));

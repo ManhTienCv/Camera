@@ -85,11 +85,19 @@ class CartController extends Controller
 
         $cart = $this->getCart($request);
         $productId = $request->product_id;
-        $quantity = $request->input('quantity', 1);
+        $quantity = (int) $request->input('quantity', 1);
 
+        $product = Product::findOrFail($productId);
         $cartItem = CartItem::where('cart_id', $cart->id)
             ->where('product_id', $productId)
             ->first();
+
+        $currentQty = $cartItem ? $cartItem->quantity : 0;
+        if ($currentQty + $quantity > $product->stock) {
+            return response()->json([
+                'message' => "Số lượng yêu cầu vượt quá tồn kho hiện có ({$product->stock} sản phẩm).",
+            ], 400);
+        }
 
         if ($cartItem) {
             $cartItem->quantity += $quantity;
@@ -111,7 +119,16 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
-        $cartItem = CartItem::findOrFail($id);
+        $cart = $this->getCart($request);
+        $cartItem = CartItem::where('id', $id)->where('cart_id', $cart->id)->firstOrFail();
+        $product = Product::findOrFail($cartItem->product_id);
+
+        if ($request->quantity > $product->stock) {
+            return response()->json([
+                'message' => "Số lượng cập nhật vượt quá tồn kho ({$product->stock} sản phẩm).",
+            ], 400);
+        }
+
         $cartItem->quantity = $request->quantity;
         $cartItem->save();
 
@@ -120,7 +137,8 @@ class CartController extends Controller
 
     public function removeItem(Request $request, $id)
     {
-        $cartItem = CartItem::findOrFail($id);
+        $cart = $this->getCart($request);
+        $cartItem = CartItem::where('id', $id)->where('cart_id', $cart->id)->firstOrFail();
         $cartItem->delete();
 
         return $this->show($request);

@@ -19,6 +19,7 @@ class OrderController extends Controller
         'picking' => ['label' => 'Đang lấy hàng', 'color' => 'cyan', 'statuses' => ['picking']],
         'delivering' => ['label' => 'Đang giao', 'color' => 'amber', 'statuses' => ['shipping', 'delivering', 'picked', 'storing', 'transporting', 'sorting']],
         'delivered' => ['label' => 'Thành công', 'color' => 'green', 'statuses' => ['delivered', 'completed']],
+        'refund' => ['label' => 'Chờ hoàn tiền', 'color' => 'amber', 'statuses' => ['refund_pending']],
         'return' => ['label' => 'Hoàn hàng', 'color' => 'orange', 'statuses' => ['return', 'returning', 'returned']],
         'cancelled' => ['label' => 'Đã hủy', 'color' => 'red', 'statuses' => ['cancelled']],
     ];
@@ -79,6 +80,11 @@ class OrderController extends Controller
                 'tracking_code' => $order->tracking_code,
                 'ghn_order_code' => $order->ghn_order_code,
                 'cancel_reason' => $order->cancel_reason,
+                'bank_name' => $order->bank_name,
+                'bank_account_number' => $order->bank_account_number,
+                'bank_account_holder' => $order->bank_account_holder,
+                'refund_ref_code' => $order->refund_ref_code,
+                'refunded_at' => $order->refunded_at ? $order->refunded_at->toIso8601String() : null,
                 'created_at' => $order->created_at ? $order->created_at->toIso8601String() : null,
                 'item_count' => $order->items->sum('quantity'),
                 'items' => $order->items->map(function ($item) {
@@ -199,6 +205,50 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Cập nhật trạng thái đơn hàng thành công!',
+            'order' => $order->fresh('items'),
+        ]);
+    }
+
+    /**
+     * MỤC TIÊU 3: ADMIN XÁC NHẬN HOÀN TIỀN CHO KHÁCH (CONFIRM REFUND)
+     */
+    public function confirmRefund(Request $request, $id)
+    {
+        $request->validate([
+            'refund_ref_code' => 'required|string|max:100',
+        ], [
+            'refund_ref_code.required' => 'Vui lòng cung cấp mã giao dịch chuyển khoản hoàn tiền.',
+        ]);
+
+        $order = Order::where('id', $id)->orWhere('order_code', $id)->firstOrFail();
+
+        if ($order->order_status !== 'refund_pending' && $order->payment_status !== 'refund_pending') {
+            return response()->json([
+                'message' => 'Đơn hàng này không ở trạng thái chờ hoàn tiền.',
+            ], 400);
+        }
+
+        $refCode = trim($request->refund_ref_code);
+        $order->order_status = 'cancelled';
+        $order->payment_status = 'refunded';
+        $order->refund_ref_code = $refCode;
+        $order->refunded_at = Carbon::now();
+        $order->notes = ($order->notes ? $order->notes . ' | ' : '') . "Đã hoàn tiền cho khách, Mã GD: {$refCode}";
+        $order->save();
+
+        // Ghi nhận nhật ký PaymentTransaction
+        \App\Models\PaymentTransaction::create([
+            'order_id' => $order->id,
+            'gateway' => $order->payment_method ?: 'refund',
+            'amount' => $order->total_amount,
+            'status' => 'refunded',
+            'transaction_id' => $refCode,
+            'message' => "Admin xác nhận hoàn tiền thành công. Mã giao dịch ngân hàng: {$refCode}",
+            'paid_at' => Carbon::now(),
+        ]);
+
+        return response()->json([
+            'message' => "Đã xác nhận hoàn tiền " . number_format($order->total_amount, 0, ',', '.') . "đ cho khách thành công! Đơn hàng đã chuyển sang Đã hủy & Đã hoàn tiền.",
             'order' => $order->fresh('items'),
         ]);
     }

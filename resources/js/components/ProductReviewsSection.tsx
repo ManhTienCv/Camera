@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import type { Product, Review } from '../types';
 import { reviewService } from '../services/review.service';
+import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
@@ -38,6 +39,7 @@ export function ProductReviewsSection({ product }: Props) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [stats, setStats] = useState(reviewService.getProductStats(product.id));
   const [selectedFilter, setSelectedFilter] = useState<'all' | '5' | '4' | '3' | '2' | '1' | 'images'>('all');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form State
   const [isWriting, setIsWriting] = useState(false);
@@ -49,7 +51,16 @@ export function ProductReviewsSection({ product }: Props) {
   const [attachedImages, setAttachedImages] = useState<string[]>([]);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
-  const loadData = () => {
+  const loadData = async () => {
+    try {
+      const res = await api.getProductReviews(String(product.id));
+      if (res && res.reviews && res.reviews.length > 0) {
+        setReviews(res.reviews);
+        setStats(res.stats);
+        return;
+      }
+    } catch (_) {}
+    // Fallback to local reviews if none in db
     const data = reviewService.getReviewsByProduct(product.id);
     setReviews(data);
     setStats(reviewService.getProductStats(product.id));
@@ -96,29 +107,40 @@ export function ProductReviewsSection({ product }: Props) {
   };
 
   // Submit Review
-  const handleSubmitReview = (e: React.FormEvent) => {
+  const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!comment.trim()) {
       toast.warning('Vui lòng nhập nội dung nhận xét của bạn.');
       return;
     }
 
-    reviewService.addReview({
-      productId: product.id,
-      userName: userName || user?.fullName || 'Khách hàng CameraHub',
-      rating,
-      variant: variant || 'Chính Hãng',
-      comment: comment.trim(),
-      images: attachedImages,
-    });
+    if (!user) {
+      toast.warning('Vui lòng đăng nhập để gửi đánh giá sản phẩm.');
+      return;
+    }
 
-    // Reset Form
-    setIsWriting(false);
-    setComment('');
-    setAttachedImages([]);
-    setRating(5);
-    toast.success('Đã gửi đánh giá sản phẩm thành công!');
-    loadData();
+    try {
+      setIsSubmitting(true);
+      const res = await api.createProductReview(String(product.id), {
+        rating,
+        variant: variant || 'Chính Hãng',
+        comment: comment.trim(),
+        images: attachedImages,
+      });
+
+      // Reset Form
+      setIsWriting(false);
+      setComment('');
+      setAttachedImages([]);
+      setRating(5);
+      toast.success(res.message || 'Đã gửi đánh giá sản phẩm thành công!');
+      window.dispatchEvent(new Event('camerahub_reviews_updated'));
+      await loadData();
+    } catch (err: any) {
+      toast.error(err.message || 'Không thể gửi đánh giá. Vui lòng kiểm tra lại điều kiện mua hàng.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -142,8 +164,13 @@ export function ProductReviewsSection({ product }: Props) {
     currentPage * itemsPerPage
   );
 
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    document.getElementById('product-reviews-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
-    <div className="space-y-6">
+    <div id="product-reviews-section" className="space-y-6">
       {/* 1. Review Summary Card (Matches Image 2 & 4) */}
       <div className="card p-6 sm:p-8 bg-white border border-cream-200 rounded-3xl shadow-xs">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
@@ -373,10 +400,11 @@ export function ProductReviewsSection({ product }: Props) {
               </button>
               <button
                 type="submit"
-                className="flex items-center gap-2 px-7 py-2.5 rounded-full text-xs font-bold text-white bg-accent-500 hover:bg-accent-600 transition-all cursor-pointer shadow-xs active:scale-95"
+                disabled={isSubmitting}
+                className="flex items-center gap-2 px-7 py-2.5 rounded-full text-xs font-bold text-white bg-accent-500 hover:bg-accent-600 transition-all cursor-pointer shadow-xs active:scale-95 disabled:opacity-60"
               >
                 <Check size={16} />
-                <span>Gửi Đánh Giá Ngay</span>
+                <span>{isSubmitting ? 'Đang gửi đánh giá...' : 'Gửi Đánh Giá Ngay'}</span>
               </button>
             </div>
           </form>
@@ -491,7 +519,18 @@ export function ProductReviewsSection({ product }: Props) {
 
                     {/* Helpful Button */}
                     <button
-                      onClick={() => {
+                      onClick={async () => {
+                        try {
+                          const res = await api.voteReviewHelpful(rev.id);
+                          if (res && res.helpful_count !== undefined) {
+                            setReviews((prev) =>
+                              prev.map((r) =>
+                                r.id === rev.id ? { ...r, helpfulCount: res.helpful_count } : r
+                              )
+                            );
+                            return;
+                          }
+                        } catch (_) {}
                         reviewService.toggleHelpful(rev.id);
                         loadData();
                       }}
@@ -533,7 +572,7 @@ export function ProductReviewsSection({ product }: Props) {
             {totalPages > 1 && (
               <div className="mt-8 flex items-center justify-center gap-2 pt-2">
                 <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
                   className="px-4 py-2 bg-white border border-cream-200 rounded-xl text-xs font-bold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                 >
@@ -543,7 +582,7 @@ export function ProductReviewsSection({ product }: Props) {
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
                   <button
                     key={pageNum}
-                    onClick={() => setCurrentPage(pageNum)}
+                    onClick={() => handlePageChange(pageNum)}
                     className={`w-9 h-9 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       currentPage === pageNum
                         ? 'bg-accent-500 text-white shadow-xs'
@@ -555,7 +594,7 @@ export function ProductReviewsSection({ product }: Props) {
                 ))}
 
                 <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages}
                   className="px-4 py-2 bg-white border border-cream-200 rounded-xl text-xs font-bold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                 >

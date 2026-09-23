@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ShieldCheck,
   Lock,
@@ -10,9 +10,8 @@ import {
   Camera,
   LogOut,
 } from 'lucide-react';
-import type { Product, Category, Order, Page } from '../types';
+import type { Product, Category, Order, Page, User } from '../types';
 import { api } from '../lib/api';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 import { AdminSidebar, type AdminTab } from '../components/admin/AdminSidebar';
@@ -24,6 +23,7 @@ import { AdminOrdersTab } from '../components/admin/AdminOrdersTab';
 import { AdminReportsTab } from '../components/admin/AdminReportsTab';
 import { AdminUsersTab } from '../components/admin/AdminUsersTab';
 import { AdminChatTab } from '../components/admin/AdminChatTab';
+import { AdminVouchersTab } from '../components/admin/AdminVouchersTab';
 import { AdminReviewsTab } from '../components/admin/AdminReviewsTab';
 import { AdminSettingsTab } from '../components/admin/AdminSettingsTab';
 import {
@@ -40,18 +40,63 @@ interface AdminPageProps {
 }
 
 export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = 'dashboard' }) => {
-  const { user, login, logout, loading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<AdminTab>(initialTab);
   const toast = useToast();
+  const [activeTab, setActiveTab] = useState<AdminTab>(initialTab);
+  const contentAreaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  // Dedicated Admin Auth State (Hoàn toàn độc lập với phiên Khách hàng Client)
+  const [adminUser, setAdminUser] = useState<User | null>(() => {
+    try {
+      const saved = localStorage.getItem('camera_admin_user');
+      const token = localStorage.getItem('camera_admin_token');
+      if (saved && token) {
+        const parsed = JSON.parse(saved);
+        if (parsed.role === 'admin') return parsed;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
 
   const handleTabChange = (tab: AdminTab) => {
     setActiveTab(tab);
     const targetUrl = tab === 'dashboard' ? '/admin' : `/admin?tab=${tab}`;
     window.history.replaceState(null, '', targetUrl);
+    contentAreaRef.current?.scrollTo({ top: 0, behavior: 'instant' });
   };
 
+  useEffect(() => {
+    contentAreaRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+  }, [activeTab]);
+
+  // Verify admin token on mount
+  useEffect(() => {
+    const verifyToken = async () => {
+      const token = localStorage.getItem('camera_admin_token');
+      if (!token) {
+        setAdminUser(null);
+        return;
+      }
+      try {
+        const freshUser = await api.getAdminProfile();
+        setAdminUser(freshUser);
+      } catch {
+        api.adminLogout();
+        setAdminUser(null);
+      }
+    };
+    verifyToken();
+  }, []);
+
   // Admin Login Screen State
-  const [adminEmail, setAdminEmail] = useState('admin@camerahub.vn');
+  const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
@@ -123,10 +168,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
   };
 
   useEffect(() => {
-    if (user && user.role === 'admin') {
+    if (adminUser && adminUser.role === 'admin') {
       loadData();
     }
-  }, [user]);
+  }, [adminUser]);
 
   // Handle Admin Login Submit
   const handleAdminLoginSubmit = async (e: React.FormEvent) => {
@@ -135,12 +180,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
     setIsSubmittingLogin(true);
 
     try {
-      const res = await login(adminEmail, adminPassword);
-      if (res.user.role !== 'admin') {
-        setLoginError('Tài khoản này không có quyền Quản trị viên (Admin).');
-      } else {
-        toast.success(`Chào mừng Quản trị viên ${res.user.fullName}!`);
-      }
+      const res = await api.adminLogin({ email: adminEmail, password: adminPassword });
+      setAdminUser(res.user);
+      toast.success(`Chào mừng Quản trị viên ${res.user.fullName}!`);
     } catch (err: any) {
       setLoginError(err.message || 'Tài khoản hoặc mật khẩu Quản trị không chính xác.');
     } finally {
@@ -148,10 +190,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
     }
   };
 
-  const handleFillAdminCredentials = () => {
-    setAdminEmail('admin@camerahub.vn');
-    setAdminPassword('admin123');
-    setLoginError(null);
+  const handleAdminLogout = () => {
+    api.adminLogout();
+    setAdminUser(null);
+    toast.info('Đã đăng xuất khỏi Bảng điều khiển Quản trị.');
   };
 
   // PRODUCT HANDLERS
@@ -238,6 +280,17 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
     }
   };
 
+  const handleToggleProductStatus = async (product: Product) => {
+    const newStatus = product.status === 'active' ? 'inactive' : 'active';
+    try {
+      await api.updateAdminProduct(product.id, { status: newStatus });
+      toast.success(`Đã chuyển sản phẩm sang trạng thái ${newStatus === 'active' ? 'kinh doanh' : 'tạm ẩn'}`);
+      loadData();
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi đổi trạng thái');
+    }
+  };
+
   // CATEGORY HANDLERS
   const handleOpenAddCategory = () => {
     setEditingCategory(null);
@@ -298,21 +351,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
   };
 
   // Loading state while restoring session
-  if (authLoading && !user) {
-    return (
-      <div className="min-h-screen bg-cream-50 flex items-center justify-center p-6">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-3 border-accent-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs font-bold text-ink-600">Đang khởi tạo phiên Quản trị...</p>
-        </div>
-      </div>
-    );
-  }
-
   // -------------------------------------------------------------
   // VIEW 1: DEDICATED ADMIN LOGIN (Warm Theme matching Main Web)
   // -------------------------------------------------------------
-  if (!user) {
+  if (!adminUser || adminUser.role !== 'admin') {
     return (
       <div className="min-h-screen bg-cream-50 flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
         {/* Subtle Warm Background Glow */}
@@ -392,16 +434,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
                 </>
               )}
             </button>
-
-            {/* 1-Click Demo Fill Button */}
-            <button
-              type="button"
-              onClick={handleFillAdminCredentials}
-              className="w-full py-2.5 rounded-2xl border border-cream-200 bg-cream-50 hover:bg-cream-100 text-xs font-bold text-ink-800 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
-            >
-              <Zap size={14} className="text-amber-500 fill-amber-500" />
-              <span>Điền nhanh tài khoản Admin mẫu</span>
-            </button>
           </form>
 
           {/* Return to storefront */}
@@ -421,46 +453,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
   }
 
   // -------------------------------------------------------------
-  // VIEW 2: ACCESS DENIED (Logged in as normal customer)
-  // -------------------------------------------------------------
-  if (user.role !== 'admin') {
-    return (
-      <div className="min-h-screen bg-cream-50 flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-cream-200 shadow-xl text-center space-y-5 animate-scale-up">
-          <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto shadow-2xs">
-            <ShieldCheck size={32} />
-          </div>
-          <div>
-            <h3 className="font-display font-bold text-xl text-ink-900">Không Có Quyền Truy Cập</h3>
-            <p className="text-xs text-ink-500 mt-1.5 leading-relaxed">
-              Tài khoản hiện tại <strong>{user.email}</strong> là tài khoản Khách hàng và không có quyền truy cập vào Bảng điều khiển Quản trị.
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 pt-2">
-            <button
-              onClick={() => {
-                logout();
-              }}
-              className="btn-primary w-full py-2.5 text-xs font-bold cursor-pointer"
-            >
-              <LogOut size={15} />
-              <span>Đăng xuất & Đăng nhập bằng tài khoản Admin</span>
-            </button>
-            <button
-              onClick={() => onNavigate({ name: 'home' })}
-              className="btn-secondary w-full py-2.5 text-xs font-bold cursor-pointer"
-            >
-              <ArrowLeft size={15} />
-              <span>Quay lại trang mua sắm</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // -------------------------------------------------------------
-  // VIEW 3: FULL ADMIN DASHBOARD (Fixed Full-Height Sticky Navbar)
+  // VIEW 2: FULL ADMIN DASHBOARD (Fixed Full-Height Sticky Navbar)
   // -------------------------------------------------------------
   return (
     <div className="h-screen w-screen overflow-hidden flex flex-col md:flex-row bg-cream-100 antialiased">
@@ -469,12 +462,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
         activeTab={activeTab}
         setActiveTab={handleTabChange}
         onNavigate={onNavigate}
+        adminUser={adminUser}
         orderCount={orders.filter((o) => o.status === 'pending' || o.status === 'processing').length}
       />
 
       {/* RIGHT CONTENT AREA: Independently Scrollable */}
-      <div className="flex-1 flex flex-col h-screen min-w-0 overflow-y-auto bg-cream-100">
-        <AdminHeader onNavigate={onNavigate} />
+      <div ref={contentAreaRef} className="flex-1 flex flex-col h-screen min-w-0 overflow-y-auto scrollbar-none bg-cream-100">
+        <AdminHeader onNavigate={onNavigate} adminUser={adminUser} onLogout={handleAdminLogout} />
 
         <main className="p-6 sm:p-8 max-w-7xl mx-auto w-full space-y-8 flex-1">
           {activeTab === 'dashboard' && (
@@ -493,10 +487,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
               products={products}
               categories={categories}
               loading={loading}
-              onOpenAdd={handleOpenAddProduct}
-              onOpenEdit={handleOpenEditProduct}
-              onOpenDelete={setDeletingProductId}
-              onOpenView={setViewingProduct}
+              onOpenAddModal={handleOpenAddProduct}
+              onOpenEditModal={handleOpenEditProduct}
+              onDeleteProduct={setDeletingProductId}
+              onViewProduct={setViewingProduct}
+              onToggleStatus={handleToggleProductStatus}
             />
           )}
 
@@ -504,9 +499,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
             <AdminCategoriesTab
               categories={categories}
               products={products}
-              onOpenAdd={handleOpenAddCategory}
-              onOpenEdit={handleOpenEditCategory}
-              onOpenDelete={setDeletingCategoryId}
+              onOpenAddCategory={handleOpenAddCategory}
+              onOpenEditCategory={handleOpenEditCategory}
+              onDeleteCategory={setDeletingCategoryId}
             />
           )}
 
@@ -518,6 +513,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
               onRefreshOrders={loadData}
             />
           )}
+
+          {activeTab === 'vouchers' && <AdminVouchersTab />}
 
           {activeTab === 'reports' && <AdminReportsTab />}
 

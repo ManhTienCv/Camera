@@ -1,9 +1,10 @@
 import React from 'react';
-import { ShoppingBag, Eye } from 'lucide-react';
+import { ShoppingBag, Eye, Heart } from 'lucide-react';
 import type { Product } from '../types';
 import { formatCurrency } from '../lib/utils';
 import { StarRating } from './StarRating';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 interface Props {
   product: Product;
@@ -12,6 +13,8 @@ interface Props {
 
 export function ProductCard({ product, onView }: Props) {
   const { addToCart } = useCart();
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  const inWishlist = isInWishlist(product.id);
 
   const discount =
     product.original_price && product.original_price > product.price
@@ -21,6 +24,11 @@ export function ProductCard({ product, onView }: Props) {
   const handleAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
     addToCart(product, 1);
+  };
+
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleWishlist(product);
   };
 
   return (
@@ -55,6 +63,20 @@ export function ProductCard({ product, onView }: Props) {
             </>
           )}
         </div>
+        {/* Wishlist Button */}
+        <button
+          type="button"
+          onClick={handleToggleWishlist}
+          title={inWishlist ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích'}
+          className={`absolute top-3 right-3 z-20 w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+            inWishlist
+              ? 'bg-rose-50 text-rose-500 border border-rose-200'
+              : 'bg-white/80 backdrop-blur-md text-ink-500 hover:text-rose-500 hover:bg-white border border-cream-200'
+          }`}
+        >
+          <Heart size={16} className={inWishlist ? 'fill-rose-500 text-rose-500' : ''} />
+        </button>
+
         <div className="absolute inset-0 bg-ink-900/0 group-hover:bg-ink-900/10 transition-all duration-300 flex items-end justify-center pb-4 opacity-0 group-hover:opacity-100">
           <span className="flex items-center gap-1.5 text-cream-50 text-sm font-medium">
             <Eye size={16} /> Xem chi tiết

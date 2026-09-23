@@ -137,7 +137,7 @@ class PaymentController extends Controller
 
         $data = $request->all();
 
-        // 1. Kiểm tra chữ ký bảo mật IPN
+        // 1. Kiểm tra chữ ký bảo mật IPN (Timing-safe bằng hash_equals bên MomoService)
         if (!$this->momoService->isValidResponse($data)) {
             Log::warning('MoMo IPN Invalid Signature!');
             return response()->json(['message' => 'Invalid signature'], 400);
@@ -168,12 +168,40 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Order not found'], 404);
         }
 
+        // 2. IDEMPOTENCY CHECK: Nếu đơn hàng đã được ghi nhận thanh toán trước đó
+        if (in_array($order->payment_status, ['paid', 'completed'])) {
+            Log::info("MoMo IPN Idempotent: Đơn hàng #{$order->id} ({$order->order_code}) đã được thanh toán hoàn tất trước đó, bỏ qua xử lý lặp.");
+            return response()->json(['message' => 'Order already processed (idempotent)'], 200);
+        }
+
         if ($this->momoService->isSuccessful($data)) {
+            // 3. KIỂM TRA ĐỐI SOÁT SỐ TIỀN CHỐNG GIAN LẬN (Amount Tampering Prevention)
+            $ipnAmount = (int) ($data['amount'] ?? 0);
+            $expectedAmount = (int) round($order->total_amount);
+            $isSandboxAllowed = ($expectedAmount > 50000000 && $ipnAmount === 50000000) || ($expectedAmount < 1000 && $ipnAmount === 1000);
+
+            if ($ipnAmount !== $expectedAmount && !$isSandboxAllowed) {
+                Log::channel('daily')->emergency("🚨 CẢNH BÁO GIAN LẬN SỐ TIỀN MoMo: Đơn {$order->order_code} số tiền {$order->total_amount} nhưng IPN gửi về {$ipnAmount}");
+                $order->payment_status = 'tampered';
+                $order->notes = ($order->notes ? $order->notes . ' | ' : '') . "CẢNH BÁO GIAN LẬN: IPN amount {$ipnAmount} != order {$expectedAmount}";
+                $order->save();
+
+                if ($transaction) {
+                    $transaction->update([
+                        'status' => 'tampered',
+                        'message' => "Gian lận số tiền: MoMo trả về {$ipnAmount} VND trong khi tổng đơn là {$expectedAmount} VND",
+                        'response_payload' => $data,
+                    ]);
+                }
+
+                return response()->json(['message' => 'Invalid amount mismatch'], 400);
+            }
+
             if ($transaction) {
                 $this->momoService->markPaid($transaction, $data);
             }
 
-            $order->payment_status = 'completed';
+            $order->payment_status = 'paid';
             $order->order_status = 'shipping'; // Duyệt sang vận chuyển
             $order->payment_method = 'momo';
             $order->save();
@@ -194,7 +222,7 @@ class PaymentController extends Controller
                 Log::error('Send order confirmation email on MoMo IPN error: ' . $e->getMessage());
             }
 
-            Log::info("MoMo Order #{$order->id} ({$order->order_code}) paid successfully!");
+            Log::info("MoMo Order #{$order->id} ({$order->order_code}) paid successfully with verified amount {$ipnAmount} VND!");
         } else {
             if ($transaction) {
                 $this->momoService->markFailed($transaction, $data);
@@ -230,13 +258,29 @@ class PaymentController extends Controller
             return redirect('/orders');
         }
 
+        // Idempotency: nếu đã hoàn tất thì về trang thành công luôn
+        if (in_array($order->payment_status, ['paid', 'completed'])) {
+            return redirect('/order-success?id=' . $order->id . '&momo=1');
+        }
+
         if ($this->momoService->isValidResponse($data) && $this->momoService->isSuccessful($data)) {
+            $ipnAmount = (int) ($data['amount'] ?? 0);
+            $expectedAmount = (int) round($order->total_amount);
+            $isSandboxAllowed = ($expectedAmount > 50000000 && $ipnAmount === 50000000) || ($expectedAmount < 1000 && $ipnAmount === 1000);
+
+            if ($ipnAmount !== $expectedAmount && !$isSandboxAllowed) {
+                Log::channel('daily')->emergency("🚨 CẢNH BÁO GIAN LẬN MoMo Callback: Đơn {$order->order_code} số tiền {$order->total_amount} != callback {$ipnAmount}");
+                $order->payment_status = 'tampered';
+                $order->save();
+                return redirect('/orders?momo_tampered=1&order_id=' . $order->id);
+            }
+
             $transaction = PaymentTransaction::where('order_id', $order->id)->latest()->first();
             if ($transaction) {
                 $this->momoService->markPaid($transaction, $data);
             }
 
-            $order->payment_status = 'completed';
+            $order->payment_status = 'paid';
             $order->order_status = 'shipping';
             $order->save();
 

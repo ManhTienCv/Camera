@@ -1,6 +1,7 @@
-import { Trash2, ArrowRight, Minus, Plus, ShoppingBag } from 'lucide-react';
+import { Trash2, ArrowRight, Minus, Plus, ShoppingBag, Lock } from 'lucide-react';
 import type { Page } from '../types';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../lib/utils';
 
 interface Props {
@@ -9,6 +10,35 @@ interface Props {
 
 export function CartPage({ onNavigate }: Props) {
   const { items, subtotal, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { user, openAuthModal } = useAuth();
+
+  if (!user) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-20 text-center animate-fade-in">
+        <div className="w-20 h-20 bg-cream-100 rounded-3xl flex items-center justify-center mx-auto mb-6 text-accent-600 border border-cream-200 shadow-xs">
+          <Lock size={36} />
+        </div>
+        <h2 className="font-display font-bold text-2xl text-ink-900 mb-2">Yêu cầu đăng nhập</h2>
+        <p className="text-ink-500 mb-8 max-w-md mx-auto text-sm leading-relaxed">
+          Bạn cần đăng nhập tài khoản để xem giỏ hàng của mình và tiến hành đặt mua máy ảnh, thiết bị.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <button
+            onClick={() => onNavigate({ name: 'catalog' })}
+            className="btn-secondary px-6 py-3 text-sm font-bold cursor-pointer"
+          >
+            Tiếp tục xem sản phẩm
+          </button>
+          <button
+            onClick={() => openAuthModal('login')}
+            className="btn-accent px-8 py-3 text-sm font-bold shadow-md hover:shadow-lg cursor-pointer"
+          >
+            Đăng nhập ngay
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -122,8 +152,14 @@ export function CartPage({ onNavigate }: Props) {
             </div>
 
             <button
-              onClick={() => onNavigate({ name: 'checkout' })}
-              className="w-full btn-accent py-3.5 mb-3"
+              onClick={() => {
+                if (!user) {
+                  openAuthModal('login');
+                  return;
+                }
+                onNavigate({ name: 'checkout' });
+              }}
+              className="w-full btn-accent py-3.5 mb-3 cursor-pointer"
             >
               Tiến hành thanh toán
               <ArrowRight size={18} />

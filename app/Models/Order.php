@@ -32,12 +32,18 @@ class Order extends Model
         'ghn_order_code',
         'expected_delivery_time',
         'cancel_reason',
+        'bank_name',
+        'bank_account_number',
+        'bank_account_holder',
+        'refund_ref_code',
+        'refunded_at',
     ];
 
     protected $casts = [
         'total_amount' => 'float',
         'shipping_fee' => 'float',
         'discount_amount' => 'float',
+        'refunded_at' => 'datetime',
     ];
 
     public function items(): HasMany

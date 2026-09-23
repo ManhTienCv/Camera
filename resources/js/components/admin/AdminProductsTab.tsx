@@ -47,7 +47,7 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [adminPageNum, setAdminPageNum] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Reset page when filters change
   useEffect(() => {
@@ -115,6 +115,12 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
     setSelectedBrandFilter('');
     setStatusFilter('all');
     setSortOption('newest');
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setAdminPageNum(newPage);
+    document.querySelector('main')?.parentElement?.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -478,17 +484,36 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
         {/* 5. PAGINATION CONTROLS */}
         {filteredProducts.length > 0 && (
           <div className="p-4 px-6 bg-cream-50/80 border-t border-cream-200 flex flex-wrap items-center justify-between gap-4 text-xs font-semibold">
-            <p className="text-ink-500">
-              Hiển thị <span className="font-bold text-ink-900">{(adminPageNum - 1) * itemsPerPage + 1}</span> -{' '}
-              <span className="font-bold text-ink-900">{Math.min(adminPageNum * itemsPerPage, filteredProducts.length)}</span> trên{' '}
-              <span className="font-bold text-ink-900">{filteredProducts.length}</span> sản phẩm
-            </p>
+            <div className="flex items-center gap-3 text-xs text-ink-600 font-medium">
+              <div>
+                Hiển thị <span className="font-bold text-ink-900">{(adminPageNum - 1) * itemsPerPage + 1}</span> -{' '}
+                <span className="font-bold text-ink-900">{Math.min(adminPageNum * itemsPerPage, filteredProducts.length)}</span> trên{' '}
+                <span className="font-bold text-ink-900">{filteredProducts.length}</span> sản phẩm
+              </div>
+
+              <div className="flex items-center gap-1.5 border-l border-cream-200 pl-3">
+                <span className="text-[11px] text-ink-400">Hiển thị:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setAdminPageNum(1);
+                  }}
+                  className="px-2 py-1 bg-white border border-cream-200 rounded-lg text-xs font-bold text-ink-800 focus:outline-none focus:border-accent-500 cursor-pointer shadow-2xs"
+                >
+                  <option value={5}>5 sản phẩm / trang</option>
+                  <option value={10}>10 sản phẩm / trang</option>
+                  <option value={20}>20 sản phẩm / trang</option>
+                  <option value={50}>50 sản phẩm / trang</option>
+                </select>
+              </div>
+            </div>
 
             <div className="flex items-center gap-1.5">
               <button
-                onClick={() => setAdminPageNum((p) => Math.max(1, p - 1))}
+                onClick={() => handlePageChange(Math.max(1, adminPageNum - 1))}
                 disabled={adminPageNum === 1}
-                className="px-3.5 py-1.5 rounded-xl border border-cream-300 bg-white text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs"
+                className="px-3.5 py-1.5 rounded-xl border border-cream-300 bg-white text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
               >
                 ‹ Trước
               </button>
@@ -496,8 +521,8 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
               {Array.from({ length: totalAdminPages }, (_, i) => i + 1).map((pageNum) => (
                 <button
                   key={pageNum}
-                  onClick={() => setAdminPageNum(pageNum)}
-                  className={`w-8 h-8 rounded-xl font-bold text-xs transition-all ${
+                  onClick={() => handlePageChange(pageNum)}
+                  className={`w-8 h-8 rounded-xl font-bold text-xs transition-all cursor-pointer ${
                     adminPageNum === pageNum
                       ? 'bg-ink-900 text-white shadow-xs'
                       : 'bg-white text-ink-700 border border-cream-300 hover:bg-cream-100'
@@ -508,9 +533,9 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
               ))}
 
               <button
-                onClick={() => setAdminPageNum((p) => Math.min(totalAdminPages, p + 1))}
+                onClick={() => handlePageChange(Math.min(totalAdminPages, adminPageNum + 1))}
                 disabled={adminPageNum === totalAdminPages || totalAdminPages === 0}
-                className="px-3.5 py-1.5 rounded-xl border border-cream-300 bg-white text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs"
+                className="px-3.5 py-1.5 rounded-xl border border-cream-300 bg-white text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
               >
                 Sau ›
               </button>

@@ -101,15 +101,21 @@ class ChatController extends Controller
             ->where('is_read', false)
             ->update(['is_read' => true]);
 
-        $messages = Message::with(['sender', 'receiver'])
+        $query = Message::with(['sender:id,name,email,avatar_url', 'receiver:id,name,email,avatar_url'])
             ->where(function ($q) use ($userId, $adminId) {
-                $q->where('sender_id', $userId)->where('receiver_id', $adminId);
-            })
-            ->orWhere(function ($q) use ($userId, $adminId) {
-                $q->where('sender_id', $adminId)->where('receiver_id', $userId);
-            })
-            ->orderBy('created_at', 'asc')
-            ->get();
+                $q->where(function ($sub) use ($userId, $adminId) {
+                    $sub->where('sender_id', $userId)->where('receiver_id', $adminId);
+                })->orWhere(function ($sub) use ($userId, $adminId) {
+                    $sub->where('sender_id', $adminId)->where('receiver_id', $userId);
+                });
+            });
+
+        // MỤC TIÊU 6: Hỗ trợ after_id cho Admin console polling
+        if ($request->filled('after_id')) {
+            $query->where('id', '>', (int) $request->after_id);
+        }
+
+        $messages = $query->orderBy('created_at', 'asc')->get();
 
         return response()->json($messages);
     }

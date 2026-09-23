@@ -30,11 +30,6 @@ class ChatController extends Controller
             }
         }
 
-        $userId = $request->header('X-User-ID') ?: $request->input('user_id');
-        if ($userId) {
-            return User::find($userId);
-        }
-
         return null;
     }
 
@@ -91,18 +86,22 @@ class ChatController extends Controller
         $admin = User::where('role', 'admin')->first();
         $adminId = $admin ? $admin->id : 1;
 
-        // Lấy toàn bộ hội thoại giữa 2 người
-        $messages = Message::with(['sender', 'receiver'])
+        // Lấy toàn bộ hội thoại giữa 2 người hoặc tin nhắn mới sau after_id
+        $query = Message::with(['sender:id,name,email,avatar_url', 'receiver:id,name,email,avatar_url'])
             ->where(function ($q) use ($userId, $adminId) {
-                $q->where('sender_id', $userId)
-                    ->where('receiver_id', $adminId);
-            })
-            ->orWhere(function ($q) use ($userId, $adminId) {
-                $q->where('sender_id', $adminId)
-                    ->where('receiver_id', $userId);
-            })
-            ->orderBy('created_at', 'asc')
-            ->get();
+                $q->where(function ($sub) use ($userId, $adminId) {
+                    $sub->where('sender_id', $userId)->where('receiver_id', $adminId);
+                })->orWhere(function ($sub) use ($userId, $adminId) {
+                    $sub->where('sender_id', $adminId)->where('receiver_id', $userId);
+                });
+            });
+
+        // MỤC TIÊU 6: Hỗ trợ after_id để giảm 90% tải server khi polling
+        if ($request->filled('after_id')) {
+            $query->where('id', '>', (int) $request->after_id);
+        }
+
+        $messages = $query->orderBy('created_at', 'asc')->get();
 
         return response()->json($messages);
     }

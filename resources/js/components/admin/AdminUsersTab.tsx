@@ -147,6 +147,16 @@ export const AdminUsersTab: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(8);
+
+  const totalPages = Math.max(1, Math.ceil(users.length / itemsPerPage));
+  const paginatedUsers = users.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    document.querySelector('main')?.parentElement?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Modals state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -457,18 +467,19 @@ export const AdminUsersTab: React.FC = () => {
       </div>
 
       {/* Users Table */}
+      {/* Users Table */}
       <div className="bg-white rounded-3xl border border-cream-200 shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-sm">
             <thead>
-              <tr className="bg-cream-100/60 border-b border-cream-200 text-xs font-bold text-ink-600 uppercase">
-                <th className="py-4 px-6">ID</th>
-                <th className="py-4 px-6">HỌ VÀ TÊN</th>
-                <th className="py-4 px-6">EMAIL</th>
-                <th className="py-4 px-6">ĐIỆN THOẠI</th>
-                <th className="py-4 px-6">VAI TRÒ</th>
-                <th className="py-4 px-6">NGÀY TẠO</th>
-                <th className="py-4 px-6 text-center">THAO TÁC</th>
+              <tr className="bg-cream-100/70 border-b border-cream-200 text-xs font-bold text-ink-600 uppercase tracking-wider">
+                <th className="py-4 px-5 whitespace-nowrap min-w-[70px]">ID</th>
+                <th className="py-4 px-5 whitespace-nowrap min-w-[170px]">HỌ VÀ TÊN</th>
+                <th className="py-4 px-5 whitespace-nowrap min-w-[180px]">EMAIL</th>
+                <th className="py-4 px-5 whitespace-nowrap min-w-[130px]">ĐIỆN THOẠI</th>
+                <th className="py-4 px-5 whitespace-nowrap min-w-[120px]">VAI TRÒ</th>
+                <th className="py-4 px-5 whitespace-nowrap min-w-[140px]">NGÀY TẠO</th>
+                <th className="py-4 px-5 text-center whitespace-nowrap min-w-[110px]">THAO TÁC</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-cream-100">
@@ -497,10 +508,10 @@ export const AdminUsersTab: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                users.map((u) => (
+                paginatedUsers.map((u) => (
                   <tr key={u.id} className="hover:bg-cream-50/70 transition-colors">
-                    <td className="py-4 px-6 font-mono text-xs font-bold text-ink-500">#{u.id}</td>
-                    <td className="py-4 px-6">
+                    <td className="py-4 px-5 align-middle font-mono text-xs font-bold text-ink-500 whitespace-nowrap">#{u.id}</td>
+                    <td className="py-4 px-5 align-middle whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-accent-50 text-accent-600 font-bold text-xs flex items-center justify-center shrink-0">
                           {u.name.substring(0, 1).toUpperCase()}
@@ -508,23 +519,23 @@ export const AdminUsersTab: React.FC = () => {
                         <span className="font-bold text-ink-900 text-xs">{u.name}</span>
                       </div>
                     </td>
-                    <td className="py-4 px-6 text-xs text-ink-700">{u.email}</td>
-                    <td className="py-4 px-6 text-xs text-ink-600 font-mono">{u.phone || '—'}</td>
-                    <td className="py-4 px-6">
+                    <td className="py-4 px-5 align-middle text-xs text-ink-700 whitespace-nowrap">{u.email}</td>
+                    <td className="py-4 px-5 align-middle text-xs text-ink-600 font-mono whitespace-nowrap">{u.phone || '—'}</td>
+                    <td className="py-4 px-5 align-middle whitespace-nowrap">
                       {u.role === 'admin' ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap">
                           <Shield size={12} />
                           <span>Admin</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">
                           <UserCheck size={12} />
                           <span>Khách hàng</span>
                         </span>
                       )}
                     </td>
-                    <td className="py-4 px-6 text-xs text-ink-400 font-mono">{u.created_at || '—'}</td>
-                    <td className="py-4 px-6 text-center">
+                    <td className="py-4 px-5 align-middle text-xs text-ink-400 font-mono whitespace-nowrap">{u.created_at || '—'}</td>
+                    <td className="py-4 px-5 align-middle text-center whitespace-nowrap">
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => handleOpenView(u)}
@@ -557,6 +568,66 @@ export const AdminUsersTab: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Toolbar */}
+        {users.length > 0 && (
+          <div className="p-4 px-6 border-t border-cream-200 flex flex-wrap items-center justify-between gap-4 bg-cream-50/70">
+            <div className="flex items-center gap-3 text-xs text-ink-600 font-medium">
+              <div>
+                Hiển thị <span className="font-bold text-ink-900">{(currentPage - 1) * itemsPerPage + 1}</span> -{' '}
+                <span className="font-bold text-ink-900">{Math.min(currentPage * itemsPerPage, users.length)}</span> trên{' '}
+                <span className="font-bold text-ink-900">{users.length}</span> người dùng
+              </div>
+
+              <div className="flex items-center gap-1.5 border-l border-cream-200 pl-3">
+                <span className="text-[11px] text-ink-400">Hiển thị:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="px-2 py-1 bg-white border border-cream-200 rounded-lg text-xs font-bold text-ink-800 focus:outline-none focus:border-accent-500 cursor-pointer shadow-2xs"
+                >
+                  <option value={5}>5 người / trang</option>
+                  <option value={8}>8 người / trang</option>
+                  <option value={15}>15 người / trang</option>
+                  <option value={30}>30 người / trang</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="px-3.5 py-1.5 rounded-xl border border-cream-300 bg-white text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+              >
+                ‹ Trước
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  onClick={() => handlePageChange(pageNum)}
+                  className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    currentPage === pageNum
+                      ? 'bg-ink-900 text-white shadow-xs'
+                      : 'bg-white text-ink-700 border border-cream-300 hover:bg-cream-100'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+              <button
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="px-3.5 py-1.5 rounded-xl border border-cream-300 bg-white text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+              >
+                Sau ›
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* CREATE MODAL */}

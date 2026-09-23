@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { Cart, CartItem, Product } from '../types';
 import { api } from '../lib/api';
+import { useAuth } from './AuthContext';
+import { useToast } from './ToastContext';
 
 interface CartContextType {
   cart: Cart | null;
@@ -8,7 +10,7 @@ interface CartContextType {
   itemCount: number;
   subtotal: number;
   loading: boolean;
-  addToCart: (product: Product, quantity?: number) => Promise<void>;
+  addToCart: (product: Product, quantity?: number) => Promise<boolean>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -18,6 +20,8 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, openAuthModal } = useAuth();
+  const toast = useToast();
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -34,19 +38,34 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    refreshCart();
-  }, [refreshCart]);
+    if (user) {
+      refreshCart();
+    } else {
+      setCart(null);
+      setLoading(false);
+    }
+  }, [user, refreshCart]);
 
-  const addToCart = async (product: Product, quantity: number = 1) => {
+  const addToCart = async (product: Product, quantity: number = 1): Promise<boolean> => {
+    if (!user) {
+      toast.info('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng và đặt mua!');
+      openAuthModal('login');
+      return false;
+    }
     try {
       const updatedCart = await api.addToCart(product.id, quantity);
       setCart(updatedCart);
-    } catch (err) {
+      toast.success(`Đã thêm "${product.name}" vào giỏ hàng!`);
+      return true;
+    } catch (err: any) {
+      toast.error(err.message || 'Không thể thêm sản phẩm vào giỏ hàng.');
       console.error('Failed to add item to cart:', err);
+      return false;
     }
   };
 
   const updateQuantity = async (itemId: string, quantity: number) => {
+    if (!user) return;
     try {
       if (quantity <= 0) {
         await removeFromCart(itemId);
@@ -60,6 +79,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const removeFromCart = async (itemId: string) => {
+    if (!user) return;
     try {
       const updatedCart = await api.removeCartItem(itemId);
       setCart(updatedCart);
@@ -69,6 +89,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const clearCart = async () => {
+    if (!user) return;
     try {
       await api.clearCart();
       setCart((prev) => (prev ? { ...prev, items: [] } : null));

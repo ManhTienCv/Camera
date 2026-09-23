@@ -212,15 +212,32 @@ class ReportController extends Controller
     }
 
     /**
+     * Thống kê top sản phẩm bán chạy nhất
+     */
+    private function topSellingProducts(int $limit = 5): Collection
+    {
+        return DB::table('order_items')
+            ->join('products', 'order_items.product_id', '=', 'products.id')
+            ->whereIn('order_items.order_id', $this->paidOrders()->select('orders.id'))
+            ->select('products.id', 'products.name', 'products.image_url', 'products.price')
+            ->selectRaw('COALESCE(SUM(order_items.quantity), 0) as sold_qty, COALESCE(SUM(order_items.price * order_items.quantity), 0) as total_revenue')
+            ->groupBy('products.id', 'products.name', 'products.image_url', 'products.price')
+            ->orderByDesc('sold_qty')
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
      * Bảng số liệu báo cáo
      */
     public function index(Request $request)
     {
         $realRevenue = (float) $this->dailyRevenue()->sum('total_revenue');
 
-        // Nếu người dùng yêu cầu fake hoặc CSDL thực tế chưa có doanh thu đã thu tiền
-        if ($realRevenue <= 0 || $request->has('fake') || $request->has('mock') || true) {
+        // Chỉ dùng mock khi có param ?fake=1 hoặc ?mock=1 từ request
+        if ($request->has('fake') || $request->has('mock')) {
             $data = $this->getStaticMockReport();
+            $data['topSellingProducts'] = $this->topSellingProducts();
         } else {
             $categoryRevenue = $this->categoryRevenue();
             $totalOrders = Order::count();
@@ -229,10 +246,11 @@ class ReportController extends Controller
             $revenueByMonth = $this->periodRevenue($revenueByDate, 'month');
             $revenueByYear = $this->periodRevenue($revenueByDate, 'year');
             $totalRevenue = $realRevenue;
+            $topSellingProducts = $this->topSellingProducts();
 
             $data = compact(
                 'categoryRevenue', 'totalOrders', 'totalCustomers', 'totalRevenue',
-                'revenueByDate', 'revenueByMonth', 'revenueByYear'
+                'revenueByDate', 'revenueByMonth', 'revenueByYear', 'topSellingProducts'
             );
         }
 
@@ -254,7 +272,8 @@ class ReportController extends Controller
     {
         $realRevenue = (float) $this->dailyRevenue()->sum('total_revenue');
 
-        if ($realRevenue <= 0 || $request->has('fake') || $request->has('mock') || true) {
+        // Chỉ dùng mock khi có param ?fake=1 hoặc ?mock=1
+        if ($request->has('fake') || $request->has('mock')) {
             $chartData = $this->getStaticMockCharts();
         } else {
             $categories = $this->categoryRevenue();

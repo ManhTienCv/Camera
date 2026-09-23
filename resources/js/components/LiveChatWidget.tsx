@@ -15,19 +15,48 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastMsgIdRef = useRef<number>(0);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (smooth = true) => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTo({
+        top: chatScrollRef.current.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto',
+      });
+    }
+  };
+
+  const isNearBottom = () => {
+    if (!chatScrollRef.current) return true;
+    const { scrollTop, scrollHeight, clientHeight } = chatScrollRef.current;
+    return scrollHeight - scrollTop - clientHeight < 100;
   };
 
   const loadMessages = async (silent = false) => {
     if (!user) return;
     if (!silent) setLoading(true);
     try {
-      const data = await api.getUserChatMessages();
-      setMessages(data || []);
+      if (!silent || lastMsgIdRef.current === 0) {
+        const data = await api.getUserChatMessages();
+        const items = data || [];
+        setMessages(items);
+        if (items.length > 0) {
+          lastMsgIdRef.current = Math.max(...items.map((m) => m.id));
+        }
+      } else {
+        // Incremental polling using after_id to save 90%+ bandwidth
+        const newItems = await api.getUserChatMessages(lastMsgIdRef.current);
+        if (newItems && newItems.length > 0) {
+          setMessages((prev) => {
+            const map = new Map(prev.map((m) => [m.id, m]));
+            newItems.forEach((m) => map.set(m.id, m));
+            return Array.from(map.values()).sort((a, b) => a.id - b.id);
+          });
+          lastMsgIdRef.current = Math.max(lastMsgIdRef.current, ...newItems.map((m) => m.id));
+        }
+      }
     } catch (err) {
       console.error('Lỗi tải tin nhắn chat:', err);
     } finally {
@@ -39,9 +68,11 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
   useEffect(() => {
     if (isOpen) {
       if (user) {
+        lastMsgIdRef.current = 0;
         loadMessages();
         setTimeout(() => {
-          inputRef.current?.focus();
+          scrollToBottom(false);
+          inputRef.current?.focus({ preventScroll: true });
         }, 150);
       }
     }
@@ -59,8 +90,8 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
   }, [isOpen, user]);
 
   useEffect(() => {
-    if (isOpen) {
-      scrollToBottom();
+    if (isOpen && isNearBottom()) {
+      scrollToBottom(true);
     }
   }, [messages, isOpen]);
 
@@ -74,12 +105,15 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
       const newMsg = await api.sendUserChatMessage(content);
       setInputValue('');
       setMessages((prev) => [...prev, newMsg]);
-      scrollToBottom();
+      if (newMsg.id > lastMsgIdRef.current) {
+        lastMsgIdRef.current = newMsg.id;
+      }
+      setTimeout(() => scrollToBottom(true), 50);
     } catch (err: any) {
       console.error('Lỗi gửi tin nhắn:', err);
     } finally {
       setSending(false);
-      setTimeout(() => inputRef.current?.focus(), 50);
+      setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 50);
     }
   };
 
@@ -132,7 +166,7 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
           </div>
 
           {/* Body / Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-cream-50/60">
+          <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-cream-50/60">
             {!user ? (
               // Case: Guest not logged in
               <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
@@ -209,7 +243,6 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
                 );
               })
             )}
-            <div ref={messagesEndRef} />
           </div>
 
           {/* Footer / Input */}

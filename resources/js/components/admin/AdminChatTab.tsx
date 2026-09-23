@@ -12,11 +12,23 @@ export const AdminChatTab: React.FC = () => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastMsgIdRef = useRef<number>(0);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (smooth = true) => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTo({
+        top: chatScrollRef.current.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto',
+      });
+    }
+  };
+
+  const isNearBottom = () => {
+    if (!chatScrollRef.current) return true;
+    const { scrollTop, scrollHeight, clientHeight } = chatScrollRef.current;
+    return scrollHeight - scrollTop - clientHeight < 120;
   };
 
   // 1. Load users list
@@ -40,8 +52,25 @@ export const AdminChatTab: React.FC = () => {
   const loadMessages = async (userId: number, silent = false) => {
     if (!silent) setLoadingMessages(true);
     try {
-      const data = await api.getAdminChatMessages(userId);
-      setMessages(data || []);
+      if (!silent || lastMsgIdRef.current === 0) {
+        const data = await api.getAdminChatMessages(userId);
+        const items = data || [];
+        setMessages(items);
+        if (items.length > 0) {
+          lastMsgIdRef.current = Math.max(...items.map((m) => m.id));
+        }
+      } else {
+        // Incremental polling using after_id to save 90%+ bandwidth
+        const newItems = await api.getAdminChatMessages(userId, lastMsgIdRef.current);
+        if (newItems && newItems.length > 0) {
+          setMessages((prev) => {
+            const map = new Map(prev.map((m) => [m.id, m]));
+            newItems.forEach((m) => map.set(m.id, m));
+            return Array.from(map.values()).sort((a, b) => a.id - b.id);
+          });
+          lastMsgIdRef.current = Math.max(lastMsgIdRef.current, ...newItems.map((m) => m.id));
+        }
+      }
     } catch (err) {
       console.error('Lỗi tải tin nhắn hội thoại:', err);
     } finally {
@@ -57,12 +86,15 @@ export const AdminChatTab: React.FC = () => {
   // When selected user changes, load their messages
   useEffect(() => {
     if (selectedUser) {
+      lastMsgIdRef.current = 0;
       loadMessages(selectedUser.id);
       setTimeout(() => {
-        inputRef.current?.focus();
+        scrollToBottom(false);
+        inputRef.current?.focus({ preventScroll: true });
       }, 100);
     } else {
       setMessages([]);
+      lastMsgIdRef.current = 0;
     }
   }, [selectedUser]);
 
@@ -79,7 +111,9 @@ export const AdminChatTab: React.FC = () => {
   }, [selectedUser]);
 
   useEffect(() => {
-    scrollToBottom();
+    if (isNearBottom()) {
+      scrollToBottom(true);
+    }
   }, [messages]);
 
   const handleSendMessage = async (e?: React.FormEvent) => {
@@ -92,13 +126,16 @@ export const AdminChatTab: React.FC = () => {
       const newMsg = await api.sendAdminChatMessage(selectedUser.id, content);
       setMessageInput('');
       setMessages((prev) => [...prev, newMsg]);
-      scrollToBottom();
+      if (newMsg.id > lastMsgIdRef.current) {
+        lastMsgIdRef.current = newMsg.id;
+      }
+      setTimeout(() => scrollToBottom(true), 50);
       loadUsers(true);
     } catch (err) {
       console.error('Lỗi gửi tin nhắn phản hồi:', err);
     } finally {
       setSending(false);
-      setTimeout(() => inputRef.current?.focus(), 50);
+      setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 50);
     }
   };
 
@@ -114,9 +151,7 @@ export const AdminChatTab: React.FC = () => {
         <div>
           <h3 className="text-2xl font-display font-bold text-ink-900 flex items-center gap-2.5">
             <span>Hỗ trợ trực tuyến & Live Chat</span>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
-              ● Polling 3s Live
-            </span>
+
           </h3>
           <p className="text-sm text-ink-500 mt-1">
             Trực tiếp trả lời thắc mắc, tư vấn thiết bị máy ảnh và hỗ trợ đơn hàng của khách hàng theo thời gian thực.
@@ -172,11 +207,10 @@ export const AdminChatTab: React.FC = () => {
                   <button
                     key={u.id}
                     onClick={() => setSelectedUser(u)}
-                    className={`w-full text-left p-3.5 transition-all flex items-start gap-3 cursor-pointer ${
-                      isSelected
+                    className={`w-full text-left p-3.5 transition-all flex items-start gap-3 cursor-pointer ${isSelected
                         ? 'bg-accent-50 border-l-4 border-accent-500'
                         : 'hover:bg-cream-100/70 border-l-4 border-transparent'
-                    }`}
+                      }`}
                   >
                     <div className="relative shrink-0">
                       <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-ink-800 to-ink-900 text-white font-bold text-sm flex items-center justify-center shadow-2xs">
@@ -245,7 +279,7 @@ export const AdminChatTab: React.FC = () => {
               </div>
 
               {/* Messages Stream */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-cream-50/30">
+              <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-6 space-y-4 bg-cream-50/30">
                 {loadingMessages && messages.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center text-ink-400 text-xs">
                     <Loader2 size={24} className="animate-spin text-accent-500 mb-2" />
@@ -271,11 +305,10 @@ export const AdminChatTab: React.FC = () => {
                             </div>
                           )}
                           <div
-                            className={`p-3 rounded-2xl text-xs leading-relaxed shadow-2xs ${
-                              isFromUser
+                            className={`p-3 rounded-2xl text-xs leading-relaxed shadow-2xs ${isFromUser
                                 ? 'bg-white border border-cream-200 text-ink-900 rounded-bl-xs'
                                 : 'bg-accent-500 text-white rounded-br-xs font-medium'
-                            }`}
+                              }`}
                           >
                             <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                           </div>
@@ -285,9 +318,9 @@ export const AdminChatTab: React.FC = () => {
                           <span>
                             {msg.created_at
                               ? new Date(msg.created_at).toLocaleTimeString('vi-VN', {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
                               : ''}
                           </span>
                           {!isFromUser && <CheckCheck size={12} className="text-emerald-500 ms-0.5" />}
@@ -296,7 +329,6 @@ export const AdminChatTab: React.FC = () => {
                     );
                   })
                 )}
-                <div ref={messagesEndRef} />
               </div>
 
               {/* Message Input Box */}

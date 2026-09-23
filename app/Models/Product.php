@@ -65,4 +65,14 @@ class Product extends Model
     {
         return $this->hasMany(Review::class)->where('status', 'approved');
     }
+
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    public function wishlists()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
 }

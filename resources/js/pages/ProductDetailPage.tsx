@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Minus, Plus, ChevronRight, Check, Truck, Shield, RotateCcw, MessageSquare, Info, FileText } from 'lucide-react';
+import { ShoppingBag, Minus, Plus, ChevronRight, Check, Truck, Shield, RotateCcw, MessageSquare, Info, FileText, Heart } from 'lucide-react';
 import type { Page, Product, Category } from '../types';
 import { api } from '../lib/api';
 import { formatCurrency } from '../lib/utils';
 import { StarRating } from '../components/StarRating';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import { ProductCard } from '../components/ProductCard';
 import { ProductReviewsSection } from '../components/ProductReviewsSection';
 import { reviewService } from '../services/review.service';
@@ -26,6 +27,7 @@ export function ProductDetailPage({ slug, onNavigate, categories }: Props) {
   const [activeTab, setActiveTab] = useState<'desc' | 'specs' | 'reviews'>('desc');
   const [reviewCount, setReviewCount] = useState(3);
   const { addToCart } = useCart();
+  const { isInWishlist, toggleWishlist } = useWishlist();
 
   useEffect(() => {
     (async () => {
@@ -40,16 +42,31 @@ export function ProductDetailPage({ slug, onNavigate, categories }: Props) {
         setProduct(prod);
 
         if (prod) {
-          const stats = reviewService.getProductStats(prod.id);
-          setReviewCount(stats.count);
+          try {
+            const revRes = await api.getProductReviews(prod.id);
+            if (revRes && revRes.stats) {
+              setReviewCount(revRes.stats.count);
+            } else {
+              const stats = reviewService.getProductStats(prod.id);
+              setReviewCount(stats.count);
+            }
+          } catch {
+            const stats = reviewService.getProductStats(prod.id);
+            setReviewCount(stats.count);
+          }
 
-          if (prod.category_id) {
-            const categoryObj = categories.find((c) => String(c.id) === String(prod.category_id));
-            const catProducts = await api.getProducts({ category: categoryObj?.slug });
-            const rel = catProducts
-              .filter((p) => String(p.id) !== String(prod.id))
-              .slice(0, 4);
-            setRelated(rel);
+          try {
+            const rel = await api.getRelatedProducts(prod.id, 4);
+            setRelated(rel || []);
+          } catch {
+            if (prod.category_id) {
+              const categoryObj = categories.find((c) => String(c.id) === String(prod.category_id));
+              const catProducts = await api.getProducts({ category: categoryObj?.slug });
+              const rel = catProducts
+                .filter((p) => String(p.id) !== String(prod.id))
+                .slice(0, 4);
+              setRelated(rel);
+            }
           }
         }
       } catch (e) {
@@ -62,8 +79,15 @@ export function ProductDetailPage({ slug, onNavigate, categories }: Props) {
 
   // Sync review count listener
   useEffect(() => {
-    const handleSync = () => {
+    const handleSync = async () => {
       if (product) {
+        try {
+          const revRes = await api.getProductReviews(product.id);
+          if (revRes && revRes.stats) {
+            setReviewCount(revRes.stats.count);
+            return;
+          }
+        } catch (_) {}
         const stats = reviewService.getProductStats(product.id);
         setReviewCount(stats.count);
       }
@@ -74,9 +98,11 @@ export function ProductDetailPage({ slug, onNavigate, categories }: Props) {
 
   const handleAddToCart = async () => {
     if (!product) return;
-    await addToCart(product, quantity);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+    const ok = await addToCart(product, quantity);
+    if (ok) {
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+    }
   };
 
   if (loading) {
@@ -278,13 +304,28 @@ export function ProductDetailPage({ slug, onNavigate, categories }: Props) {
                   </>
                 )}
               </button>
+              <button
+                type="button"
+                onClick={() => product && toggleWishlist(product)}
+                title={isInWishlist(product.id) ? 'Bỏ khỏi danh sách yêu thích' : 'Lưu vào danh sách yêu thích'}
+                className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-center shrink-0 ${
+                  isInWishlist(product.id)
+                    ? 'bg-rose-50 border-rose-300 text-rose-500 shadow-xs'
+                    : 'bg-white border-cream-300 text-ink-600 hover:text-rose-500 hover:border-rose-200'
+                }`}
+              >
+                <Heart size={20} className={isInWishlist(product.id) ? 'fill-rose-500 text-rose-500' : ''} />
+              </button>
             </div>
           </div>
 
           <button
-            onClick={() => {
-              handleAddToCart();
-              setTimeout(() => onNavigate({ name: 'cart' }), 300);
+            onClick={async () => {
+              if (!product) return;
+              const ok = await addToCart(product, quantity);
+              if (ok) {
+                onNavigate({ name: 'cart' });
+              }
             }}
             disabled={product.stock === 0}
             className="w-full btn-accent py-3.5 rounded-2xl font-bold text-sm shadow-md mb-8 disabled:opacity-50 cursor-pointer"
