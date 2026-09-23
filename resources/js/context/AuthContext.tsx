@@ -141,10 +141,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
+    const handleUserSessionExpired = () => {
+      setUser(null);
+      localStorage.removeItem('camera_auth_token');
+      localStorage.removeItem('camera_auth_user');
+    };
+
     window.addEventListener('message', handleAuthMessage);
+    window.addEventListener('camera_user_session_expired', handleUserSessionExpired);
     refreshUser();
 
-    return () => window.removeEventListener('message', handleAuthMessage);
+    return () => {
+      window.removeEventListener('message', handleAuthMessage);
+      window.removeEventListener('camera_user_session_expired', handleUserSessionExpired);
+    };
   }, []);
 
   const openAuthModal = (tab: 'login' | 'register' = 'login') => {

@@ -50,12 +50,27 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      if (url.startsWith('/admin') || url.includes('/admin/')) {
+        localStorage.removeItem('camera_admin_token');
+        localStorage.removeItem('camera_admin_user');
+        window.dispatchEvent(new Event('camera_admin_session_expired'));
+      } else {
+        localStorage.removeItem('camera_auth_token');
+        localStorage.removeItem('camera_auth_user');
+        window.dispatchEvent(new Event('camera_user_session_expired'));
+      }
+    }
+
     let errMsg = `API error: ${response.status} ${response.statusText}`;
     try {
       const errData = await response.json();
       if (errData.message) errMsg = errData.message;
     } catch (_) {}
-    throw new Error(errMsg);
+    const error: any = new Error(errMsg);
+    error.status = response.status;
+    error.isUnauthorized = response.status === 401;
+    throw error;
   }
 
   const data = await response.json();
