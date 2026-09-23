@@ -142,8 +142,18 @@ class GoogleAuthController extends Controller
                 $isNewUser = true;
             }
 
-            // 4. Khởi tạo mã Auth Token cho hệ thống CameraHub (lưu Cache 30 ngày)
-            $token = 'camerahub_' . Str::random(40) . '_' . time();
+            // 4. Khởi tạo mã Auth Token cho hệ thống CameraHub (HMAC signed token)
+            $payload = base64_encode(json_encode([
+                'uid' => $user->id,
+                'email' => $user->email,
+                'role' => $user->role,
+                'iat' => time(),
+                'exp' => time() + (86400 * 30),
+                'nonce' => Str::random(16),
+            ]));
+            $appKey = config('app.key') ?: 'camerahub_default_secret_key_2026';
+            $signature = hash_hmac('sha256', $payload, $appKey);
+            $token = 'camerahub_' . $payload . '.' . $signature;
             Cache::put('auth_token_' . $token, $user->id, now()->addDays(30));
 
             // 5. Trả về Blade view đồng bộ với Popup hoặc chuyển hướng
@@ -195,7 +205,17 @@ class GoogleAuthController extends Controller
             $isNewUser = false;
         }
 
-        $token = 'camerahub_' . Str::random(40) . '_' . time();
+        $payload = base64_encode(json_encode([
+            'uid' => $user->id,
+            'email' => $user->email,
+            'role' => $user->role,
+            'iat' => time(),
+            'exp' => time() + (86400 * 30),
+            'nonce' => Str::random(16),
+        ]));
+        $appKey = config('app.key') ?: 'camerahub_default_secret_key_2026';
+        $signature = hash_hmac('sha256', $payload, $appKey);
+        $token = 'camerahub_' . $payload . '.' . $signature;
         Cache::put('auth_token_' . $token, $user->id, now()->addDays(30));
 
         return view('auth.google_callback', [
