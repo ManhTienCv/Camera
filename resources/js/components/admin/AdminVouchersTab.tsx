@@ -84,6 +84,9 @@ export const AdminVouchersTab: React.FC = () => {
         setStats(res.stats);
       }
     } catch (err: any) {
+      if (err.isUnauthorized || (err.message && err.message.includes('Unauthorized'))) {
+        return;
+      }
       toast.error(err.message || 'Lỗi tải danh sách mã giảm giá.');
     } finally {
       setLoading(false);

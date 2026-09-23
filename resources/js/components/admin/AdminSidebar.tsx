@@ -126,7 +126,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       </div>
 
       {/* Nav List */}
-      <div className={`flex-1 overflow-y-auto space-y-5 ${isCollapsed ? 'px-2 py-4' : 'px-3 py-4'}`}>
+      <div className={`flex-1 overflow-y-auto overflow-x-hidden space-y-5 ${isCollapsed ? 'px-2 py-4' : 'px-3 py-4'}`}>
         {/* Section 1: Quản lý chung */}
         <div>
           {!isCollapsed && (
@@ -143,6 +143,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 <div key={item.id} className="relative group flex items-center">
                   <button
                     onClick={() => setActiveTab(item.id)}
+                    title={isCollapsed ? item.label : undefined}
                     className={`flex items-center rounded-2xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${isCollapsed
                       ? 'w-10 h-10 mx-auto justify-center'
                       : 'w-full gap-3 px-3.5 py-2.5'
@@ -168,12 +169,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                       </div>
                     )}
                   </button>
-
-                  {isCollapsed && (
-                    <div className="absolute left-full ml-3 px-3 py-1.5 bg-ink-900 text-white text-xs font-semibold rounded-full opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 whitespace-nowrap shadow-lg z-50 transform -translate-y-1/2 top-1/2">
-                      {item.label}
-                    </div>
-                  )}
                 </div>
               );
             })}
@@ -198,6 +193,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 <div key={item.id} className="relative group flex items-center">
                   <button
                     onClick={() => setActiveTab(item.id)}
+                    title={isCollapsed ? item.label : undefined}
                     className={`flex items-center rounded-2xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${isCollapsed
                       ? 'w-10 h-10 mx-auto justify-center'
                       : 'w-full gap-3 px-3.5 py-2.5'
@@ -209,12 +205,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     <Icon size={18} className="shrink-0" />
                     {!isCollapsed && <span className="truncate">{item.label}</span>}
                   </button>
-
-                  {isCollapsed && (
-                    <div className="absolute left-full ml-3 px-3 py-1.5 bg-ink-900 text-white text-xs font-semibold rounded-full opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 whitespace-nowrap shadow-lg z-50 transform -translate-y-1/2 top-1/2">
-                      {item.label}
-                    </div>
-                  )}
                 </div>
               );
             })}
@@ -239,6 +229,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 <div key={item.id} className="relative group flex items-center">
                   <button
                     onClick={() => setActiveTab(item.id)}
+                    title={isCollapsed ? item.label : undefined}
                     className={`flex items-center rounded-2xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${isCollapsed
                       ? 'w-10 h-10 mx-auto justify-center'
                       : 'w-full gap-3 px-3.5 py-2.5'
@@ -250,12 +241,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     <Icon size={18} className="shrink-0" />
                     {!isCollapsed && <span className="truncate">{item.label}</span>}
                   </button>
-
-                  {isCollapsed && (
-                    <div className="absolute left-full ml-3 px-3 py-1.5 bg-ink-900 text-white text-xs font-semibold rounded-full opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 whitespace-nowrap shadow-lg z-50 transform -translate-y-1/2 top-1/2">
-                      {item.label}
-                    </div>
-                  )}
                 </div>
               );
             })}

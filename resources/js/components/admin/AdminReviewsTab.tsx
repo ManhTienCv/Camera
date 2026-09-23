@@ -75,6 +75,9 @@ export const AdminReviewsTab: React.FC = () => {
         setStats(res.stats);
       }
     } catch (err: any) {
+      if (err.isUnauthorized || (err.message && err.message.includes('Unauthorized'))) {
+        return;
+      }
       toast.error(err.message || 'Lỗi tải danh sách đánh giá.');
     } finally {
       setLoading(false);

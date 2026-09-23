@@ -76,24 +76,50 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
     contentAreaRef.current?.scrollTo({ top: 0, behavior: 'instant' });
   }, [activeTab]);
 
+  const [isVerifyingToken, setIsVerifyingToken] = useState<boolean>(() => {
+    return !!localStorage.getItem('camera_admin_token');
+  });
+
   // Verify admin token on mount
   useEffect(() => {
+    let isMounted = true;
     const verifyToken = async () => {
       const token = localStorage.getItem('camera_admin_token');
       if (!token) {
-        setAdminUser(null);
+        if (isMounted) {
+          setAdminUser(null);
+          setIsVerifyingToken(false);
+        }
         return;
       }
       try {
         const freshUser = await api.getAdminProfile();
-        setAdminUser(freshUser);
-      } catch {
+        if (isMounted) {
+          setAdminUser(freshUser);
+          setIsVerifyingToken(false);
+        }
+      } catch (err: any) {
         api.adminLogout();
-        setAdminUser(null);
+        if (isMounted) {
+          setAdminUser(null);
+          setIsVerifyingToken(false);
+        }
       }
     };
     verifyToken();
-  }, []);
+
+    const handleSessionExpired = () => {
+      setAdminUser(null);
+      setIsVerifyingToken(false);
+      toast.warning('Phiên làm việc quản trị đã hết hạn. Vui lòng đăng nhập lại.');
+    };
+
+    window.addEventListener('camera_admin_session_expired', handleSessionExpired);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('camera_admin_session_expired', handleSessionExpired);
+    };
+  }, [toast]);
 
   // Admin Login Screen State
   const [adminEmail, setAdminEmail] = useState('');
@@ -152,7 +178,12 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
       const [prods, cats, ords] = await Promise.all([
         api.getProducts({ sort: 'newest' }),
         api.getCategories(),
-        api.getAdminOrders().catch(() => []),
+        api.getAdminOrders().catch((err: any) => {
+          if (err?.isUnauthorized || err?.status === 401) {
+            setAdminUser(null);
+          }
+          return [];
+        }),
       ]);
       setProducts(prods || []);
       setCategories(cats || []);
@@ -160,7 +191,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
       if (cats && cats.length > 0 && !productFormData.category_id) {
         setProductFormData((prev) => ({ ...prev, category_id: cats[0].id }));
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.isUnauthorized || err?.status === 401) {
+        setAdminUser(null);
+        return;
+      }
       console.error('Failed to load admin data:', err);
     } finally {
       setLoading(false);
@@ -351,6 +386,22 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
   };
 
   // Loading state while restoring session
+  if (isVerifyingToken) {
+    return (
+      <div className="min-h-screen bg-cream-50 flex items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-3 text-center animate-fade-in">
+          <div className="w-12 h-12 rounded-2xl bg-accent-50 border border-accent-200 text-accent-600 flex items-center justify-center animate-pulse shadow-xs">
+            <ShieldCheck size={26} />
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-display font-bold text-ink-900 text-sm">Đang xác thực quyền Quản trị</h3>
+            <p className="text-xs text-ink-400">Vui lòng chờ trong giây lát...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // -------------------------------------------------------------
   // VIEW 1: DEDICATED ADMIN LOGIN (Warm Theme matching Main Web)
   // -------------------------------------------------------------
