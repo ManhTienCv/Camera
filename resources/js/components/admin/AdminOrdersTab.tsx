@@ -40,6 +40,84 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]['key'];
 
+const MOCK_ADMIN_ORDERS: Order[] = [
+  {
+    id: 'ord-mock-1',
+    order_code: 'CH-2603-9081',
+    customer_name: 'Nguyễn Văn Minh',
+    customer_phone: '0987654321',
+    customer_email: 'minh.nguyen@gmail.com',
+    shipping_address: '123 Cầu Giấy, Hà Nội',
+    total_amount: 45900000,
+    payment_method: 'vietqr',
+    payment_status: 'paid',
+    status: 'shipping',
+    tracking_code: 'GHN-89042-VN',
+    created_at: '2026-03-20T10:30:00Z',
+    items: [],
+  },
+  {
+    id: 'ord-mock-2',
+    order_code: 'CH-2603-9082',
+    customer_name: 'Trần Thị Thu Hà',
+    customer_phone: '0912345678',
+    customer_email: 'ha.tran@outlook.com',
+    shipping_address: '45 Lê Duẩn, Quận 1, TP.HCM',
+    total_amount: 18500000,
+    payment_method: 'momo',
+    payment_status: 'paid',
+    status: 'processing',
+    tracking_code: '',
+    created_at: '2026-03-21T14:15:00Z',
+    items: [],
+  },
+  {
+    id: 'ord-mock-3',
+    order_code: 'CH-2603-9083',
+    customer_name: 'Lê Hoàng Nam',
+    customer_phone: '0903334455',
+    customer_email: 'nam.le@gmail.com',
+    shipping_address: '78 Bạch Đằng, Hải Châu, Đà Nẵng',
+    total_amount: 32000000,
+    payment_method: 'cod',
+    payment_status: 'pending',
+    status: 'pending',
+    tracking_code: '',
+    created_at: '2026-03-22T08:00:00Z',
+    items: [],
+  },
+  {
+    id: 'ord-mock-4',
+    order_code: 'CH-2603-9084',
+    customer_name: 'Phạm Quỳnh Chi',
+    customer_phone: '0977889900',
+    customer_email: 'chi.pham@gmail.com',
+    shipping_address: '12 Trần Phú, Nha Trang',
+    total_amount: 12400000,
+    payment_method: 'vietqr',
+    payment_status: 'paid',
+    status: 'delivered',
+    tracking_code: 'GHN-77312-VN',
+    created_at: '2026-03-18T16:45:00Z',
+    items: [],
+  },
+  {
+    id: 'ord-mock-5',
+    order_code: 'CH-2603-9085',
+    customer_name: 'Hoàng Anh Tuấn',
+    customer_phone: '0934567890',
+    customer_email: 'tuan.ha@gmail.com',
+    shipping_address: '88 Nguyễn Trãi, Thanh Xuân, Hà Nội',
+    total_amount: 28900000,
+    payment_method: 'momo',
+    payment_status: 'paid',
+    status: 'refund_pending',
+    tracking_code: '',
+    created_at: '2026-03-19T11:20:00Z',
+    items: [],
+  },
+];
+
 export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
   orders,
   onUpdateStatus,
@@ -58,19 +136,24 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
   const [isSubmittingRefund, setIsSubmittingRefund] = useState(false);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
+  // Active orders with mock fallback if no database orders
+  const activeOrders = useMemo(() => {
+    return orders && orders.length > 0 ? orders : MOCK_ADMIN_ORDERS;
+  }, [orders]);
+
   // Compute counts for all 8 status tabs (Lab 08)
   const tabCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: orders.length };
+    const counts: Record<string, number> = { all: activeOrders.length };
     TABS.forEach((tab) => {
       if (tab.key === 'all') return;
-      counts[tab.key] = orders.filter((o) => tab.statuses.includes(o.status as any)).length;
+      counts[tab.key] = activeOrders.filter((o) => tab.statuses.includes(o.status as any)).length;
     });
     return counts;
-  }, [orders]);
+  }, [activeOrders]);
 
   // Filter orders by active tab, search query, and payment filter
   const filteredOrders = useMemo(() => {
-    return orders.filter((o) => {
+    return activeOrders.filter((o) => {
       // 1. Tab filter
       if (activeTab !== 'all') {
         const tabDef = TABS.find((t) => t.key === activeTab);

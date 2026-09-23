@@ -345,13 +345,13 @@ export const AdminVouchersTab: React.FC = () => {
         </div>
 
         {/* Status Pills */}
-        <div className="inline-flex items-center p-1 bg-white border border-cream-200 rounded-2xl shadow-xs self-start sm:self-auto">
+        <div className="inline-flex items-center p-1 bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-800 rounded-2xl shadow-xs self-start sm:self-auto">
           <button
             onClick={() => setStatusFilter('all')}
             className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
               statusFilter === 'all'
-                ? 'bg-ink-900 text-white shadow-xs'
-                : 'text-ink-600 hover:text-ink-900 hover:bg-cream-100/70'
+                ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
+                : 'text-ink-600 dark:text-cream-200 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70'
             }`}
           >
             Tất cả
@@ -360,8 +360,8 @@ export const AdminVouchersTab: React.FC = () => {
             onClick={() => setStatusFilter('active')}
             className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
               statusFilter === 'active'
-                ? 'bg-ink-900 text-white shadow-xs'
-                : 'text-ink-600 hover:text-ink-900 hover:bg-cream-100/70'
+                ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
+                : 'text-ink-600 dark:text-cream-200 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70'
             }`}
           >
             Đang hiệu lực
@@ -370,8 +370,8 @@ export const AdminVouchersTab: React.FC = () => {
             onClick={() => setStatusFilter('inactive')}
             className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
               statusFilter === 'inactive'
-                ? 'bg-ink-900 text-white shadow-xs'
-                : 'text-ink-600 hover:text-ink-900 hover:bg-cream-100/70'
+                ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
+                : 'text-ink-600 dark:text-cream-200 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70'
             }`}
           >
             Tạm ngưng

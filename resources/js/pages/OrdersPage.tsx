@@ -442,14 +442,14 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
               onClick={() => setOrderStatusTab(tab.id as any)}
               className={`relative px-5 py-2.5 rounded-full text-xs font-bold transition-colors cursor-pointer border ${
                 isActive
-                  ? 'border-ink-900 text-white shadow-xs'
-                  : 'border-cream-200 text-ink-700 hover:border-cream-300 hover:bg-cream-50 bg-white shadow-2xs'
+                  ? 'border-ink-900 dark:border-accent-500 text-white shadow-xs'
+                  : 'border-cream-200 dark:border-ink-800 text-ink-700 dark:text-cream-200 hover:border-cream-300 hover:bg-cream-50 bg-white shadow-2xs'
               }`}
             >
               {isActive && (
                 <motion.div
                   layoutId="orders-status-tab-capsule"
-                  className="absolute inset-0 bg-ink-900 rounded-full z-0"
+                  className="absolute inset-0 bg-ink-900 dark:bg-accent-500 rounded-full z-0"
                   transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                 />
               )}
@@ -823,7 +823,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                       }}
                       className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         currentPage === pageNum
-                          ? 'bg-ink-900 text-white shadow-xs'
+                          ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
                           : 'bg-white text-ink-700 border border-cream-300 hover:bg-cream-100'
                       }`}
                     >

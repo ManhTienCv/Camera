@@ -165,7 +165,7 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
           Cảm ơn bạn đã mua sắm tại CameraHub. Đơn hàng của bạn đã được tiếp nhận và xử lý tự động vào hệ thống.
         </p>
         {order?.order_code && (
-          <div className="inline-block mt-3 px-4 py-1.5 bg-ink-900 text-white rounded-full text-xs font-bold font-mono tracking-wider shadow-2xs">
+          <div className="inline-block mt-3 px-4 py-1.5 bg-ink-900 dark:bg-ink-800 text-white rounded-full text-xs font-bold font-mono tracking-wider shadow-2xs border border-transparent dark:border-ink-700">
             MÃ ĐƠN: #{order.order_code}
           </div>
         )}

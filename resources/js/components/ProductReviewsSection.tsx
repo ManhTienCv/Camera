@@ -228,7 +228,7 @@ export function ProductReviewsSection({ product }: Props) {
               onClick={() => setIsWriting(!isWriting)}
               className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-xs shadow-sm transition-all cursor-pointer active:scale-95 ${
                 isWriting
-                  ? 'bg-ink-800 hover:bg-ink-900 text-white'
+                  ? 'bg-ink-800 dark:bg-ink-700 hover:bg-ink-900 dark:hover:bg-ink-600 text-white border border-transparent dark:border-ink-600'
                   : 'bg-accent-500 hover:bg-accent-600 text-white shadow-accent-500/20'
               }`}
             >

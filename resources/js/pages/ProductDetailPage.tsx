@@ -196,7 +196,7 @@ export function ProductDetailPage({ slug, onNavigate, categories }: Props) {
               {product.brand}
             </span>
             {product.is_new && (
-              <span className="px-2.5 py-0.5 bg-ink-900 text-white text-[11px] font-bold rounded-full">
+              <span className="px-2.5 py-0.5 bg-ink-900 dark:bg-accent-500 text-white text-[11px] font-bold rounded-full">
                 Mới Ra Mắt
               </span>
             )}

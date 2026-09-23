@@ -31,6 +31,73 @@ interface AdminProductsTabProps {
 type StatusFilter = 'all' | 'active' | 'inactive' | 'outofstock';
 type SortOption = 'newest' | 'price-desc' | 'price-asc' | 'stock-asc' | 'stock-desc';
 
+const MOCK_ADMIN_PRODUCTS: Product[] = [
+  {
+    id: 'prod-mock-1',
+    name: 'Sony Alpha A7 IV (Body Only)',
+    slug: 'sony-alpha-a7-iv',
+    category_id: '1',
+    category: { id: '1', name: 'Máy Ảnh Mirrorless', slug: 'may-anh-mirrorless' },
+    brand: 'Sony',
+    price: 52990000,
+    original_price: 59990000,
+    stock: 14,
+    description: 'Máy ảnh full-frame chuyên nghiệp 33MP với khả năng quay 4K 60p 10-bit 4:2:2.',
+    image_url: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=600&q=80',
+    status: 'active',
+    rating: 4.9,
+    reviews_count: 28,
+  },
+  {
+    id: 'prod-mock-2',
+    name: 'Canon EOS R6 Mark II Body',
+    slug: 'canon-eos-r6-mark-ii',
+    category_id: '1',
+    category: { id: '1', name: 'Máy Ảnh Mirrorless', slug: 'may-anh-mirrorless' },
+    brand: 'Canon',
+    price: 58500000,
+    original_price: 64900000,
+    stock: 4,
+    description: 'Cảm biến 24.2MP CMOS, chụp liên tiếp 40fps, lấy nét Dual Pixel CMOS AF II.',
+    image_url: 'https://images.unsplash.com/photo-1502982720700-bfff97f2da8d?auto=format&fit=crop&w=600&q=80',
+    status: 'active',
+    rating: 4.8,
+    reviews_count: 19,
+  },
+  {
+    id: 'prod-mock-3',
+    name: 'Fujifilm X-T5 Silver',
+    slug: 'fujifilm-x-t5-silver',
+    category_id: '1',
+    category: { id: '1', name: 'Máy Ảnh Mirrorless', slug: 'may-anh-mirrorless' },
+    brand: 'Fujifilm',
+    price: 43900000,
+    original_price: 46900000,
+    stock: 0,
+    description: 'Thiết kế hoài cổ, cảm biến X-Trans CMOS 5 HR 40.2MP, chống rung 5 trục 7 stops.',
+    image_url: 'https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?auto=format&fit=crop&w=600&q=80',
+    status: 'inactive',
+    rating: 4.7,
+    reviews_count: 15,
+  },
+  {
+    id: 'prod-mock-4',
+    name: 'DJI Mini 4 Pro Fly More Combo',
+    slug: 'dji-mini-4-pro-fly-more-combo',
+    category_id: '2',
+    category: { id: '2', name: 'Flycam & Gimbal', slug: 'flycam-gimbal' },
+    brand: 'DJI',
+    price: 21990000,
+    original_price: 23990000,
+    stock: 8,
+    description: 'Flycam siêu nhẹ dưới 249g, cảm biến vật cản đa hướng, quay 4K/60fps HDR.',
+    image_url: 'https://images.unsplash.com/photo-1473968512647-3e447244af8f?auto=format&fit=crop&w=600&q=80',
+    status: 'active',
+    rating: 5.0,
+    reviews_count: 32,
+  },
+];
+
 export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
   products,
   categories,
@@ -49,29 +116,34 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
   const [adminPageNum, setAdminPageNum] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
+  // Active products with mock fallback if no database products
+  const activeProducts = useMemo(() => {
+    return products && products.length > 0 ? products : MOCK_ADMIN_PRODUCTS;
+  }, [products]);
+
   // Reset page when filters change
   useEffect(() => {
     setAdminPageNum(1);
   }, [searchQuery, selectedCategoryFilter, selectedBrandFilter, statusFilter, sortOption]);
 
   // Derived stats
-  const activeCount = products.filter((p) => p.status === 'active' && p.stock > 0).length;
-  const inactiveCount = products.filter((p) => p.status === 'inactive').length;
-  const outOfStockCount = products.filter((p) => p.stock <= 0).length;
-  const totalStockValue = products.reduce((acc, p) => acc + p.price * p.stock, 0);
+  const activeCount = activeProducts.filter((p) => p.status === 'active' && p.stock > 0).length;
+  const inactiveCount = activeProducts.filter((p) => p.status === 'inactive').length;
+  const outOfStockCount = activeProducts.filter((p) => p.stock <= 0).length;
+  const totalStockValue = activeProducts.reduce((acc, p) => acc + p.price * p.stock, 0);
 
   // Brands list from products
   const brandsList = useMemo(() => {
     const set = new Set<string>();
-    products.forEach((p) => {
+    activeProducts.forEach((p) => {
       if (p.brand) set.add(p.brand);
     });
     return Array.from(set).sort();
-  }, [products]);
+  }, [activeProducts]);
 
   // Filtering & Sorting
   const filteredProducts = useMemo(() => {
-    let result = products.filter((p) => {
+    let result = activeProducts.filter((p) => {
       const matchesSearch =
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.brand.toLowerCase().includes(searchQuery.toLowerCase());
