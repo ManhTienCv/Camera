@@ -30,8 +30,25 @@ export const AuthModal: React.FC = () => {
     login,
     registerWithOtp,
     setAuthenticatedUser,
+    loginWithGoogle,
+    demoGoogleLogin,
+    onboardingData,
+    completeOnboarding,
+    cancelOnboarding,
   } = useAuth();
   const toast = useToast();
+
+  // Onboarding form state (Hoàn tất thông tin tài khoản cho mail chưa đăng ký)
+  const [onboardingName, setOnboardingName] = useState('');
+  const [onboardingPhone, setOnboardingPhone] = useState('');
+  const [onboardingLoading, setOnboardingLoading] = useState(false);
+
+  useEffect(() => {
+    if (onboardingData) {
+      setOnboardingName(onboardingData.user.fullName || '');
+      setOnboardingPhone(onboardingData.user.phone || '');
+    }
+  }, [onboardingData]);
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -389,15 +406,6 @@ export const AuthModal: React.FC = () => {
     forgotOtpInputsRef.current[nextFocusIndex]?.focus();
   };
 
-  // ==========================================
-  // QUICK DEMO ACCOUNTS FILL
-  // ==========================================
-  const handleDemoFill = () => {
-    setError(null);
-    setLoginEmail('customer@demopick.vn');
-    setLoginPassword('123456');
-  };
-
   const handleSwitchTab = (tab: 'login' | 'register') => {
     setError(null);
     setIsForgotPassword(false);
@@ -437,14 +445,18 @@ export const AuthModal: React.FC = () => {
           <div className="relative z-10 space-y-4">
             <div className="space-y-2">
               <h3 className="font-display font-bold text-2xl text-white leading-tight">
-                {isForgotPassword
+                {onboardingData
+                  ? 'Thiết lập tên hiển thị tài khoản'
+                  : isForgotPassword
                   ? 'Bảo mật tài khoản của bạn'
                   : authModalTab === 'login'
                   ? 'Trọn vẹn đam mê trên từng khung hình'
                   : 'Trở thành hội viên chính thức ngay hôm nay'}
               </h3>
               <p className="text-xs text-cream-100/80 leading-relaxed font-normal">
-                {isForgotPassword
+                {onboardingData
+                  ? 'Hệ thống tự động đồng bộ đơn hàng, vận chuyển GHN Express và thanh toán trực tuyến bảo mật.'
+                  : isForgotPassword
                   ? 'Khôi phục quyền truy cập vào tài khoản với mã xác thực OTP gửi trực tiếp tới email cá nhân của bạn.'
                   : 'Khám phá hệ sinh thái máy ảnh, ống kính và phụ kiện nhiếp ảnh chính hãng với chính sách bảo hành và ưu đãi độc quyền dành riêng cho bạn.'}
               </p>
@@ -485,9 +497,143 @@ export const AuthModal: React.FC = () => {
           )}
 
           {/* ===================================================================== */}
-          {/* VIEW A: FORGOT PASSWORD FLOW (TÍCH HỢP OTP QUA SMTP) */}
+          {/* VIEW 0: ONBOARDING CHO EMAIL/GOOGLE CHƯA ĐĂNG KÝ (MATCHES MOCKUP)      */}
           {/* ===================================================================== */}
-          {isForgotPassword ? (
+          {onboardingData ? (
+            <div className="p-8 sm:p-10 flex flex-col justify-center space-y-5 animate-fade-in">
+              <div className="text-center space-y-1">
+                <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200 shadow-xs">
+                  <CheckCircle2 size={26} className="text-emerald-500" />
+                </div>
+                <h3 className="font-display font-bold text-2xl text-ink-900">
+                  Hoàn tất thông tin tài khoản
+                </h3>
+                <p className="text-xs text-ink-500">
+                  Thiết lập tên hiển thị của bạn để gia nhập CameraHub
+                </p>
+              </div>
+
+              {/* User email info card (Matches Image) */}
+              <div className="p-3 bg-cream-50 rounded-2xl border border-cream-200 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  {onboardingData.user.avatarUrl ? (
+                    <img
+                      src={onboardingData.user.avatarUrl}
+                      alt=""
+                      className="w-10 h-10 rounded-full object-cover border border-cream-300 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-accent-100 text-accent-700 flex items-center justify-center font-bold text-sm shrink-0">
+                      {onboardingData.user.fullName?.charAt(0) || 'U'}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-ink-900 truncate">
+                      {onboardingData.user.email}
+                    </p>
+                    <p className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
+                      <ShieldCheck size={13} />
+                      <span>Tài khoản Google hợp lệ</span>
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    cancelOnboarding();
+                    loginWithGoogle();
+                  }}
+                  className="text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline shrink-0 cursor-pointer"
+                >
+                  Đổi tài khoản
+                </button>
+              </div>
+
+              {/* Onboarding form */}
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!onboardingName.trim()) {
+                    setError('Vui lòng nhập tên hiển thị của bạn.');
+                    return;
+                  }
+                  setOnboardingLoading(true);
+                  try {
+                    await completeOnboarding(onboardingName, onboardingPhone);
+                    toast.success('Thiết lập tài khoản thành công!');
+                  } catch (err: any) {
+                    setError(err.message || 'Lỗi khi hoàn tất thông tin.');
+                  } finally {
+                    setOnboardingLoading(false);
+                  }
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-xs font-bold text-ink-700 mb-1">
+                    Tên hiển thị của bạn <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-400" />
+                    <input
+                      type="text"
+                      required
+                      value={onboardingName}
+                      onChange={(e) => setOnboardingName(e.target.value)}
+                      placeholder="Ví dụ: Tiến Mạnh"
+                      className="w-full pl-11 pr-4 py-3 bg-cream-50/70 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-accent-500 focus:bg-white transition-all text-ink-900 font-medium"
+                    />
+                  </div>
+                  <p className="text-[11px] text-ink-400 mt-1">
+                    Tên này sẽ hiển thị trên đơn hàng, giỏ hàng và danh tính tài khoản của bạn.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-ink-700 mb-1">
+                    Số điện thoại liên hệ (Khuyến khích)
+                  </label>
+                  <div className="relative">
+                    <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-400" />
+                    <input
+                      type="tel"
+                      value={onboardingPhone}
+                      onChange={(e) => setOnboardingPhone(e.target.value)}
+                      placeholder="Ví dụ: 0923745596"
+                      className="w-full pl-11 pr-4 py-3 bg-cream-50/70 border border-cream-200 rounded-2xl text-sm focus:outline-none focus:border-accent-500 focus:bg-white transition-all text-ink-900 font-medium"
+                    />
+                  </div>
+                  <p className="text-[11px] text-ink-400 mt-1">
+                    Dùng để nhận SMS mã vận đơn và giao nhận hàng GHN Express.
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={onboardingLoading}
+                  className="w-full btn-accent py-3.5 rounded-2xl font-bold text-sm shadow-md hover:shadow-lg active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {onboardingLoading ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <span>Hoàn tất & Bắt đầu mua sắm</span>
+                  )}
+                </button>
+
+                <div className="text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={cancelOnboarding}
+                    className="text-xs font-bold text-ink-500 hover:text-ink-800 transition-colors cursor-pointer inline-flex items-center gap-1"
+                  >
+                    <ArrowLeft size={13} />
+                    <span>Quay lại Đăng nhập</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          ) : isForgotPassword ? (
             <div className="p-8 sm:p-12 flex flex-col justify-center space-y-6 animate-fade-in">
               {forgotStep === 'email' ? (
                 <>
@@ -751,14 +897,31 @@ export const AuthModal: React.FC = () => {
                     </span>
                   </div>
 
-                  {/* Quick Demo Fill Button */}
+                  {/* Google Login Button */}
                   <button
                     type="button"
-                    onClick={handleDemoFill}
-                    className="w-full py-2.5 px-3 rounded-2xl border border-cream-200 bg-cream-50 hover:bg-cream-100 text-xs font-bold text-ink-800 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs active:scale-98"
+                    onClick={loginWithGoogle}
+                    className="w-full py-3 px-4 rounded-2xl border border-cream-200 bg-white hover:bg-cream-50 text-xs sm:text-sm font-bold text-ink-900 transition-all flex items-center justify-center gap-3 cursor-pointer shadow-2xs hover:shadow-xs active:scale-98"
                   >
-                    <Zap size={14} className="text-amber-500 fill-amber-500 shrink-0" />
-                    <span>Điền nhanh tài khoản Demo</span>
+                    <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                      <path
+                        fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                      />
+                      <path
+                        fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                      />
+                    </svg>
+                    <span>Tiếp tục với Google</span>
                   </button>
                 </form>
 
@@ -783,7 +946,33 @@ export const AuthModal: React.FC = () => {
                   <>
                     <div className="text-center space-y-1">
                       <h3 className="font-display font-bold text-2xl sm:text-3xl text-ink-900">Tạo tài khoản</h3>
-                      <p className="text-xs text-ink-500">Điền thông tin để nhận mã xác thực OTP qua Email</p>
+                      <p className="text-xs text-ink-500">Đăng ký nhanh bằng Google hoặc điền thông tin</p>
+                    </div>
+
+                    <div className="max-w-sm mx-auto w-full space-y-2.5">
+                      {/* Google Quick Register Button */}
+                      <button
+                        type="button"
+                        onClick={loginWithGoogle}
+                        className="w-full py-2.5 px-4 rounded-2xl border border-cream-200 bg-white hover:bg-cream-50 text-xs sm:text-sm font-bold text-ink-900 transition-all flex items-center justify-center gap-2.5 cursor-pointer shadow-2xs hover:shadow-xs active:scale-98"
+                      >
+                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                        </svg>
+                        <span>Đăng ký nhanh với Google</span>
+                      </button>
+
+                      <div className="relative py-0.5 flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t border-cream-200" />
+                        </div>
+                        <span className="relative px-3 bg-white text-[10px] font-bold text-ink-400 uppercase tracking-wider">
+                          HOẶC ĐIỀN THÔNG TIN
+                        </span>
+                      </div>
                     </div>
 
                     <form onSubmit={handleRequestOtp} className="space-y-3.5 max-w-sm mx-auto w-full">
@@ -884,6 +1073,43 @@ export const AuthModal: React.FC = () => {
                         )}
                       </button>
                     </form>
+
+                    {/* Divider */}
+                    <div className="relative py-1 flex items-center justify-center">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-cream-200" />
+                      </div>
+                      <span className="relative px-3 bg-white text-[11px] font-bold text-ink-400 uppercase tracking-wider">
+                        HOẶC
+                      </span>
+                    </div>
+
+                    {/* Google Register Button */}
+                    <button
+                      type="button"
+                      onClick={loginWithGoogle}
+                      className="w-full py-3 px-4 rounded-2xl border border-cream-200 bg-white hover:bg-cream-50 text-xs sm:text-sm font-bold text-ink-900 transition-all flex items-center justify-center gap-3 cursor-pointer shadow-2xs hover:shadow-xs active:scale-98"
+                    >
+                      <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                        <path
+                          fill="#4285F4"
+                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        />
+                        <path
+                          fill="#34A853"
+                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        />
+                        <path
+                          fill="#FBBC05"
+                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                        />
+                        <path
+                          fill="#EA4335"
+                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                        />
+                      </svg>
+                      <span>Đăng ký nhanh bằng Google</span>
+                    </button>
 
                     {/* Switch to Login */}
                     <div className="text-center text-xs text-ink-500">

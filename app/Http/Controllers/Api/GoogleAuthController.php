@@ -40,6 +40,23 @@ class GoogleAuthController extends Controller
         return redirect('https://accounts.google.com/o/oauth2/v2/auth?' . $queryParams);
     }
 
+    protected function formatUser(User $user): array
+    {
+        return [
+            'id' => (string) $user->id,
+            'customerCode' => 'CAM-ACC-' . str_pad((string) $user->id, 5, '0', STR_PAD_LEFT),
+            'email' => $user->email,
+            'fullName' => $user->name,
+            'phone' => $user->phone,
+            'avatarUrl' => $user->avatar_url,
+            'role' => $user->role ?? 'customer',
+            'hasPassword' => !empty($user->password),
+            'createdAt' => $user->created_at ? $user->created_at->toISOString() : null,
+            'totalOrders' => $user->orders()->count(),
+            'addresses' => [],
+        ];
+    }
+
     /**
      * Tiếp nhận callback chuyển hướng từ Google khi người dùng hoàn tất đăng nhập
      */
@@ -47,12 +64,12 @@ class GoogleAuthController extends Controller
     {
         if ($request->has('error')) {
             $err = $request->get('error_description', $request->get('error', 'Đăng nhập Google bị hủy.'));
-            return redirect('/?auth_error=' . urlencode($err));
+            return view('auth.google_callback', ['error' => $err]);
         }
 
         $code = $request->input('code');
         if (!$code) {
-            return redirect('/?auth_error=' . urlencode('Không nhận được mã xác thực (authorization code) từ Google.'));
+            return view('auth.google_callback', ['error' => 'Không nhận được mã xác thực (authorization code) từ Google.']);
         }
 
         $clientId = config('services.google.client_id');
@@ -72,14 +89,14 @@ class GoogleAuthController extends Controller
             if (!$tokenResponse->successful()) {
                 $errBody = $tokenResponse->json();
                 $msg = $errBody['error_description'] ?? $errBody['error'] ?? 'Lỗi xác thực mã với Google OAuth.';
-                return redirect('/?auth_error=' . urlencode($msg));
+                return view('auth.google_callback', ['error' => $msg]);
             }
 
             $tokenData = $tokenResponse->json();
             $accessToken = $tokenData['access_token'] ?? null;
 
             if (!$accessToken) {
-                return redirect('/?auth_error=' . urlencode('Không tìm thấy access_token trong phản hồi từ Google.'));
+                return view('auth.google_callback', ['error' => 'Không tìm thấy access_token trong phản hồi từ Google.']);
             }
 
             // 2. Lấy thông tin hồ sơ người dùng từ Google UserInfo API
@@ -88,7 +105,7 @@ class GoogleAuthController extends Controller
                 ->get('https://www.googleapis.com/oauth2/v3/userinfo');
 
             if (!$userResponse->successful()) {
-                return redirect('/?auth_error=' . urlencode('Không thể lấy thông tin tài khoản từ máy chủ Google.'));
+                return view('auth.google_callback', ['error' => 'Không thể lấy thông tin tài khoản từ máy chủ Google.']);
             }
 
             $googleData = $userResponse->json();
@@ -98,7 +115,7 @@ class GoogleAuthController extends Controller
             $avatar = $googleData['picture'] ?? null;
 
             if (!$email) {
-                return redirect('/?auth_error=' . urlencode('Tài khoản Google này không có quyền truy cập email công khai.'));
+                return view('auth.google_callback', ['error' => 'Tài khoản Google này không có quyền truy cập email công khai.']);
             }
 
             // 3. Tìm hoặc tạo mới người dùng trong cơ sở dữ liệu
@@ -106,6 +123,7 @@ class GoogleAuthController extends Controller
                 ->orWhere('email', $email)
                 ->first();
 
+            $isNewUser = false;
             if ($user) {
                 $user->update([
                     'google_id' => $googleId,
@@ -121,43 +139,70 @@ class GoogleAuthController extends Controller
                     'role' => 'customer',
                     'email_verified_at' => now(),
                 ]);
+                $isNewUser = true;
             }
 
             // 4. Khởi tạo mã Auth Token cho hệ thống CameraHub (lưu Cache 30 ngày)
             $token = 'camerahub_' . Str::random(40) . '_' . time();
             Cache::put('auth_token_' . $token, $user->id, now()->addDays(30));
 
-            // 5. Chuyển hướng người dùng về trang chủ kèm token
-            return redirect('/?google_token=' . $token . '&google_name=' . urlencode($user->name));
+            // 5. Trả về Blade view đồng bộ với Popup hoặc chuyển hướng
+            return view('auth.google_callback', [
+                'token' => $token,
+                'userData' => $this->formatUser($user),
+                'isNewUser' => $isNewUser,
+                'error' => null,
+            ]);
         } catch (\Throwable $e) {
-            return redirect('/?auth_error=' . urlencode('Lỗi hệ thống trong quá trình đăng nhập Google: ' . $e->getMessage()));
+            return view('auth.google_callback', ['error' => 'Lỗi hệ thống trong quá trình đăng nhập Google: ' . $e->getMessage()]);
         }
     }
 
     /**
      * Đăng nhập mô phỏng Google dùng cho môi trường thử nghiệm khi chưa có Client ID
      */
-    public function demoGoogleLogin()
+    public function demoGoogleLogin(Request $request)
     {
-        $demoEmail = 'google.photographer@gmail.com';
-        $user = User::where('email', $demoEmail)->first();
-
-        if (!$user) {
+        $isNew = $request->has('new');
+        if ($isNew) {
+            $rand = Str::lower(Str::random(5));
+            $demoEmail = 'newuser.' . $rand . '@gmail.com';
             $user = User::create([
-                'name' => 'Trần Đức Minh (Google User)',
+                'name' => 'Khách Hàng Mới (' . strtoupper($rand) . ')',
                 'email' => $demoEmail,
                 'password' => Hash::make('Demo@Google123'),
-                'google_id' => 'google_demo_1098273645123',
+                'google_id' => 'google_demo_' . time() . '_' . $rand,
                 'avatar_url' => 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
                 'role' => 'customer',
-                'phone' => '0912345678',
                 'email_verified_at' => now(),
             ]);
+            $isNewUser = true;
+        } else {
+            $demoEmail = 'google.photographer@gmail.com';
+            $user = User::where('email', $demoEmail)->first();
+            if (!$user) {
+                $user = User::create([
+                    'name' => 'Trần Đức Minh (Google User)',
+                    'email' => $demoEmail,
+                    'password' => Hash::make('Demo@Google123'),
+                    'google_id' => 'google_demo_1098273645123',
+                    'avatar_url' => 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
+                    'role' => 'customer',
+                    'phone' => '0912345678',
+                    'email_verified_at' => now(),
+                ]);
+            }
+            $isNewUser = false;
         }
 
         $token = 'camerahub_' . Str::random(40) . '_' . time();
         Cache::put('auth_token_' . $token, $user->id, now()->addDays(30));
 
-        return redirect('/?google_token=' . $token . '&google_name=' . urlencode($user->name));
+        return view('auth.google_callback', [
+            'token' => $token,
+            'userData' => $this->formatUser($user),
+            'isNewUser' => $isNewUser,
+            'error' => null,
+        ]);
     }
 }
