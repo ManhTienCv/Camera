@@ -17,7 +17,33 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
   const [sending, setSending] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const chatPopupRef = useRef<HTMLDivElement>(null);
   const lastMsgIdRef = useRef<number>(0);
+
+  // Close chat window when clicking outside or pressing Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (chatPopupRef.current && !chatPopupRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
 
   const scrollToBottom = (smooth = true) => {
     if (chatScrollRef.current) {
@@ -137,7 +163,10 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
 
       {/* 2. Chat Window Popup */}
       {isOpen && (
-        <div className="w-[360px] sm:w-[390px] h-[520px] max-h-[85vh] bg-white rounded-3xl shadow-2xl border border-cream-200 flex flex-col overflow-hidden animate-scale-up">
+        <div
+          ref={chatPopupRef}
+          className="w-[360px] sm:w-[390px] h-[520px] max-h-[85vh] bg-white rounded-3xl shadow-2xl border border-cream-200 flex flex-col overflow-hidden animate-scale-up"
+        >
           {/* Header */}
           <div className="px-5 py-4 bg-gradient-to-r from-ink-900 to-ink-800 text-white flex items-center justify-between shrink-0 shadow-sm">
             <div className="flex items-center gap-3">
