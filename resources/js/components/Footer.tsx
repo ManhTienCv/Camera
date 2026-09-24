@@ -118,14 +118,6 @@ export function Footer({ onNavigate, categories }: Props) {
 
         <div className="border-t border-ink-800 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-ink-400">
           <p>© 2026 {settings.storeName || 'CameraHub'}. Bản quyền thuộc về CameraHub Store.</p>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => onNavigate({ name: 'admin' })}
-              className="text-ink-400 hover:text-accent-400 transition-colors underline"
-            >
-              Trang Quản trị (Admin Dashboard)
-            </button>
-          </div>
         </div>
       </div>
     </footer>
