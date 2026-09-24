@@ -32,6 +32,7 @@
             } catch (e) {}
         })();
     </script>
+    @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/main.tsx'])
 </head>
 <body class="bg-cream-50 text-ink-800 antialiased min-h-screen">
