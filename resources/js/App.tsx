@@ -49,7 +49,11 @@ const parseLocation = (): Page => {
     return { name: 'admin', tab };
   }
   if (path.startsWith('/catalog')) {
-    return { name: 'catalog', categorySlug: search.get('cat') || undefined };
+    return {
+      name: 'catalog',
+      categorySlug: search.get('cat') || undefined,
+      brand: search.get('brand') || undefined,
+    };
   }
   if (path.startsWith('/product/')) {
     const slug = path.replace('/product/', '');
@@ -147,7 +151,11 @@ export default function App() {
     if (p.name === 'admin') {
       targetUrl = p.tab && p.tab !== 'dashboard' ? `/admin?tab=${p.tab}` : '/admin';
     } else if (p.name === 'catalog') {
-      targetUrl = p.categorySlug ? `/catalog?cat=${p.categorySlug}` : '/catalog';
+      const params = new URLSearchParams();
+      if (p.categorySlug) params.set('cat', p.categorySlug);
+      if (p.brand) params.set('brand', p.brand);
+      const q = params.toString();
+      targetUrl = q ? `/catalog?${q}` : '/catalog';
     } else if (p.name === 'product') {
       targetUrl = `/product/${p.slug}`;
     } else if (p.name === 'cart') {
@@ -254,6 +262,7 @@ export default function App() {
                             onNavigate={navigate}
                             categories={categories}
                             categorySlug={page.categorySlug}
+                            brand={page.brand}
                           />
                         )}
                         {page.name === 'product' && (

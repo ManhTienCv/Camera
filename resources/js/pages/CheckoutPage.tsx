@@ -34,6 +34,7 @@ import {
   type ShippingCarrier,
 } from '../services/shipping.service';
 import { vietqrService, VIETQR_CONFIG } from '../services/vietqr.service';
+import { getStoreSettings } from '../lib/settings';
 import { useToast } from '../context/ToastContext';
 
 interface Props {
@@ -653,12 +654,19 @@ export function CheckoutPage({ onNavigate }: Props) {
             </div>
 
             <div className="space-y-3">
-              {[
-                { id: 'vietqr', label: 'Chuyển khoản VietQR (Napas 24/7 - Khuyên dùng)' },
-                { id: 'cod', label: 'Thanh toán khi nhận hàng (COD)' },
-                { id: 'vnpay', label: 'Cổng VNPAY (ATM / Visa / QR Code)' },
-                { id: 'momo', label: 'Ví điện tử MoMo' },
-              ].map((method) => {
+              {(() => {
+                const storeSettings = getStoreSettings();
+                const availablePaymentMethods = [
+                  storeSettings.isVietQrEnabled && {
+                    id: 'vietqr',
+                    label: `Chuyển khoản VietQR (${storeSettings.bankName} 24/7 - Khuyên dùng)`,
+                  },
+                  storeSettings.isCodEnabled && { id: 'cod', label: 'Thanh toán khi nhận hàng (COD)' },
+                  { id: 'vnpay', label: 'Cổng VNPAY (ATM / Visa / QR Code)' },
+                  storeSettings.isMomoEnabled && { id: 'momo', label: 'Ví điện tử MoMo' },
+                ].filter(Boolean) as Array<{ id: string; label: string }>;
+
+                return availablePaymentMethods.map((method) => {
                 const isSelected = form.payment === method.id;
                 return (
                   <div
@@ -680,15 +688,14 @@ export function CheckoutPage({ onNavigate }: Props) {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-bold text-sm text-ink-900 dark:text-cream-50">{method.label}</p>
-
                         </div>
-
                       </div>
                     </label>
                   </div>
                 );
-              })}
-            </div>
+              });
+            })()}
+          </div>
           </div>
         </div>
 

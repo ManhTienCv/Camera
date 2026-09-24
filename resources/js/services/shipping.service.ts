@@ -1,3 +1,5 @@
+import { getStoreSettings } from '../lib/settings';
+
 export interface ShippingCarrier {
   id: string;
   name: string;
@@ -71,10 +73,12 @@ export function calculateShippingFee(params: ShippingCalculationParams): {
 } {
   const carrier =
     AVAILABLE_CARRIERS.find((c) => c.id === params.carrierId) || AVAILABLE_CARRIERS[0];
+  const settings = getStoreSettings();
+  const threshold = settings.freeShippingThreshold || FREE_SHIPPING_THRESHOLD;
   const originalFee = carrier.baseFee;
 
-  // Freeship for orders >= 1M, except GrabExpress Hỏa Tốc
-  const isEligibleForFree = params.subtotal >= FREE_SHIPPING_THRESHOLD && !carrier.isExpress;
+  // Freeship for orders >= freeShippingThreshold, except GrabExpress Hỏa Tốc
+  const isEligibleForFree = params.subtotal >= threshold && !carrier.isExpress;
   const fee = isEligibleForFree ? 0 : originalFee;
 
   return {

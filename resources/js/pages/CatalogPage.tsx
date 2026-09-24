@@ -9,6 +9,7 @@ interface Props {
   onNavigate: (page: Page) => void;
   categories: Category[];
   categorySlug?: string;
+  brand?: string;
 }
 
 type SortOption = 'featured' | 'best-seller' | 'price-asc' | 'price-desc' | 'rating' | 'newest';
@@ -22,11 +23,11 @@ const sortLabels: Record<SortOption, string> = {
   newest: 'Mới nhất',
 };
 
-export function CatalogPage({ onNavigate, categories, categorySlug }: Props) {
+export function CatalogPage({ onNavigate, categories, categorySlug, brand }: Props) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(categorySlug || null);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>(brand ? [brand] : []);
   const [sort, setSort] = useState<SortOption>('featured');
   const [, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 200000000]);
@@ -34,6 +35,12 @@ export function CatalogPage({ onNavigate, categories, categorySlug }: Props) {
   useEffect(() => {
     setSelectedCategory(categorySlug || null);
   }, [categorySlug]);
+
+  useEffect(() => {
+    if (brand) {
+      setSelectedBrands([brand]);
+    }
+  }, [brand]);
 
   useEffect(() => {
     (async () => {

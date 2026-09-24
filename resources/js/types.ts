@@ -327,7 +327,7 @@ export interface FinanceTransactionsData {
 
 export type Page =
   | { name: 'home' }
-  | { name: 'catalog'; categorySlug?: string }
+  | { name: 'catalog'; categorySlug?: string; brand?: string }
   | { name: 'product'; slug: string }
   | { name: 'cart' }
   | { name: 'checkout' }

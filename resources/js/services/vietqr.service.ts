@@ -1,7 +1,7 @@
 /**
  * VietQR Configuration & Service for CameraHub Store
- * Official Account: Vietcombank - STK: 88888888 - NGUYEN MANH TIEN
  */
+import { getStoreSettings } from '../lib/settings';
 
 export interface VietQRConfig {
   bankId: string;
@@ -20,8 +20,15 @@ export const VIETQR_CONFIG: VietQRConfig = {
 };
 
 export const vietqrService = {
-  getConfig() {
-    return VIETQR_CONFIG;
+  getConfig(): VietQRConfig {
+    const settings = getStoreSettings();
+    return {
+      bankId: settings.bankId || VIETQR_CONFIG.bankId,
+      bankName: settings.bankName || VIETQR_CONFIG.bankName,
+      bankFullName: settings.bankFullName || VIETQR_CONFIG.bankFullName,
+      accountNo: settings.bankAccountNumber || VIETQR_CONFIG.accountNo,
+      accountName: settings.bankAccountName || VIETQR_CONFIG.accountName,
+    };
   },
 
   /**
@@ -32,12 +39,13 @@ export const vietqrService = {
     orderCode: string;
     template?: 'compact2' | 'compact' | 'qr_only';
   }): string {
+    const config = this.getConfig();
     const { amount, orderCode, template = 'compact2' } = params;
     const safeAmount = Math.max(0, Math.round(amount));
     const safeCode = encodeURIComponent(orderCode.trim());
-    const safeAccountName = encodeURIComponent(VIETQR_CONFIG.accountName);
+    const safeAccountName = encodeURIComponent(config.accountName);
 
-    return `https://img.vietqr.io/image/${VIETQR_CONFIG.bankId}-${VIETQR_CONFIG.accountNo}-${template}.png?amount=${safeAmount}&addInfo=${safeCode}&accountName=${safeAccountName}`;
+    return `https://img.vietqr.io/image/${config.bankId}-${config.accountNo}-${template}.png?amount=${safeAmount}&addInfo=${safeCode}&accountName=${safeAccountName}`;
   },
 
   /**
