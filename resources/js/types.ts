@@ -179,6 +179,15 @@ export interface PeriodRevenueItem {
   order_count: number;
 }
 
+export interface TopSellingProductItem {
+  id: number;
+  name: string;
+  image_url?: string | null;
+  price: number;
+  sold_qty: number;
+  total_revenue: number;
+}
+
 export interface ReportSummaryData {
   totalOrders: number;
   totalCustomers: number;
@@ -187,6 +196,8 @@ export interface ReportSummaryData {
   revenueByDate: PeriodRevenueItem[];
   revenueByMonth: PeriodRevenueItem[];
   revenueByYear: PeriodRevenueItem[];
+  topSellingProducts?: TopSellingProductItem[];
+  isMock?: boolean;
 }
 
 export interface ReportChartsData {
@@ -200,6 +211,7 @@ export interface ReportChartsData {
   revYearData: number[];
   paymentMethodLabels: string[];
   paymentMethodRevenue: number[];
+  isMock?: boolean;
 }
 
 export interface AdminUserItem {

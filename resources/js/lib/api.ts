@@ -514,11 +514,15 @@ export const api = {
   // ==========================================
   // Lab 08: Admin Reports & Charts APIs
   // ==========================================
-  getAdminReportSummary: () =>
-    request<ReportSummaryData>('/admin/reports'),
+  getAdminReportSummary: (params?: { mock?: boolean; real?: boolean }) => {
+    const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
+    return request<ReportSummaryData>(`/admin/reports${query}`);
+  },
 
-  getAdminReportCharts: () =>
-    request<ReportChartsData>('/admin/reports/charts'),
+  getAdminReportCharts: (params?: { mock?: boolean; real?: boolean }) => {
+    const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
+    return request<ReportChartsData>(`/admin/reports/charts${query}`);
+  },
 
   // ==========================================
   // Lab 08: Admin User Management APIs

@@ -212,6 +212,71 @@ class ReportController extends Controller
     }
 
     /**
+     * Dữ liệu tĩnh mẫu cho top sản phẩm bán chạy nhất
+     */
+    private function mockTopSellingProducts(): Collection
+    {
+        $products = DB::table('products')->take(5)->get();
+        if ($products->count() >= 5) {
+            $soldQtys = [48, 36, 42, 29, 18];
+            return $products->map(function ($p, $idx) use ($soldQtys) {
+                $qty = $soldQtys[$idx] ?? 12;
+                return (object)[
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'image_url' => $p->image_url,
+                    'price' => (float)$p->price,
+                    'sold_qty' => $qty,
+                    'total_revenue' => (float)($p->price * $qty),
+                ];
+            })->sortByDesc('sold_qty')->values();
+        }
+
+        return collect([
+            (object)[
+                'id' => 1,
+                'name' => 'Sony Alpha A7 Mark IV (Body)',
+                'image_url' => 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=1000',
+                'price' => 54990000,
+                'sold_qty' => 48,
+                'total_revenue' => 2639520000,
+            ],
+            (object)[
+                'id' => 3,
+                'name' => 'Fujifilm X-T5 (Body) - Bạc',
+                'image_url' => 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&q=80&w=1000',
+                'price' => 43900000,
+                'sold_qty' => 42,
+                'total_revenue' => 1843800000,
+            ],
+            (object)[
+                'id' => 2,
+                'name' => 'Canon EOS R6 Mark II (Body)',
+                'image_url' => 'https://images.unsplash.com/photo-1617005082133-548c4dd27f35?auto=format&fit=crop&q=80&w=1000',
+                'price' => 58900000,
+                'sold_qty' => 36,
+                'total_revenue' => 2120400000,
+            ],
+            (object)[
+                'id' => 4,
+                'name' => 'Nikon Z6 III (Body)',
+                'image_url' => 'https://images.unsplash.com/photo-1510127034890-ba27508e9f1c?auto=format&fit=crop&q=80&w=1000',
+                'price' => 62500000,
+                'sold_qty' => 29,
+                'total_revenue' => 1812500000,
+            ],
+            (object)[
+                'id' => 5,
+                'name' => 'Sony Alpha A7R Mark V (Body)',
+                'image_url' => 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=1000',
+                'price' => 84900000,
+                'sold_qty' => 18,
+                'total_revenue' => 1528200000,
+            ],
+        ]);
+    }
+
+    /**
      * Thống kê top sản phẩm bán chạy nhất
      */
     private function topSellingProducts(int $limit = 5): Collection
@@ -234,10 +299,14 @@ class ReportController extends Controller
     {
         $realRevenue = (float) $this->dailyRevenue()->sum('total_revenue');
 
-        // Chỉ dùng mock khi có param ?fake=1 hoặc ?mock=1 từ request
-        if ($request->has('fake') || $request->has('mock')) {
+        // Mặc định trả về dữ liệu giả định (mock), trừ khi yêu cầu rõ ràng dữ liệu thực tế (?real=1 hoặc ?mock=0)
+        $isReal = $request->boolean('real') || ($request->has('mock') && !$request->boolean('mock'));
+        $useMock = !$isReal;
+
+        if ($useMock) {
             $data = $this->getStaticMockReport();
-            $data['topSellingProducts'] = $this->topSellingProducts();
+            $data['topSellingProducts'] = $this->mockTopSellingProducts();
+            $data['isMock'] = true;
         } else {
             $categoryRevenue = $this->categoryRevenue();
             $totalOrders = Order::count();
@@ -252,6 +321,7 @@ class ReportController extends Controller
                 'categoryRevenue', 'totalOrders', 'totalCustomers', 'totalRevenue',
                 'revenueByDate', 'revenueByMonth', 'revenueByYear', 'topSellingProducts'
             );
+            $data['isMock'] = false;
         }
 
         if ($request->wantsJson() || $request->is('api/*')) {
@@ -270,11 +340,12 @@ class ReportController extends Controller
      */
     public function charts(Request $request)
     {
-        $realRevenue = (float) $this->dailyRevenue()->sum('total_revenue');
+        $isReal = $request->boolean('real') || ($request->has('mock') && !$request->boolean('mock'));
+        $useMock = !$isReal;
 
-        // Chỉ dùng mock khi có param ?fake=1 hoặc ?mock=1
-        if ($request->has('fake') || $request->has('mock')) {
+        if ($useMock) {
             $chartData = $this->getStaticMockCharts();
+            $chartData['isMock'] = true;
         } else {
             $categories = $this->categoryRevenue();
             $catLabels = $categories->map(fn ($row) => $row->category_name ?? 'Danh mục #'.$row->category_id)->all();
@@ -317,6 +388,7 @@ class ReportController extends Controller
                 'revMonthLabels', 'revMonthData', 'revYearLabels', 'revYearData',
                 'paymentMethodLabels', 'paymentMethodRevenue'
             );
+            $chartData['isMock'] = false;
         }
 
         if ($request->wantsJson() || $request->is('api/*')) {
