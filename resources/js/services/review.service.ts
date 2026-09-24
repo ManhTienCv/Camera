@@ -3,50 +3,8 @@ import type { Review } from '../types';
 const STORAGE_KEY = 'camerahub_reviews_v1';
 const REVIEWED_ORDERS_KEY = 'camerahub_reviewed_orders_v1';
 
-// Initial sample camera reviews with real high quality unboxing / photography photos
-const DEFAULT_REVIEWS: Review[] = [
-  {
-    id: 'rev-1',
-    productId: 'all', // matches any product as fallback or specific IDs
-    userName: 'Trần Văn Mạnh',
-    rating: 5,
-    variant: 'Body Only • Chính Hãng',
-    comment: 'Máy chụp nét đứt tay! Cảm biến fullframe thế hệ mới tái tạo màu da người rất trong và tự nhiên. Hệ thống lấy nét mắt thời gian thực bắt dính chủ thể dù đang di chuyển nhanh. Shop đóng gói bọc chống sốc 4 lớp rất cẩn thận!',
-    images: [
-      'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=800',
-      'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&q=80&w=800',
-    ],
-    isVerifiedPurchase: true,
-    helpfulCount: 14,
-    createdAt: '16/08/2026',
-  },
-  {
-    id: 'rev-2',
-    productId: 'all',
-    userName: 'Hoàng Quốc Bảo (Photographer)',
-    rating: 5,
-    variant: 'Kit 24-70mm GM II',
-    comment: 'Đã thử nghiệm quay video 4K 60fps 10-bit 4:2:2 cho dự án dịch vụ cưới cuối tuần qua, màu S-Cinetone lên rất no và dễ hậu kỳ. Khử noise ISO 6400 vẫn sạch sẽ. Đáng tiền từng xu!',
-    images: [
-      'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&q=80&w=800',
-    ],
-    isVerifiedPurchase: true,
-    helpfulCount: 8,
-    createdAt: '12/08/2026',
-  },
-  {
-    id: 'rev-3',
-    productId: 'all',
-    userName: 'Lê Minh Tuấn',
-    rating: 4,
-    variant: 'Combo Fly More',
-    comment: 'Thiết bị hoạt động mượt mà, cảm ứng và giao diện menu thế hệ mới trực quan hơn nhiều. Giao hàng GHN hỏa tốc nhận trong 24h. Chỉ tiếc là hộp không tặng kèm sạc ngoài kép mà phải mua thêm.',
-    images: [],
-    isVerifiedPurchase: true,
-    helpfulCount: 5,
-    createdAt: '07/08/2026',
-  },
-];
+// Reviews are strictly loaded from real database APIs
+const DEFAULT_REVIEWS: Review[] = [];
 
 class ReviewService {
   private getStoredReviews(): Review[] {

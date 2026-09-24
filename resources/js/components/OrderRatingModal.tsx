@@ -10,16 +10,18 @@ import {
   Package,
 } from 'lucide-react';
 import { reviewService } from '../services/review.service';
+import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 interface Props {
-  isOpen: boolean;
+  isOpen?: boolean;
   onClose: () => void;
-  order: {
+  order?: {
     id: string;
     order_code: string;
     items: Array<{
+      product_id?: string;
       categoryTag?: string;
       name: string;
       quantity: number;
@@ -27,7 +29,17 @@ interface Props {
       image_url?: string;
     }>;
   } | null;
+  orderCode?: string;
+  items?: Array<{
+    id?: string;
+    product_id?: string;
+    name: string;
+    image_url?: string;
+    quantity?: number;
+    price?: number;
+  }>;
   onSubmitted?: () => void;
+  onSuccess?: () => void;
 }
 
 const RATING_FEEDBACK: Record<number, string> = {
@@ -38,7 +50,7 @@ const RATING_FEEDBACK: Record<number, string> = {
   1: 'Rất Tệ (1/5)',
 };
 
-export function OrderRatingModal({ isOpen, onClose, order, onSubmitted }: Props) {
+export function OrderRatingModal({ isOpen = true, onClose, order, orderCode, items, onSubmitted, onSuccess }: Props) {
   const { user } = useAuth();
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -72,9 +84,11 @@ export function OrderRatingModal({ isOpen, onClose, order, onSubmitted }: Props)
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen || !order) return null;
+  const effectiveOrderCode = order?.order_code || orderCode || '';
+  const effectiveItems = order?.items || items || [];
+  const firstItem = effectiveItems[0];
 
-  const firstItem = order.items?.[0];
+  if (!isOpen || (!order && !orderCode)) return null;
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -111,30 +125,36 @@ export function OrderRatingModal({ isOpen, onClose, order, onSubmitted }: Props)
 
     setSubmitting(true);
     try {
-      // Save review to reviewService
-      reviewService.addReview({
-        productId: 'all', // matches the store catalog
-        orderId: order.order_code,
-        userName: user?.fullName || 'Khách hàng CameraHub',
+      const targetProductId = (firstItem as any)?.product_id || (firstItem as any)?.id || '1';
+
+      // 1. Gửi review trực tiếp lên API Database
+      await api.createProductReview(String(targetProductId), {
         rating,
         variant: firstItem?.name ? `${firstItem.name}` : 'Chính Hãng',
         comment: comment.trim(),
         images: attachedImages,
       });
 
-      // Mark order as reviewed
-      reviewService.markOrderAsReviewed(order.order_code);
-      toast.success('Cảm ơn bạn đã gửi đánh giá sản phẩm!');
+      // 2. Đánh dấu order đã được đánh giá thành công
+      if (effectiveOrderCode) {
+        reviewService.markOrderAsReviewed(effectiveOrderCode);
+      }
+
+      toast.success('Cảm ơn bạn đã gửi đánh giá sản phẩm thành công!');
+      window.dispatchEvent(new Event('camerahub_reviews_updated'));
 
       if (onSubmitted) {
         onSubmitted();
+      }
+      if (onSuccess) {
+        onSuccess();
       }
 
       onClose();
       setComment('');
       setAttachedImages([]);
-    } catch (err) {
-      console.error('Rating failed:', err);
+    } catch (err: any) {
+      toast.error(err.message || 'Không thể gửi đánh giá. Vui lòng kiểm tra lại đơn hàng.');
     } finally {
       setSubmitting(false);
     }

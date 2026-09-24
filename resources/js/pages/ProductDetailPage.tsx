@@ -9,7 +9,6 @@ import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { ProductCard } from '../components/ProductCard';
 import { ProductReviewsSection } from '../components/ProductReviewsSection';
-import { reviewService } from '../services/review.service';
 
 interface Props {
   slug: string;
@@ -47,12 +46,10 @@ export function ProductDetailPage({ slug, onNavigate, categories }: Props) {
             if (revRes && revRes.stats) {
               setReviewCount(revRes.stats.count);
             } else {
-              const stats = reviewService.getProductStats(prod.id);
-              setReviewCount(stats.count);
+              setReviewCount(prod.review_count || 0);
             }
           } catch {
-            const stats = reviewService.getProductStats(prod.id);
-            setReviewCount(stats.count);
+            setReviewCount(prod.review_count || 0);
           }
 
           try {
@@ -88,8 +85,6 @@ export function ProductDetailPage({ slug, onNavigate, categories }: Props) {
             return;
           }
         } catch (_) {}
-        const stats = reviewService.getProductStats(product.id);
-        setReviewCount(stats.count);
       }
     };
     window.addEventListener('camerahub_reviews_updated', handleSync);

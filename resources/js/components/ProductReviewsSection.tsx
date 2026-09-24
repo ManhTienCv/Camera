@@ -14,7 +14,6 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import type { Product, Review } from '../types';
-import { reviewService } from '../services/review.service';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -37,9 +36,22 @@ export function ProductReviewsSection({ product }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [stats, setStats] = useState(reviewService.getProductStats(product.id));
+  const [stats, setStats] = useState({
+    average: product.rating || 5.0,
+    count: product.review_count || 0,
+    breakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } as Record<number, number>,
+    breakdownPercent: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } as Record<number, number>,
+    withImagesCount: 0,
+  });
   const [selectedFilter, setSelectedFilter] = useState<'all' | '5' | '4' | '3' | '2' | '1' | 'images'>('all');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [votedHelpfulIds, setVotedHelpfulIds] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('camerahub_voted_helpful_ids') || '[]');
+    } catch {
+      return [];
+    }
+  });
 
   // Form State
   const [isWriting, setIsWriting] = useState(false);
@@ -54,16 +66,17 @@ export function ProductReviewsSection({ product }: Props) {
   const loadData = async () => {
     try {
       const res = await api.getProductReviews(String(product.id));
-      if (res && res.reviews && res.reviews.length > 0) {
+      if (res && res.reviews) {
         setReviews(res.reviews);
-        setStats(res.stats);
+        if (res.stats) {
+          setStats(res.stats);
+        }
         return;
       }
-    } catch (_) {}
-    // Fallback to local reviews if none in db
-    const data = reviewService.getReviewsByProduct(product.id);
-    setReviews(data);
-    setStats(reviewService.getProductStats(product.id));
+    } catch (e) {
+      console.error('Không thể nạp đánh giá từ API:', e);
+    }
+    setReviews([]);
   };
 
   useEffect(() => {
@@ -465,7 +478,7 @@ export function ProductReviewsSection({ product }: Props) {
             </div>
 
             {paginatedReviews.map((rev) => {
-              const isVoted = reviewService.isReviewHelpfulVoted(rev.id);
+              const isVoted = votedHelpfulIds.includes(rev.id);
               return (
                 <div
                   key={rev.id}
@@ -520,6 +533,10 @@ export function ProductReviewsSection({ product }: Props) {
                     {/* Helpful Button */}
                     <button
                       onClick={async () => {
+                        if (isVoted) {
+                          toast.info('Bạn đã bình chọn hữu ích cho đánh giá này rồi.');
+                          return;
+                        }
                         try {
                           const res = await api.voteReviewHelpful(rev.id);
                           if (res && res.helpful_count !== undefined) {
@@ -528,11 +545,15 @@ export function ProductReviewsSection({ product }: Props) {
                                 r.id === rev.id ? { ...r, helpfulCount: res.helpful_count } : r
                               )
                             );
+                            const updated = [...votedHelpfulIds, rev.id];
+                            setVotedHelpfulIds(updated);
+                            localStorage.setItem('camerahub_voted_helpful_ids', JSON.stringify(updated));
+                            toast.success('Cảm ơn bạn đã ghi nhận đánh giá hữu ích!');
                             return;
                           }
-                        } catch (_) {}
-                        reviewService.toggleHelpful(rev.id);
-                        loadData();
+                        } catch (err: any) {
+                          toast.warning(err.message || 'Không thể ghi nhận đánh giá hữu ích lúc này.');
+                        }
                       }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer shrink-0 ${
                         isVoted

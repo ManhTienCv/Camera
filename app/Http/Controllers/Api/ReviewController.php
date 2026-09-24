@@ -210,12 +210,25 @@ class ReviewController extends Controller
     }
 
     /**
-     * Bấm hữu ích cho đánh giá
+     * Bấm hữu ích cho đánh giá (chống spam nhiều lần)
      */
-    public function helpful($id)
+    public function helpful(Request $request, $id)
     {
         $review = Review::findOrFail($id);
+
+        $user = $this->resolveUser($request);
+        $voterKey = $user ? "vote_user_{$user->id}_rev_{$id}" : "vote_ip_" . md5($request->ip()) . "_rev_{$id}";
+
+        if (Cache::has($voterKey)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn đã bình chọn hữu ích cho đánh giá này rồi.',
+                'helpful_count' => (int) $review->helpful_count,
+            ], 429);
+        }
+
         $review->increment('helpful_count');
+        Cache::put($voterKey, true, now()->addDays(30));
 
         return response()->json([
             'success' => true,

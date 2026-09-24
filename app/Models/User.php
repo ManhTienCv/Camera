@@ -67,7 +67,10 @@ class User extends Authenticatable
             'exp' => time() + (86400 * 30),
             'nonce' => \Illuminate\Support\Str::random(16),
         ]));
-        $appKey = config('app.key') ?: 'camerahub_default_secret_key_2026';
+        $appKey = config('app.key');
+        if (empty($appKey)) {
+            throw new \RuntimeException('Hệ thống chưa cấu hình APP_KEY trong file môi trường .env.');
+        }
         $signature = hash_hmac('sha256', $payload, $appKey);
         $token = 'camerahub_' . $payload . '.' . $signature;
 
@@ -92,7 +95,10 @@ class User extends Authenticatable
             $parts = explode('.', $tokenRaw, 2);
             if (count($parts) === 2) {
                 [$payloadEncoded, $signature] = $parts;
-                $appKey = config('app.key') ?: 'camerahub_default_secret_key_2026';
+                $appKey = config('app.key');
+                if (empty($appKey)) {
+                    return null;
+                }
                 $expectedSig = hash_hmac('sha256', $payloadEncoded, $appKey);
                 if (hash_equals($expectedSig, $signature)) {
                     $payload = json_decode(base64_decode($payloadEncoded), true);

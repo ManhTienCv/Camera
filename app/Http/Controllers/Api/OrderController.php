@@ -199,10 +199,25 @@ class OrderController extends Controller
                     $voucher = \App\Models\Voucher::where('code', $voucherCode)->first();
                     if ($voucher) {
                         $check = $voucher->isValid($totalAmount);
-                        if ($check['valid']) {
-                            $discountAmount = $voucher->calculateDiscount($totalAmount);
-                            $voucher->increment('used_count');
+                        if (!$check['valid']) {
+                            throw new \Exception($check['message']);
                         }
+
+                        // Atomic conditional increment để chống Race Condition khi nhiều người mua cùng lúc
+                        $affected = \App\Models\Voucher::where('id', $voucher->id)
+                            ->where(function ($q) {
+                                $q->where('usage_limit', 0)
+                                  ->orWhereColumn('used_count', '<', 'usage_limit');
+                            })
+                            ->increment('used_count');
+
+                        if (!$affected) {
+                            throw new \Exception("Mã ưu đãi \"{$voucher->code}\" vừa hết lượt sử dụng.");
+                        }
+
+                        $discountAmount = $voucher->calculateDiscount($totalAmount);
+                    } else {
+                        throw new \Exception("Mã ưu đãi \"{$voucherCode}\" không tồn tại hoặc đã hết hạn.");
                     }
                 }
 
@@ -285,7 +300,7 @@ class OrderController extends Controller
     }
 
     /**
-     * MỤC TIÊU 4: BẢO VỆ DỮ LIỆU CÁ NHÂN & CHỐNG IDOR (PII PROTECTION)
+     * MỤC TIÊU 4: BẢO VỆ DỮ LIỆU CÁ NHÂN & CHỐNG IDOR (PII & ORDER DATA PROTECTION)
      */
     public function show(Request $request, $id)
     {
@@ -295,11 +310,36 @@ class OrderController extends Controller
         $isAuthorized = false;
 
         if ($currentUser) {
-            // Admin hoặc người sở hữu đơn hàng được xem đầy đủ
+            // Admin hoặc người sở hữu tài khoản đơn hàng được xem
             $isAuthorized = ($currentUser->role === 'admin') || ((int) $currentUser->id === (int) $order->user_id);
         }
 
-        return response()->json($this->formatOrder($order, $isAuthorized));
+        // Nếu là đơn hàng của khách vãng lai (không gắn user_id), kiểm tra Session ID
+        if (!$isAuthorized && empty($order->user_id)) {
+            $sessionId = $request->header('X-Session-ID') ?: $request->input('session_id');
+            if ($sessionId && $sessionId === $order->session_id) {
+                $isAuthorized = true;
+            }
+        }
+
+        // Cho phép khách tra cứu bằng email hoặc số điện thoại đặt hàng (verify_key)
+        if (!$isAuthorized && $request->filled('verify_key')) {
+            $verifyKey = trim($request->input('verify_key'));
+            if (
+                strcasecmp($verifyKey, (string) $order->customer_email) === 0 ||
+                $verifyKey === (string) $order->customer_phone
+            ) {
+                $isAuthorized = true;
+            }
+        }
+
+        if (!$isAuthorized) {
+            return response()->json([
+                'message' => 'Bạn không có quyền truy cập thông tin chi tiết đơn hàng này.',
+            ], 403);
+        }
+
+        return response()->json($this->formatOrder($order, true));
     }
 
     public function index(Request $request)
@@ -307,9 +347,14 @@ class OrderController extends Controller
         $currentUser = $this->resolveCurrentUser($request);
         $isAdmin = $currentUser && $currentUser->role === 'admin';
 
-        $orders = Order::with('items')->orderBy('created_at', 'desc')->get()->map(function ($order) use ($currentUser, $isAdmin) {
-            $isAuthorized = $isAdmin || ($currentUser && (int) $currentUser->id === (int) $order->user_id);
-            $data = $this->formatOrder($order, $isAuthorized);
+        if (!$isAdmin) {
+            return response()->json([
+                'message' => 'Forbidden: Bạn không có quyền truy cập danh sách đơn hàng toàn hệ thống.',
+            ], 403);
+        }
+
+        $orders = Order::with('items')->orderBy('created_at', 'desc')->get()->map(function ($order) {
+            $data = $this->formatOrder($order, true);
             $data['item_count'] = $order->items->sum('quantity');
             return $data;
         });
@@ -376,6 +421,39 @@ class OrderController extends Controller
     {
         $order = Order::where('id', $id)->orWhere('order_code', $id)->firstOrFail();
 
+        // 0. KIỂM TRA QUYỀN SỞ HỮU ĐƠN HÀNG (CHỐNG LỖ HỔNG IDOR)
+        $currentUser = $this->resolveCurrentUser($request);
+        $isAuthorized = false;
+
+        if ($currentUser) {
+            $isAuthorized = ($currentUser->role === 'admin') || ((int) $currentUser->id === (int) $order->user_id);
+        }
+
+        // Khách vãng lai (không gắn user_id), đối chiếu theo session_id
+        if (!$isAuthorized && empty($order->user_id)) {
+            $sessionId = $request->header('X-Session-ID') ?: $request->input('session_id');
+            if ($sessionId && $sessionId === $order->session_id) {
+                $isAuthorized = true;
+            }
+        }
+
+        // Khách tra cứu qua email hoặc số điện thoại (verify_key)
+        if (!$isAuthorized && $request->filled('verify_key')) {
+            $verifyKey = trim($request->input('verify_key'));
+            if (
+                strcasecmp($verifyKey, (string) $order->customer_email) === 0 ||
+                $verifyKey === (string) $order->customer_phone
+            ) {
+                $isAuthorized = true;
+            }
+        }
+
+        if (!$isAuthorized) {
+            return response()->json([
+                'message' => 'Bạn không có quyền thực hiện thao tác hủy đơn hàng này.',
+            ], 403);
+        }
+
         // 1. Chặn hủy nếu đơn đã hoàn tất giao hàng hoặc đã hủy trước đó
         if (in_array($order->order_status, ['delivered', 'cancelled'])) {
             return response()->json([
@@ -408,12 +486,33 @@ class OrderController extends Controller
                 'bank_account_holder.required' => 'Vui lòng cung cấp tên chủ tài khoản nhận tiền hoàn.',
             ]);
 
-            // Hoàn lại tồn kho cho sản phẩm
-            foreach ($order->items as $item) {
-                Product::where('id', $item->product_id)->increment('stock', $item->quantity);
-            }
+            DB::transaction(function () use ($order, $request, $reason) {
+                // Hoàn lại tồn kho cho sản phẩm
+                foreach ($order->items as $item) {
+                    Product::where('id', $item->product_id)->increment('stock', $item->quantity);
+                }
 
-            // Hủy vận đơn GHN nếu có
+                // Chuyển sang refund_pending để Admin duyệt hoàn tiền
+                $order->order_status = 'refund_pending';
+                $order->payment_status = 'refund_pending';
+                $order->bank_name = trim($request->bank_name);
+                $order->bank_account_number = trim($request->bank_account_number);
+                $order->bank_account_holder = trim($request->bank_account_holder);
+                $order->cancel_reason = $reason;
+                $order->notes = ($order->notes ? $order->notes . ' | ' : '') . 'Yêu cầu hoàn tiền về STK: ' . $order->bank_account_number . ' (' . $order->bank_name . ' - ' . $order->bank_account_holder . '). Lý do: ' . $reason;
+                $order->save();
+
+                // Lưu log giao dịch hoàn tiền
+                PaymentTransaction::create([
+                    'order_id' => $order->id,
+                    'gateway' => $order->payment_method ?: 'online',
+                    'amount' => $order->total_amount,
+                    'status' => 'refund_pending',
+                    'message' => "Khách yêu cầu hoàn tiền về STK {$order->bank_account_number} ({$order->bank_name}) - {$order->bank_account_holder}",
+                ]);
+            });
+
+            // Hủy vận đơn GHN nếu có (thực hiện ngoài transaction)
             if ($order->tracking_code && !str_starts_with($order->tracking_code, '#GHN')) {
                 try {
                     GHNService::cancelOrder($order->tracking_code);
@@ -422,35 +521,23 @@ class OrderController extends Controller
                 }
             }
 
-            // Chuyển sang refund_pending để Admin duyệt hoàn tiền
-            $order->order_status = 'refund_pending';
-            $order->payment_status = 'refund_pending';
-            $order->bank_name = trim($request->bank_name);
-            $order->bank_account_number = trim($request->bank_account_number);
-            $order->bank_account_holder = trim($request->bank_account_holder);
-            $order->cancel_reason = $reason;
-            $order->notes = ($order->notes ? $order->notes . ' | ' : '') . 'Yêu cầu hoàn tiền về STK: ' . $order->bank_account_number . ' (' . $order->bank_name . ' - ' . $order->bank_account_holder . '). Lý do: ' . $reason;
-            $order->save();
-
-            // Lưu log giao dịch hoàn tiền
-            PaymentTransaction::create([
-                'order_id' => $order->id,
-                'gateway' => $order->payment_method ?: 'online',
-                'amount' => $order->total_amount,
-                'status' => 'refund_pending',
-                'message' => "Khách yêu cầu hoàn tiền về STK {$order->bank_account_number} ({$order->bank_name}) - {$order->bank_account_holder}",
-            ]);
-
             return response()->json([
                 'message' => 'Đã tiếp nhận yêu cầu hủy đơn và hoàn tiền! Số lượng sản phẩm đã được hoàn lại kho. Ban quản trị sẽ chuyển khoản hoàn tiền vào số tài khoản của bạn trong 24h.',
                 'order' => $this->formatOrder($order->fresh('items'), true),
             ]);
         }
 
-        // 4. Nhánh COD hoặc chưa thanh toán: Hủy ngay lập tức
-        foreach ($order->items as $item) {
-            Product::where('id', $item->product_id)->increment('stock', $item->quantity);
-        }
+        // 4. Nhánh COD hoặc chưa thanh toán: Hủy ngay lập tức trong transaction
+        DB::transaction(function () use ($order, $reason) {
+            foreach ($order->items as $item) {
+                Product::where('id', $item->product_id)->increment('stock', $item->quantity);
+            }
+
+            $order->order_status = 'cancelled';
+            $order->cancel_reason = $reason;
+            $order->notes = ($order->notes ? $order->notes . ' | ' : '') . 'Lý do hủy: ' . $reason;
+            $order->save();
+        });
 
         if ($order->tracking_code && !str_starts_with($order->tracking_code, '#GHN')) {
             try {
@@ -459,11 +546,6 @@ class OrderController extends Controller
                 Log::warning('Cancel order on GHN failed: ' . $e->getMessage());
             }
         }
-
-        $order->order_status = 'cancelled';
-        $order->cancel_reason = $reason;
-        $order->notes = ($order->notes ? $order->notes . ' | ' : '') . 'Lý do hủy: ' . $reason;
-        $order->save();
 
         return response()->json([
             'message' => 'Đã hủy đơn hàng thành công! Số lượng sản phẩm đã được hoàn lại kho.',

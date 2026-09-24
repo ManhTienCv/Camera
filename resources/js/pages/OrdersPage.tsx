@@ -52,6 +52,7 @@ interface EnhancedOrder {
   refundRefCode?: string;
   refundedAt?: string;
   items: Array<{
+    product_id?: string;
     categoryTag: string;
     name: string;
     quantity: number;
@@ -147,7 +148,8 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                 refundRefCode: o.refund_ref_code,
                 refundedAt: o.refunded_at,
                 cancelReason: o.cancel_reason,
-                items: (o.items || []).map((i) => ({
+                items: (o.items || []).map((i: any) => ({
+                  product_id: i.product_id,
                   categoryTag: 'Sản phẩm',
                   name: i.name,
                   quantity: i.quantity,
@@ -1153,12 +1155,10 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
       {/* 7. DIALOG: ĐÁNH GIÁ SẢN PHẨM */}
       {ratingOrder && (
         <OrderRatingModal
+          isOpen={true}
+          order={ratingOrder}
           orderCode={ratingOrder.order_code}
-          items={ratingOrder.items.map((it) => ({
-            id: it.name,
-            name: it.name,
-            image_url: it.image_url || '',
-          }))}
+          items={ratingOrder.items}
           onClose={() => setRatingOrder(null)}
           onSuccess={() => {
             setRatingOrder(null);
