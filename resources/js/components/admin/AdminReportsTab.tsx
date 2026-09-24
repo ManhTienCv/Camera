@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { formatCurrency } from '../../lib/utils';
+import { GlidingIndicator } from '../ui/GlidingIndicator';
 import type { ReportSummaryData, ReportChartsData, TopSellingProductItem } from '../../types';
 
 interface MiniPaginationProps {
@@ -286,58 +287,90 @@ export const AdminReportsTab: React.FC = () => {
 
         <div className="flex flex-wrap items-center gap-3">
           {/* Mode Switcher: Giả định vs Thực tế */}
-          <div className="bg-cream-200/60 dark:bg-ink-800 p-1 rounded-2xl flex items-center gap-1 border border-cream-200 dark:border-ink-700 shadow-2xs">
+          <div className="relative bg-cream-200/60 dark:bg-ink-800 p-1 rounded-2xl flex items-center gap-1 border border-cream-200 dark:border-ink-700 shadow-2xs" role="tablist" aria-label="Chế độ dữ liệu báo cáo">
             <button
+              role="tab"
+              aria-selected={dataMode === 'mock'}
               onClick={() => handleModeChange('mock')}
               disabled={loading}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 ${
+              className={`relative px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 select-none outline-none ${
                 dataMode === 'mock'
-                  ? 'bg-amber-500 text-white shadow-xs'
+                  ? 'text-white'
                   : 'text-ink-600 dark:text-ink-300 hover:text-ink-900 dark:hover:text-white'
               }`}
               title="Xem dữ liệu mô phỏng phong phú cho báo cáo"
             >
-              <Sparkles size={13} />
-              <span>Dữ liệu giả định</span>
+              {dataMode === 'mock' && (
+                <GlidingIndicator
+                  layoutId="admin-reports-mode-pill"
+                  className="inset-0 bg-amber-500 rounded-xl shadow-xs"
+                />
+              )}
+              <Sparkles size={13} className="relative z-10" />
+              <span className="relative z-10">Dữ liệu giả định</span>
             </button>
             <button
+              role="tab"
+              aria-selected={dataMode === 'real'}
               onClick={() => handleModeChange('real')}
               disabled={loading}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 ${
+              className={`relative px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 select-none outline-none ${
                 dataMode === 'real'
-                  ? 'bg-ink-900 dark:bg-accent-600 text-white shadow-xs'
+                  ? 'text-white'
                   : 'text-ink-600 dark:text-ink-300 hover:text-ink-900 dark:hover:text-white'
               }`}
               title="Lấy số liệu thực tế đã đặt trong cơ sở dữ liệu"
             >
-              <Database size={13} />
-              <span>Dữ liệu thực tế</span>
+              {dataMode === 'real' && (
+                <GlidingIndicator
+                  layoutId="admin-reports-mode-pill"
+                  className="inset-0 bg-ink-900 dark:bg-accent-600 rounded-xl shadow-xs"
+                />
+              )}
+              <Database size={13} className="relative z-10" />
+              <span className="relative z-10">Dữ liệu thực tế</span>
             </button>
           </div>
 
           {/* Sub-tab toggle buttons */}
-          <div className="bg-cream-200/60 dark:bg-ink-800 p-1 rounded-2xl flex items-center gap-1 border border-cream-200 dark:border-ink-700 shadow-2xs">
+          <div className="relative bg-cream-200/60 dark:bg-ink-800 p-1 rounded-2xl flex items-center gap-1 border border-cream-200 dark:border-ink-700 shadow-2xs" role="tablist" aria-label="Dạng xem báo cáo">
             <button
+              role="tab"
+              aria-selected={subTab === 'tables'}
               onClick={() => setSubTab('tables')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`relative px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer select-none outline-none ${
                 subTab === 'tables'
-                  ? 'bg-white dark:bg-ink-900 text-ink-900 dark:text-cream-50 shadow-xs'
+                  ? 'text-ink-900 dark:text-cream-50'
                   : 'text-ink-600 dark:text-ink-300 hover:text-ink-900 dark:hover:text-white'
               }`}
             >
-              <TableIcon size={14} />
-              <span>Bảng số liệu</span>
+              {subTab === 'tables' && (
+                <GlidingIndicator
+                  layoutId="admin-reports-view-pill"
+                  className="inset-0 bg-white dark:bg-ink-900 rounded-xl shadow-xs"
+                />
+              )}
+              <TableIcon size={14} className="relative z-10" />
+              <span className="relative z-10">Bảng số liệu</span>
             </button>
             <button
+              role="tab"
+              aria-selected={subTab === 'charts'}
               onClick={() => setSubTab('charts')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`relative px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer select-none outline-none ${
                 subTab === 'charts'
-                  ? 'bg-white dark:bg-ink-900 text-ink-900 dark:text-cream-50 shadow-xs'
+                  ? 'text-ink-900 dark:text-cream-50'
                   : 'text-ink-600 dark:text-ink-300 hover:text-ink-900 dark:hover:text-white'
               }`}
             >
-              <BarChart3 size={14} />
-              <span>Biểu đồ trực quan</span>
+              {subTab === 'charts' && (
+                <GlidingIndicator
+                  layoutId="admin-reports-view-pill"
+                  className="inset-0 bg-white dark:bg-ink-900 rounded-xl shadow-xs"
+                />
+              )}
+              <BarChart3 size={14} className="relative z-10" />
+              <span className="relative z-10">Biểu đồ trực quan</span>
             </button>
           </div>
 

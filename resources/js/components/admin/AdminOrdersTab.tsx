@@ -17,6 +17,7 @@ import type { Order } from '../../types';
 import { formatCurrency } from '../../lib/utils';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
+import { GlidingIndicator } from '../ui/GlidingIndicator';
 
 interface AdminOrdersTabProps {
   orders: Order[];
@@ -296,26 +297,34 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
       </div>
 
       {/* Lab 08: 8 Status Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none" role="tablist" aria-label="Bộ lọc trạng thái đơn hàng">
         {TABS.map((tab) => {
           const count = tabCounts[tab.key] || 0;
           const isActive = activeTab === tab.key;
           return (
             <button
               key={tab.key}
+              role="tab"
+              aria-selected={isActive}
               onClick={() => {
                 setActiveTab(tab.key);
                 setAdminPageNum(1);
               }}
-              className={`px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+              className={`relative px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-colors flex items-center gap-2 cursor-pointer select-none outline-none ${
                 isActive
-                  ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-sm scale-102'
+                  ? 'text-white'
                   : 'bg-white dark:bg-ink-900 text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800 border border-cream-200 dark:border-ink-800'
               }`}
             >
-              <span>{tab.label}</span>
+              {isActive && (
+                <GlidingIndicator
+                  layoutId="admin-orders-tab-pill"
+                  className="inset-0 bg-ink-900 dark:bg-accent-500 rounded-2xl shadow-xs"
+                />
+              )}
+              <span className="relative z-10">{tab.label}</span>
               <span
-                className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                className={`relative z-10 px-1.5 py-0.2 rounded-full text-[10px] font-bold transition-colors ${
                   isActive
                     ? 'bg-white/20 text-white'
                     : 'bg-cream-200/80 dark:bg-ink-800 text-ink-600 dark:text-cream-300'

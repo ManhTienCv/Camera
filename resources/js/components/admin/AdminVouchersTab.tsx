@@ -18,6 +18,7 @@ import type { AdminVoucherItem } from '../../types';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 import { formatPrice } from '../../lib/utils';
+import { GlidingIndicator } from '../ui/GlidingIndicator';
 
 export const AdminVouchersTab: React.FC = () => {
   const toast = useToast();
@@ -345,37 +346,35 @@ export const AdminVouchersTab: React.FC = () => {
         </div>
 
         {/* Status Pills */}
-        <div className="inline-flex items-center p-1 bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-800 rounded-2xl shadow-xs self-start sm:self-auto">
-          <button
-            onClick={() => setStatusFilter('all')}
-            className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              statusFilter === 'all'
-                ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
-                : 'text-ink-600 dark:text-cream-200 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70'
-            }`}
-          >
-            Tất cả
-          </button>
-          <button
-            onClick={() => setStatusFilter('active')}
-            className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              statusFilter === 'active'
-                ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
-                : 'text-ink-600 dark:text-cream-200 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70'
-            }`}
-          >
-            Đang hiệu lực
-          </button>
-          <button
-            onClick={() => setStatusFilter('inactive')}
-            className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              statusFilter === 'inactive'
-                ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
-                : 'text-ink-600 dark:text-cream-200 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70'
-            }`}
-          >
-            Tạm ngưng
-          </button>
+        <div className="relative inline-flex items-center p-1 bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-800 rounded-2xl shadow-xs self-start sm:self-auto" role="tablist" aria-label="Bộ lọc trạng thái voucher">
+          {[
+            { id: 'all' as const, label: 'Tất cả' },
+            { id: 'active' as const, label: 'Đang hiệu lực' },
+            { id: 'inactive' as const, label: 'Tạm ngưng' },
+          ].map((tab) => {
+            const isActive = statusFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setStatusFilter(tab.id)}
+                className={`relative px-4 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer select-none outline-none ${
+                  isActive
+                    ? 'text-white'
+                    : 'text-ink-600 dark:text-cream-200 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70 dark:hover:bg-ink-800'
+                }`}
+              >
+                {isActive && (
+                  <GlidingIndicator
+                    layoutId="admin-vouchers-status-pill"
+                    className="inset-0 bg-ink-900 dark:bg-accent-500 rounded-xl shadow-xs"
+                  />
+                )}
+                <span className="relative z-10">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

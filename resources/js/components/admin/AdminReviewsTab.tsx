@@ -19,6 +19,7 @@ import {
 import type { AdminReviewItem } from '../../types';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
+import { GlidingIndicator } from '../ui/GlidingIndicator';
 
 export const AdminReviewsTab: React.FC = () => {
   const toast = useToast();
@@ -285,64 +286,70 @@ export const AdminReviewsTab: React.FC = () => {
         {/* Filter Pills Group */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Status Pills */}
-          <div className="inline-flex items-center p-1 bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-800 rounded-2xl shadow-xs">
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                statusFilter === 'all'
-                  ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
-                  : 'text-ink-600 dark:text-cream-300 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70 dark:hover:bg-ink-800'
-              }`}
-            >
-              Tất cả
-            </button>
-            <button
-              onClick={() => setStatusFilter('approved')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                statusFilter === 'approved'
-                  ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
-                  : 'text-ink-600 dark:text-cream-300 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70 dark:hover:bg-ink-800'
-              }`}
-            >
-              Đang hiển thị
-            </button>
-            <button
-              onClick={() => setStatusFilter('hidden')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                statusFilter === 'hidden'
-                  ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
-                  : 'text-ink-600 dark:text-cream-300 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70 dark:hover:bg-ink-800'
-              }`}
-            >
-              Đã ẩn
-            </button>
+          <div className="relative inline-flex items-center p-1 bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-800 rounded-2xl shadow-xs" role="tablist" aria-label="Bộ lọc trạng thái đánh giá">
+            {[
+              { id: 'all' as const, label: 'Tất cả' },
+              { id: 'approved' as const, label: 'Đang hiển thị' },
+              { id: 'hidden' as const, label: 'Đã ẩn' },
+            ].map((tab) => {
+              const isActive = statusFilter === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setStatusFilter(tab.id)}
+                  className={`relative px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer select-none outline-none ${
+                    isActive
+                      ? 'text-white'
+                      : 'text-ink-600 dark:text-cream-300 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70 dark:hover:bg-ink-800'
+                  }`}
+                >
+                  {isActive && (
+                    <GlidingIndicator
+                      layoutId="admin-reviews-status-pill"
+                      className="inset-0 bg-ink-900 dark:bg-accent-500 rounded-xl shadow-xs"
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Rating Pills */}
-          <div className="inline-flex items-center p-1 bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-800 rounded-2xl shadow-xs">
-            <button
-              onClick={() => setRatingFilter('all')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                ratingFilter === 'all'
-                  ? 'bg-amber-500 text-white shadow-xs'
-                  : 'text-ink-600 dark:text-cream-300 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70 dark:hover:bg-ink-800'
-              }`}
-            >
-              Tất cả sao
-            </button>
-            {[5, 4, 3, 2, 1].map((star) => (
-              <button
-                key={star}
-                onClick={() => setRatingFilter(String(star))}
-                className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  ratingFilter === String(star)
-                    ? 'bg-amber-500 text-white shadow-xs'
-                    : 'text-ink-600 dark:text-cream-300 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70 dark:hover:bg-ink-800'
-                }`}
-              >
-                {star} ★
-              </button>
-            ))}
+          <div className="relative inline-flex items-center p-1 bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-800 rounded-2xl shadow-xs" role="tablist" aria-label="Bộ lọc số sao">
+            {[
+              { id: 'all', label: 'Tất cả sao' },
+              { id: '5', label: '5 ★' },
+              { id: '4', label: '4 ★' },
+              { id: '3', label: '3 ★' },
+              { id: '2', label: '2 ★' },
+              { id: '1', label: '1 ★' },
+            ].map((starTab) => {
+              const isActive = ratingFilter === starTab.id;
+              return (
+                <button
+                  key={starTab.id}
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setRatingFilter(starTab.id)}
+                  className={`relative px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer select-none outline-none ${
+                    isActive
+                      ? 'text-white'
+                      : 'text-ink-600 dark:text-cream-300 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70 dark:hover:bg-ink-800'
+                  }`}
+                >
+                  {isActive && (
+                    <GlidingIndicator
+                      layoutId="admin-reviews-rating-pill"
+                      className="inset-0 bg-amber-500 rounded-xl shadow-xs"
+                    />
+                  )}
+                  <span className="relative z-10">{starTab.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

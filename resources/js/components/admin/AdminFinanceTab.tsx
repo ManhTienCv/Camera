@@ -28,6 +28,7 @@ import {
 import { api } from '../../lib/api';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import { useToast } from '../../context/ToastContext';
+import { GlidingIndicator } from '../ui/GlidingIndicator';
 import type {
   FinanceSummaryData,
   FinanceTransactionsData,
@@ -332,28 +333,44 @@ export const AdminFinanceTab: React.FC = () => {
 
         {/* Sub-tab Pill Switcher */}
         <div className="flex items-center gap-2">
-          <div className="bg-cream-100 dark:bg-ink-950 p-1.5 rounded-2xl flex items-center gap-1 border border-cream-200 dark:border-ink-800">
+          <div className="relative bg-cream-100 dark:bg-ink-950 p-1.5 rounded-2xl flex items-center gap-1 border border-cream-200 dark:border-ink-800" role="tablist" aria-label="Phân hệ tài chính">
             <button
+              role="tab"
+              aria-selected={subTab === 'summary'}
               onClick={() => setSubTab('summary')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              className={`relative px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-2 cursor-pointer select-none outline-none ${
                 subTab === 'summary'
-                  ? 'bg-accent-500 text-white shadow-xs'
+                  ? 'text-white'
                   : 'text-ink-600 dark:text-cream-300 hover:text-ink-900 dark:hover:text-cream-100'
               }`}
             >
-              <TrendingUp size={15} />
-              <span>Thống kê tổng quan</span>
+              {subTab === 'summary' && (
+                <GlidingIndicator
+                  layoutId="admin-finance-subtab-pill"
+                  className="inset-0 bg-accent-500 rounded-xl shadow-xs"
+                />
+              )}
+              <TrendingUp size={15} className="relative z-10" />
+              <span className="relative z-10">Thống kê tổng quan</span>
             </button>
             <button
+              role="tab"
+              aria-selected={subTab === 'transactions'}
               onClick={() => setSubTab('transactions')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              className={`relative px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-2 cursor-pointer select-none outline-none ${
                 subTab === 'transactions'
-                  ? 'bg-accent-500 text-white shadow-xs'
+                  ? 'text-white'
                   : 'text-ink-600 dark:text-cream-300 hover:text-ink-900 dark:hover:text-cream-100'
               }`}
             >
-              <Receipt size={15} />
-              <span>Chi tiết giao dịch & COD</span>
+              {subTab === 'transactions' && (
+                <GlidingIndicator
+                  layoutId="admin-finance-subtab-pill"
+                  className="inset-0 bg-accent-500 rounded-xl shadow-xs"
+                />
+              )}
+              <Receipt size={15} className="relative z-10" />
+              <span className="relative z-10">Chi tiết giao dịch & COD</span>
             </button>
           </div>
 

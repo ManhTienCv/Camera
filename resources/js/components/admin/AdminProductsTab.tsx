@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import type { Product, Category } from '../../types';
 import { formatCurrency } from '../../lib/utils';
+import { GlidingIndicator } from '../ui/GlidingIndicator';
 
 interface AdminProductsTabProps {
   products: Product[];
@@ -264,47 +265,36 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
       <div className="bg-white p-4 rounded-3xl border border-cream-200 shadow-xs space-y-4">
         {/* Status Tab Pills */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-cream-100">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-semibold">
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
-                statusFilter === 'all'
-                  ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
-                  : 'bg-cream-100/70 text-ink-600 hover:bg-cream-200 dark:bg-ink-800 dark:text-cream-300 dark:hover:bg-ink-700'
-              }`}
-            >
-              Tất cả ({products.length})
-            </button>
-            <button
-              onClick={() => setStatusFilter('active')}
-              className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
-                statusFilter === 'active'
-                  ? 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-xs'
-                  : 'bg-cream-100/70 text-emerald-700 hover:bg-cream-200 dark:bg-ink-800 dark:text-emerald-400 dark:hover:bg-ink-700'
-              }`}
-            >
-              Đang bán ({activeCount})
-            </button>
-            <button
-              onClick={() => setStatusFilter('outofstock')}
-              className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
-                statusFilter === 'outofstock'
-                  ? 'bg-rose-600 dark:bg-rose-500 text-white shadow-xs'
-                  : 'bg-cream-100/70 text-rose-700 hover:bg-cream-200 dark:bg-ink-800 dark:text-rose-400 dark:hover:bg-ink-700'
-              }`}
-            >
-              Hết hàng ({outOfStockCount})
-            </button>
-            <button
-              onClick={() => setStatusFilter('inactive')}
-              className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
-                statusFilter === 'inactive'
-                  ? 'bg-amber-600 dark:bg-amber-500 text-white shadow-xs'
-                  : 'bg-cream-100/70 text-amber-700 hover:bg-cream-200 dark:bg-ink-800 dark:text-amber-400 dark:hover:bg-ink-700'
-              }`}
-            >
-              Tạm ẩn ({inactiveCount})
-            </button>
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-semibold" role="tablist" aria-label="Bộ lọc tình trạng kho hàng">
+            {[
+              { id: 'all' as StatusFilter, label: 'Tất cả', count: products.length, activeBg: 'bg-ink-900 dark:bg-accent-500' },
+              { id: 'active' as StatusFilter, label: 'Đang bán', count: activeCount, activeBg: 'bg-emerald-600 dark:bg-emerald-500' },
+              { id: 'outofstock' as StatusFilter, label: 'Hết hàng', count: outOfStockCount, activeBg: 'bg-rose-600 dark:bg-rose-500' },
+              { id: 'inactive' as StatusFilter, label: 'Tạm ẩn', count: inactiveCount, activeBg: 'bg-amber-600 dark:bg-amber-500' },
+            ].map((tab) => {
+              const isActive = statusFilter === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setStatusFilter(tab.id)}
+                  className={`relative px-3.5 py-1.5 rounded-xl transition-colors cursor-pointer select-none outline-none ${
+                    isActive
+                      ? 'text-white'
+                      : 'bg-cream-100/70 text-ink-600 hover:bg-cream-200 dark:bg-ink-800 dark:text-cream-300 dark:hover:bg-ink-700'
+                  }`}
+                >
+                  {isActive && (
+                    <GlidingIndicator
+                      layoutId="admin-products-status-pill"
+                      className={`inset-0 ${tab.activeBg} rounded-xl shadow-xs`}
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label} ({tab.count})</span>
+                </button>
+              );
+            })}
           </div>
 
           {(searchQuery || selectedCategoryFilter || selectedBrandFilter || statusFilter !== 'all') && (

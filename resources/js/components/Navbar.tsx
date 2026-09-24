@@ -1,8 +1,8 @@
 import React from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
 import { Home, ShoppingBag, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import type { Page } from '../types';
+import { GlidingIndicator } from './ui/GlidingIndicator';
 
 export interface NavItem {
   id: string;
@@ -25,7 +25,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   className = '',
 }) => {
   const { user } = useAuth();
-  const shouldReduceMotion = useReducedMotion();
 
   // Xác định ID của item đang active dựa trên currentPage và URL pathname
   const getActiveItemId = (): string => {
@@ -64,16 +63,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     });
   }
 
-  // Cấu hình lò xo vật lý cao cấp theo chuẩn thiết kế
-  const springTransition = shouldReduceMotion
-    ? { duration: 0 }
-    : {
-        type: 'spring' as const,
-        stiffness: 450,
-        damping: 35,
-        mass: 0.8,
-      };
-
   return (
     <nav
       className={`relative inline-flex items-center p-1.5 rounded-full bg-cream-100/80 dark:bg-ink-900/80 backdrop-blur-md border border-cream-200/80 dark:border-ink-800/80 shadow-2xs ${className}`}
@@ -98,11 +87,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             {/* GLIDING ACTIVE PILL INDICATOR */}
             {isActive && (
-              <motion.div
+              <GlidingIndicator
                 layoutId="navbar-active-pill"
-                className="absolute inset-0 bg-accent-500 rounded-full shadow-xs z-0"
-                transition={springTransition}
-                initial={false}
+                className="inset-0 bg-accent-500 rounded-full shadow-xs"
               />
             )}
 

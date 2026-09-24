@@ -19,6 +19,7 @@ import type { Page, User, Order, Product } from '../../types';
 import type { AdminTab } from './AdminSidebar';
 import { useTheme } from '../../context/ThemeContext';
 import { formatCurrency } from '../../lib/utils';
+import { GlidingIndicator } from '../ui/GlidingIndicator';
 
 export interface AdminNotification {
   id: string;
@@ -421,28 +422,44 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               </div>
 
               {/* Filter Tabs */}
-              <div className="flex border-b border-cream-200 dark:border-ink-800 px-4 pt-2.5 gap-5 text-xs bg-white dark:bg-ink-900">
+              <div className="flex border-b border-cream-200 dark:border-ink-800 px-4 pt-2.5 gap-5 text-xs bg-white dark:bg-ink-900" role="tablist" aria-label="Bộ lọc thông báo">
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={notifFilter === 'all'}
                   onClick={() => setNotifFilter('all')}
-                  className={`pb-2 -mb-px border-b-2 font-bold text-xs transition-colors duration-150 relative cursor-pointer select-none ${
+                  className={`pb-2 -mb-px font-bold text-xs transition-colors duration-150 relative cursor-pointer select-none outline-none ${
                     notifFilter === 'all'
-                      ? 'text-accent-600 dark:text-accent-400 border-accent-600 dark:border-accent-400'
-                      : 'text-ink-500 dark:text-cream-400 border-transparent hover:text-ink-800 dark:hover:text-cream-200'
+                      ? 'text-accent-600 dark:text-accent-400'
+                      : 'text-ink-500 dark:text-cream-400 hover:text-ink-800 dark:hover:text-cream-200'
                   }`}
                 >
-                  Tất cả ({allNotifications.length})
+                  <span className="relative z-10">Tất cả ({allNotifications.length})</span>
+                  {notifFilter === 'all' && (
+                    <GlidingIndicator
+                      layoutId="admin-notif-tab-indicator"
+                      className="left-0 right-0 bottom-0 h-0.5 bg-accent-600 dark:bg-accent-400 rounded-full"
+                    />
+                  )}
                 </button>
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={notifFilter === 'unread'}
                   onClick={() => setNotifFilter('unread')}
-                  className={`pb-2 -mb-px border-b-2 font-bold text-xs transition-colors duration-150 relative cursor-pointer select-none ${
+                  className={`pb-2 -mb-px font-bold text-xs transition-colors duration-150 relative cursor-pointer select-none outline-none ${
                     notifFilter === 'unread'
-                      ? 'text-accent-600 dark:text-accent-400 border-accent-600 dark:border-accent-400'
-                      : 'text-ink-500 dark:text-cream-400 border-transparent hover:text-ink-800 dark:hover:text-cream-200'
+                      ? 'text-accent-600 dark:text-accent-400'
+                      : 'text-ink-500 dark:text-cream-400 hover:text-ink-800 dark:hover:text-cream-200'
                   }`}
                 >
-                  Chưa đọc ({unreadCount})
+                  <span className="relative z-10">Chưa đọc ({unreadCount})</span>
+                  {notifFilter === 'unread' && (
+                    <GlidingIndicator
+                      layoutId="admin-notif-tab-indicator"
+                      className="left-0 right-0 bottom-0 h-0.5 bg-accent-600 dark:bg-accent-400 rounded-full"
+                    />
+                  )}
                 </button>
               </div>
 

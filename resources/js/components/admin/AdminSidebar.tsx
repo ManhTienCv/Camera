@@ -16,6 +16,7 @@ import {
   Ticket,
 } from 'lucide-react';
 import type { Page, User } from '../../types';
+import { GlidingIndicator } from '../ui/GlidingIndicator';
 
 export type AdminTab = 'dashboard' | 'products' | 'categories' | 'orders' | 'vouchers' | 'reports' | 'finance' | 'users' | 'chat' | 'reviews' | 'settings';
 
@@ -28,6 +29,13 @@ interface AdminSidebarProps {
   onToggleCollapse?: (collapsed: boolean) => void;
   orderCount?: number;
   onLogout?: () => void;
+}
+
+interface AdminNavItem {
+  id: AdminTab;
+  label: string;
+  icon: typeof LayoutDashboard;
+  badge?: number;
 }
 
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({
@@ -56,25 +64,71 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     }
   };
 
-  const navItemsSection1 = [
-    { id: 'dashboard' as AdminTab, label: 'Tổng quan', icon: LayoutDashboard },
-    { id: 'products' as AdminTab, label: 'Sản phẩm', icon: Package },
-    { id: 'categories' as AdminTab, label: 'Danh mục', icon: FolderTree },
-    { id: 'orders' as AdminTab, label: 'Đơn hàng', icon: ShoppingCart, badge: orderCount > 0 ? orderCount : undefined },
-    { id: 'vouchers' as AdminTab, label: 'Mã Giảm Giá', icon: Ticket },
+  const navItemsSection1: AdminNavItem[] = [
+    { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard },
+    { id: 'products', label: 'Sản phẩm', icon: Package },
+    { id: 'categories', label: 'Danh mục', icon: FolderTree },
+    { id: 'orders', label: 'Đơn hàng', icon: ShoppingCart, badge: orderCount > 0 ? orderCount : undefined },
+    { id: 'vouchers', label: 'Mã Giảm Giá', icon: Ticket },
   ];
 
-  const navItemsSection2 = [
-    { id: 'reports' as AdminTab, label: 'Báo cáo doanh thu', icon: BarChart3 },
-    { id: 'finance' as AdminTab, label: 'Thống kê tài chính', icon: CircleDollarSign },
-    { id: 'users' as AdminTab, label: 'Người dùng', icon: Users },
-    { id: 'chat' as AdminTab, label: 'Live Chat hỗ trợ', icon: MessageSquare },
+  const navItemsSection2: AdminNavItem[] = [
+    { id: 'reports', label: 'Báo cáo doanh thu', icon: BarChart3 },
+    { id: 'finance', label: 'Thống kê tài chính', icon: CircleDollarSign },
+    { id: 'users', label: 'Người dùng', icon: Users },
+    { id: 'chat', label: 'Live Chat hỗ trợ', icon: MessageSquare },
   ];
 
-  const navItemsSection3 = [
-    { id: 'reviews' as AdminTab, label: 'Đánh giá & Phản hồi', icon: Star },
-    { id: 'settings' as AdminTab, label: 'Cài đặt', icon: Settings },
+  const navItemsSection3: AdminNavItem[] = [
+    { id: 'reviews', label: 'Đánh giá & Phản hồi', icon: Star },
+    { id: 'settings', label: 'Cài đặt', icon: Settings },
   ];
+
+  const renderNavItem = (item: AdminNavItem) => {
+    const Icon = item.icon;
+    const isActive = activeTab === item.id;
+    return (
+      <div key={item.id} className="relative group flex items-center">
+        <button
+          onClick={() => setActiveTab(item.id)}
+          title={isCollapsed ? item.label : undefined}
+          className={`relative flex items-center rounded-2xl text-xs sm:text-sm font-medium transition-colors cursor-pointer select-none outline-none ${
+            isCollapsed
+              ? 'w-10 h-10 mx-auto justify-center'
+              : 'w-full gap-3 px-3.5 py-2.5'
+          } ${
+            isActive
+              ? 'text-white font-bold'
+              : 'text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800 hover:text-ink-900 dark:hover:text-white'
+          }`}
+        >
+          {isActive && (
+            <GlidingIndicator
+              layoutId="admin-sidebar-active-pill"
+              className="inset-0 bg-accent-500 rounded-2xl shadow-xs"
+            />
+          )}
+          <Icon size={18} className="shrink-0 relative z-10" />
+          {!isCollapsed && (
+            <div className="flex items-center justify-between flex-1 min-w-0 relative z-10">
+              <span className="truncate">{item.label}</span>
+              {item.badge !== undefined && (
+                <span
+                  className={`px-2 py-0.5 text-[11px] font-bold rounded-full transition-colors ${
+                    isActive
+                      ? 'bg-white text-accent-700'
+                      : 'bg-red-500 text-white'
+                  }`}
+                >
+                  {item.badge}
+                </span>
+              )}
+            </div>
+          )}
+        </button>
+      </div>
+    );
+  };
 
   return (
     <aside
@@ -137,46 +191,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             </p>
           )}
 
-          <nav className="space-y-1">
-            {navItemsSection1.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <div key={item.id} className="relative group flex items-center">
-                  <button
-                    onClick={() => setActiveTab(item.id)}
-                    title={isCollapsed ? item.label : undefined}
-                    className={`flex items-center rounded-2xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${
-                      isCollapsed
-                        ? 'w-10 h-10 mx-auto justify-center'
-                        : 'w-full gap-3 px-3.5 py-2.5'
-                    } ${
-                      isActive
-                        ? 'bg-accent-500 text-white font-bold shadow-xs'
-                        : 'text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800 hover:text-ink-900 dark:hover:text-white'
-                    }`}
-                  >
-                    <Icon size={18} className="shrink-0" />
-                    {!isCollapsed && (
-                      <div className="flex items-center justify-between flex-1 min-w-0">
-                        <span className="truncate">{item.label}</span>
-                        {item.badge !== undefined && (
-                          <span
-                            className={`px-2 py-0.5 text-[11px] font-bold rounded-full transition-colors ${
-                              isActive
-                                ? 'bg-white text-accent-700'
-                                : 'bg-red-500 text-white'
-                            }`}
-                          >
-                            {item.badge}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </button>
-                </div>
-              );
-            })}
+          <nav className="space-y-1" role="tablist" aria-label="Quản lý chung">
+            {navItemsSection1.map(renderNavItem)}
           </nav>
         </div>
 
@@ -189,32 +205,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           ) : (
             <div className="w-8 h-[1px] bg-cream-200 dark:bg-ink-800 mx-auto my-2" />
           )}
-
-          <nav className="space-y-1">
-            {navItemsSection2.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <div key={item.id} className="relative group flex items-center">
-                  <button
-                    onClick={() => setActiveTab(item.id)}
-                    title={isCollapsed ? item.label : undefined}
-                    className={`flex items-center rounded-2xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${
-                      isCollapsed
-                        ? 'w-10 h-10 mx-auto justify-center'
-                        : 'w-full gap-3 px-3.5 py-2.5'
-                    } ${
-                      isActive
-                        ? 'bg-accent-500 text-white font-bold shadow-xs'
-                        : 'text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800 hover:text-ink-900 dark:hover:text-white'
-                    }`}
-                  >
-                    <Icon size={18} className="shrink-0" />
-                    {!isCollapsed && <span className="truncate">{item.label}</span>}
-                  </button>
-                </div>
-              );
-            })}
+          <nav className="space-y-1" role="tablist" aria-label="Báo cáo và chăm sóc khách hàng">
+            {navItemsSection2.map(renderNavItem)}
           </nav>
         </div>
 
@@ -227,32 +219,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           ) : (
             <div className="w-8 h-[1px] bg-cream-200 dark:bg-ink-800 mx-auto my-2" />
           )}
-
-          <nav className="space-y-1">
-            {navItemsSection3.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <div key={item.id} className="relative group flex items-center">
-                  <button
-                    onClick={() => setActiveTab(item.id)}
-                    title={isCollapsed ? item.label : undefined}
-                    className={`flex items-center rounded-2xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${
-                      isCollapsed
-                        ? 'w-10 h-10 mx-auto justify-center'
-                        : 'w-full gap-3 px-3.5 py-2.5'
-                    } ${
-                      isActive
-                        ? 'bg-accent-500 text-white font-bold shadow-xs'
-                        : 'text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800 hover:text-ink-900 dark:hover:text-white'
-                    }`}
-                  >
-                    <Icon size={18} className="shrink-0" />
-                    {!isCollapsed && <span className="truncate">{item.label}</span>}
-                  </button>
-                </div>
-              );
-            })}
+          <nav className="space-y-1" role="tablist" aria-label="Cài đặt hệ thống">
+            {navItemsSection3.map(renderNavItem)}
           </nav>
         </div>
       </div>
