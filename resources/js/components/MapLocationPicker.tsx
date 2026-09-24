@@ -39,10 +39,21 @@ const POPULAR_VN_LANDMARKS = [
   { name: 'Khu Đô Thị Phúc Diễn', address: 'Phúc Diễn, Bắc Từ Liêm', city: 'Hà Nội', district: 'Bắc Từ Liêm', lat: 21.0470, lng: 105.7619 },
   { name: 'Keangnam Landmark 72', address: 'Đường Phạm Hùng, Mễ Trì', city: 'Hà Nội', district: 'Nam Từ Liêm', lat: 21.0168, lng: 105.7838 },
   { name: 'Hồ Hoàn Kiếm', address: 'Phố Đinh Tiên Hoàng, Hàng Trống', city: 'Hà Nội', district: 'Hoàn Kiếm', lat: 21.0285, lng: 105.8542 },
+  { name: 'Hồ Tây', address: 'Đường Thanh Niên, Yên Phụ', city: 'Hà Nội', district: 'Tây Hồ', lat: 21.0583, lng: 105.8266 },
+  { name: 'Lăng Chủ tịch Hồ Chí Minh', address: 'Số 2 Hùng Vương, Điện Bàn', city: 'Hà Nội', district: 'Ba Đình', lat: 21.0368, lng: 105.8347 },
+  { name: 'Vincom Mega Mall Royal City', address: '72A Nguyễn Trãi, Thượng Đình', city: 'Hà Nội', district: 'Thanh Xuân', lat: 21.0028, lng: 105.8155 },
+  { name: 'Vincom Mega Mall Times City', address: '458 Minh Khai, Vĩnh Tuy', city: 'Hà Nội', district: 'Hai Bà Trưng', lat: 20.9953, lng: 105.8679 },
+  { name: 'Đại học Quốc Gia Hà Nội', address: '144 Xuân Thủy, Dịch Vọng Hậu', city: 'Hà Nội', district: 'Cầu Giấy', lat: 21.0373, lng: 105.7818 },
+  { name: 'Đại học Bách Khoa Hà Nội', address: 'Số 1 Đại Cồ Việt, Bách Khoa', city: 'Hà Nội', district: 'Hai Bà Trưng', lat: 21.0044, lng: 105.8436 },
   { name: 'Sân bay Quốc tế Nội Bài', address: 'Phú Cường, Sóc Sơn', city: 'Hà Nội', district: 'Sóc Sơn', lat: 21.2212, lng: 105.8072 },
   { name: 'Chợ Bến Thành', address: 'Đường Lê Lợi, Bến Thành, Quận 1', city: 'TP. Hồ Chí Minh', district: 'Quận 1', lat: 10.7725, lng: 106.6980 },
   { name: 'Landmark 81', address: '720A Điện Biên Phủ, Phường 22, Bình Thạnh', city: 'TP. Hồ Chí Minh', district: 'Bình Thạnh', lat: 10.7950, lng: 106.7218 },
+  { name: 'Phố đi bộ Nguyễn Huệ', address: 'Nguyễn Huệ, Bến Nghé, Quận 1', city: 'TP. Hồ Chí Minh', district: 'Quận 1', lat: 10.7735, lng: 106.7037 },
+  { name: 'Sân bay Quốc tế Tân Sơn Nhất', address: 'Đường Trường Sơn, Phường 2, Tân Bình', city: 'TP. Hồ Chí Minh', district: 'Tân Bình', lat: 10.8185, lng: 106.6588 },
+  { name: 'Nhà thờ Đức Bà', address: '01 Công xã Paris, Bến Nghé, Quận 1', city: 'TP. Hồ Chí Minh', district: 'Quận 1', lat: 10.7798, lng: 106.6990 },
+  { name: 'Khu đô thị Phú Mỹ Hưng', address: 'Đường Nguyễn Văn Linh, Tân Phong, Quận 7', city: 'TP. Hồ Chí Minh', district: 'Quận 7', lat: 10.7293, lng: 106.7118 },
   { name: 'Cầu Rồng Đà Nẵng', address: 'Đường Nguyễn Văn Linh, Phước Ninh, Hải Châu', city: 'Đà Nẵng', district: 'Hải Châu', lat: 16.0611, lng: 108.2238 },
+  { name: 'Bãi biển Mỹ Khê', address: 'Đường Võ Nguyên Giáp, Phước Mỹ, Sơn Trà', city: 'Đà Nẵng', district: 'Sơn Trà', lat: 16.0601, lng: 108.2464 },
 ];
 
 export function MapLocationPicker({
@@ -78,9 +89,13 @@ export function MapLocationPicker({
   const [mapType, setMapType] = useState<'street' | 'satellite'>('street');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Array<{ name: string; lat: number; lng: number; area: string }>>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [isGeocoding, setIsGeocoding] = useState(false);
+
+  const searchWrapperRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Address fields
   const [detailAddress, setDetailAddress] = useState('Phúc Diễn');
@@ -88,16 +103,47 @@ export function MapLocationPicker({
   const [detectedCity, setDetectedCity] = useState('Hà Nội');
   const [detectedDistrict, setDetectedDistrict] = useState('Bắc Từ Liêm');
 
-  // Close on Escape Key
+  // Reset search state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchQuery('');
+      setSearchResults([]);
+      setShowSuggestions(false);
+      setIsSearching(false);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    }
+  }, [isOpen]);
+
+  // Click outside search container to close suggestions
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        searchWrapperRef.current &&
+        !searchWrapperRef.current.contains(e.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Close on Escape Key (closes suggestions first if open, else closes modal)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
-        onClose();
+        if (showSuggestions) {
+          setShowSuggestions(false);
+        } else {
+          onClose();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, showSuggestions]);
 
   // Reverse Geocoding with Multi-tier Fallback
   const reverseGeocode = useCallback(async (lat: number, lng: number) => {
@@ -276,51 +322,130 @@ export function MapLocationPicker({
     );
   };
 
-  // Search Address or Landmark
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
+  // Core Search Execution (Local landmarks + Nominatim OpenStreetMap API)
+  const executeSearch = useCallback(async (query: string, signal?: AbortSignal) => {
+    const trimmed = query.trim();
+    if (!trimmed || trimmed.length < 2) {
+      setSearchResults([]);
+      setShowSuggestions(false);
+      setIsSearching(false);
+      return;
+    }
 
     setIsSearching(true);
     try {
-      // Check local landmarks first
-      const localMatches = POPULAR_VN_LANDMARKS.filter((lm) =>
-        lm.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lm.address.toLowerCase().includes(searchQuery.toLowerCase())
+      const lower = trimmed.toLowerCase();
+      // 1. Instant local landmark matches
+      const localMatches = POPULAR_VN_LANDMARKS.filter(
+        (lm) =>
+          lm.name.toLowerCase().includes(lower) ||
+          lm.address.toLowerCase().includes(lower) ||
+          lm.district.toLowerCase().includes(lower) ||
+          lm.city.toLowerCase().includes(lower)
       ).map((lm) => ({
         name: lm.name,
-        area: `${lm.address}, ${lm.city}`,
+        area: `${lm.address}, ${lm.district}, ${lm.city}`,
         lat: lm.lat,
         lng: lm.lng,
       }));
 
-      // Search Nominatim OpenStreetMap
+      // 2. Fetch Nominatim OpenStreetMap Search
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          searchQuery + ', Vietnam'
-        )}&limit=5&accept-language=vi`
+          trimmed + ', Vietnam'
+        )}&limit=5&accept-language=vi`,
+        {
+          signal,
+          headers: { 'User-Agent': 'CameraHub/1.0' },
+        }
       );
-      const data = await res.json();
 
-      const apiMatches = data.map((item: any) => ({
-        name: item.display_name.split(',')[0],
-        area: item.display_name,
-        lat: parseFloat(item.lat),
-        lng: parseFloat(item.lon),
-      }));
+      let apiMatches: Array<{ name: string; lat: number; lng: number; area: string }> = [];
+      if (res.ok) {
+        const data = await res.json();
+        apiMatches = data.map((item: any) => ({
+          name: item.display_name.split(',')[0],
+          area: item.display_name,
+          lat: parseFloat(item.lat),
+          lng: parseFloat(item.lon),
+        }));
+      }
 
-      setSearchResults([...localMatches, ...apiMatches]);
-    } catch (err) {
-      console.error('Search failed:', err);
+      // Merge and deduplicate by proximity (< ~100m)
+      const combined = [...localMatches];
+      for (const apiItem of apiMatches) {
+        const exists = combined.some(
+          (c) => Math.abs(c.lat - apiItem.lat) < 0.001 && Math.abs(c.lng - apiItem.lng) < 0.001
+        );
+        if (!exists) {
+          combined.push(apiItem);
+        }
+      }
+
+      setSearchResults(combined);
+      setShowSuggestions(true);
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.warn('Search suggestions failed:', err);
+      }
     } finally {
       setIsSearching(false);
     }
+  }, []);
+
+  // Debounced search effect: Wait 750ms after user stops typing to avoid spam & delay
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed || trimmed.length < 2) {
+      setSearchResults([]);
+      setShowSuggestions(false);
+      setIsSearching(false);
+      return;
+    }
+
+    // Indicate searching state while user pauses
+    setIsSearching(true);
+
+    const timer = setTimeout(() => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      executeSearch(trimmed, controller.signal);
+    }, 750);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchQuery, executeSearch]);
+
+  // Immediate search on Form Submit (Enter key)
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    executeSearch(searchQuery, controller.signal);
+  };
+
+  const handleClearSearch = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowSuggestions(false);
+    setIsSearching(false);
   };
 
   const handleSelectSearchResult = (result: { lat: number; lng: number; name: string }) => {
     setCoords({ lat: result.lat, lng: result.lng });
-    setSearchResults([]);
-    setSearchQuery('');
+    setShowSuggestions(false);
+    setSearchQuery(result.name);
 
     if (mapInstanceRef.current && markerRef.current) {
       mapInstanceRef.current.flyTo([result.lat, result.lng], 17, { duration: 1.2 });
@@ -376,23 +501,83 @@ export function MapLocationPicker({
           </button>
         </div>
 
-        {/* Search & Map Toolbar - Compact */}
-        <div className="p-3 bg-white dark:bg-ink-900 border-b border-cream-100 dark:border-ink-800 space-y-2 shrink-0">
+        {/* Search & Map Toolbar */}
+        <div className="relative z-20 p-3 bg-white dark:bg-ink-900 border-b border-cream-100 dark:border-ink-800 shrink-0">
           <div className="flex items-center gap-2">
-            {/* Search Input */}
-            <form onSubmit={handleSearch} className="flex-1 relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm kiếm địa chỉ, tên đường, toà nhà..."
-                className="w-full pl-9 pr-8 py-2 bg-cream-50/90 dark:bg-ink-950 border border-cream-200 dark:border-ink-700 rounded-xl text-xs focus:outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20 text-ink-800 dark:text-cream-50 placeholder:text-ink-400 dark:placeholder:text-ink-500"
-              />
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400 dark:text-ink-500" />
-              {isSearching && (
-                <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-accent-500 animate-spin" />
+            {/* Search Input Container with Relative Wrapper for Floating Dropdown */}
+            <div ref={searchWrapperRef} className="flex-1 relative">
+              <form onSubmit={handleSearch} className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => {
+                    if (searchResults.length > 0 || searchQuery.trim().length >= 2) {
+                      setShowSuggestions(true);
+                    }
+                  }}
+                  placeholder="Tìm kiếm địa chỉ, tên đường, toà nhà..."
+                  className="w-full pl-9 pr-14 py-2 bg-cream-50/90 dark:bg-ink-950 border border-cream-200 dark:border-ink-700 rounded-xl text-xs focus:outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20 text-ink-800 dark:text-cream-50 placeholder:text-ink-400 dark:placeholder:text-ink-500 transition-colors"
+                />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400 dark:text-ink-500" />
+                
+                {/* Search Right Status: Loading spinner & Clear button */}
+                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                  {isSearching && (
+                    <Loader2 size={13} className="text-accent-500 animate-spin" />
+                  )}
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={handleClearSearch}
+                      className="w-5 h-5 flex items-center justify-center rounded-full text-ink-400 hover:text-ink-700 dark:hover:text-cream-200 hover:bg-cream-200/60 dark:hover:bg-ink-800 transition-colors cursor-pointer"
+                      title="Xoá tìm kiếm"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              </form>
+
+              {/* Floating Autocomplete Suggestions Dropdown */}
+              {showSuggestions && (
+                <div className="absolute left-0 right-0 top-full mt-1.5 z-[1000] bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-700 rounded-2xl shadow-2xl p-1.5 max-h-56 overflow-y-auto space-y-1">
+                  {searchResults.length > 0 ? (
+                    searchResults.map((res, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => handleSelectSearchResult(res)}
+                        className="w-full flex items-start gap-2.5 p-2 rounded-xl text-left hover:bg-accent-50/80 dark:hover:bg-ink-800/80 transition-all cursor-pointer group"
+                      >
+                        <div className="w-6 h-6 rounded-lg bg-accent-100 dark:bg-accent-950/60 text-accent-600 dark:text-accent-400 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
+                          <MapPin size={13} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-ink-800 dark:text-cream-100 truncate group-hover:text-accent-600 dark:group-hover:text-accent-400 transition-colors">
+                            {res.name}
+                          </p>
+                          <p className="text-[10px] text-ink-400 dark:text-ink-500 truncate">
+                            {res.area}
+                          </p>
+                        </div>
+                      </button>
+                    ))
+                  ) : !isSearching && searchQuery.trim().length >= 2 ? (
+                    <div className="px-3 py-3 text-center text-xs text-ink-500 dark:text-ink-400 flex flex-col items-center justify-center gap-1">
+                      <MapPin size={16} className="text-ink-300 dark:text-ink-600" />
+                      <span>Không tìm thấy gợi ý phù hợp</span>
+                      <span className="text-[10px] text-ink-400">Bạn có thể bấm trực tiếp lên bản đồ để chọn vị trí</span>
+                    </div>
+                  ) : isSearching ? (
+                    <div className="px-3 py-3 text-center text-xs text-ink-500 dark:text-ink-400 flex items-center justify-center gap-2">
+                      <Loader2 size={13} className="text-accent-500 animate-spin" />
+                      <span>Đang tìm kiếm gợi ý địa điểm...</span>
+                    </div>
+                  ) : null}
+                </div>
               )}
-            </form>
+            </div>
 
             {/* My Location Button */}
             <button
@@ -419,26 +604,6 @@ export function MapLocationPicker({
               <span>{mapType === 'street' ? 'Vệ tinh' : 'Bản đồ'}</span>
             </button>
           </div>
-
-          {/* Autocomplete Suggestions Dropdown */}
-          {searchResults.length > 0 && (
-            <div className="bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-700 rounded-xl shadow-xl p-1.5 max-h-40 overflow-y-auto space-y-1">
-              {searchResults.map((res, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => handleSelectSearchResult(res)}
-                  className="w-full flex items-start gap-2 p-1.5 rounded-lg text-left hover:bg-cream-100 dark:hover:bg-ink-800 transition-colors"
-                >
-                  <MapPin size={14} className="text-accent-500 shrink-0 mt-0.5" />
-                  <div className="truncate">
-                    <p className="text-xs font-bold text-ink-800 dark:text-cream-100 truncate">{res.name}</p>
-                    <p className="text-[10px] text-ink-400 dark:text-ink-400 truncate">{res.area}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Leaflet Map Area with Floating Badge and Coordinates */}
