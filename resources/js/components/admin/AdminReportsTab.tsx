@@ -17,10 +17,100 @@ import {
   PackageCheck,
   ArrowUpRight,
   Info,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { formatCurrency } from '../../lib/utils';
 import type { ReportSummaryData, ReportChartsData, TopSellingProductItem } from '../../types';
+
+interface MiniPaginationProps {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  pageSize: number;
+  itemName?: string;
+  onPageChange: (page: number) => void;
+}
+
+const MiniPagination: React.FC<MiniPaginationProps> = ({
+  currentPage,
+  totalPages,
+  totalItems,
+  pageSize,
+  itemName = 'mục',
+  onPageChange,
+}) => {
+  if (totalItems === 0) return null;
+
+  const startIdx = (currentPage - 1) * pageSize + 1;
+  const endIdx = Math.min(currentPage * pageSize, totalItems);
+
+  // Generate page numbers
+  const pages: number[] = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pages.push(i);
+  }
+
+  return (
+    <div className="px-5 py-3 border-t border-cream-100 dark:border-ink-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-cream-50/40 dark:bg-ink-950/40 text-xs">
+      <div className="text-ink-500 dark:text-ink-400 font-medium">
+        Hiển thị <span className="font-semibold text-ink-800 dark:text-cream-200">{startIdx} - {endIdx}</span> trên <span className="font-semibold text-ink-800 dark:text-cream-200">{totalItems}</span> {itemName}
+        {totalPages > 1 && (
+          <span className="ml-1.5 text-ink-400 dark:text-ink-500">
+            (Trang {currentPage}/{totalPages})
+          </span>
+        )}
+      </div>
+
+      {totalPages > 1 ? (
+        <div className="flex items-center gap-1 self-end sm:self-auto">
+          <button
+            type="button"
+            onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+            disabled={currentPage <= 1}
+            className="p-1 rounded-lg border border-cream-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-600 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
+            title="Trang trước"
+          >
+            <ChevronLeft size={14} />
+          </button>
+
+          {pages.map((p) => {
+            const isActive = p === currentPage;
+            return (
+              <button
+                key={p}
+                type="button"
+                onClick={() => onPageChange(p)}
+                className={`min-w-[26px] h-6 px-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer font-mono ${
+                  isActive
+                    ? 'bg-accent-500 text-white shadow-2xs'
+                    : 'border border-cream-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-600 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800'
+                }`}
+              >
+                {p}
+              </button>
+            );
+          })}
+
+          <button
+            type="button"
+            onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage >= totalPages}
+            className="p-1 rounded-lg border border-cream-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-600 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
+            title="Trang sau"
+          >
+            <ChevronRight size={14} />
+          </button>
+        </div>
+      ) : (
+        <span className="text-[11px] text-ink-400 dark:text-ink-500 font-medium">
+          Đã hiển thị toàn bộ {totalItems} {itemName}
+        </span>
+      )}
+    </div>
+  );
+};
 
 export const AdminReportsTab: React.FC = () => {
   const [subTab, setSubTab] = useState<'tables' | 'charts'>('tables');
@@ -28,6 +118,20 @@ export const AdminReportsTab: React.FC = () => {
   const [summaryData, setSummaryData] = useState<ReportSummaryData | null>(null);
   const [chartsData, setChartsData] = useState<ReportChartsData | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Pagination states for tables
+  const [dailyPage, setDailyPage] = useState(1);
+  const [monthlyPage, setMonthlyPage] = useState(1);
+  const [yearlyPage, setYearlyPage] = useState(1);
+  const [categoryPage, setCategoryPage] = useState(1);
+  const [topProductsPage, setTopProductsPage] = useState(1);
+
+  // Page size constants
+  const dailyPageSize = 7; // 1 week per page
+  const monthlyPageSize = 6; // 6 months per page (half-year)
+  const yearlyPageSize = 5;
+  const categoryPageSize = 5;
+  const topProductsPageSize = 5;
 
   const loadReportData = async (mode: 'mock' | 'real' = dataMode) => {
     setLoading(true);
@@ -53,6 +157,11 @@ export const AdminReportsTab: React.FC = () => {
   const handleModeChange = (newMode: 'mock' | 'real') => {
     if (newMode === dataMode && !loading) return;
     setDataMode(newMode);
+    setDailyPage(1);
+    setMonthlyPage(1);
+    setYearlyPage(1);
+    setCategoryPage(1);
+    setTopProductsPage(1);
     loadReportData(newMode);
   };
 
@@ -78,6 +187,22 @@ export const AdminReportsTab: React.FC = () => {
   } = summaryData || {};
 
   const averageOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+
+  // Pagination calculation
+  const dailyTotalPages = Math.max(1, Math.ceil(revenueByDate.length / dailyPageSize));
+  const paginatedDaily = revenueByDate.slice((dailyPage - 1) * dailyPageSize, dailyPage * dailyPageSize);
+
+  const monthlyTotalPages = Math.max(1, Math.ceil(revenueByMonth.length / monthlyPageSize));
+  const paginatedMonthly = revenueByMonth.slice((monthlyPage - 1) * monthlyPageSize, monthlyPage * monthlyPageSize);
+
+  const yearlyTotalPages = Math.max(1, Math.ceil(revenueByYear.length / yearlyPageSize));
+  const paginatedYearly = revenueByYear.slice((yearlyPage - 1) * yearlyPageSize, yearlyPage * yearlyPageSize);
+
+  const categoryTotalPages = Math.max(1, Math.ceil(categoryRevenue.length / categoryPageSize));
+  const paginatedCategory = categoryRevenue.slice((categoryPage - 1) * categoryPageSize, categoryPage * categoryPageSize);
+
+  const topProductsTotalPages = Math.max(1, Math.ceil(topSellingProducts.length / topProductsPageSize));
+  const paginatedTopProducts = topSellingProducts.slice((topProductsPage - 1) * topProductsPageSize, topProductsPage * topProductsPageSize);
 
   return (
     <div className="space-y-6">
@@ -316,13 +441,14 @@ export const AdminReportsTab: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-cream-100 dark:divide-ink-800">
-                    {topSellingProducts.map((p, idx) => {
+                    {paginatedTopProducts.map((p, idx) => {
+                      const absoluteRank = (topProductsPage - 1) * topProductsPageSize + idx;
                       const medalBg =
-                        idx === 0
+                        absoluteRank === 0
                           ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 border-amber-300'
-                          : idx === 1
+                          : absoluteRank === 1
                           ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-300'
-                          : idx === 2
+                          : absoluteRank === 2
                           ? 'bg-orange-100 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 border-orange-300'
                           : 'bg-cream-100 text-ink-600 dark:bg-ink-800 dark:text-ink-400 border-cream-200';
 
@@ -330,7 +456,7 @@ export const AdminReportsTab: React.FC = () => {
                         <tr key={p.id || idx} className="hover:bg-cream-50/50 dark:hover:bg-ink-800/40 transition-colors">
                           <td className="py-3.5 px-6 text-center">
                             <span className={`inline-flex items-center justify-center w-7 h-7 rounded-xl text-xs font-bold border ${medalBg}`}>
-                              #{idx + 1}
+                              #{absoluteRank + 1}
                             </span>
                           </td>
                           <td className="py-3.5 px-6">
@@ -372,6 +498,14 @@ export const AdminReportsTab: React.FC = () => {
                   </tbody>
                 </table>
               </div>
+              <MiniPagination
+                currentPage={topProductsPage}
+                totalPages={topProductsTotalPages}
+                totalItems={topSellingProducts.length}
+                pageSize={topProductsPageSize}
+                itemName="sản phẩm"
+                onPageChange={setTopProductsPage}
+              />
             </div>
           )}
 
@@ -403,7 +537,7 @@ export const AdminReportsTab: React.FC = () => {
                       </td>
                     </tr>
                   ) : (
-                    categoryRevenue.map((item, idx) => {
+                    paginatedCategory.map((item, idx) => {
                       const totalCatRev = categoryRevenue.reduce((acc, cur) => acc + (cur.total_revenue || 0), 0);
                       const sharePct = totalCatRev > 0 ? Math.round((item.total_revenue / totalCatRev) * 100) : 0;
 
@@ -430,20 +564,31 @@ export const AdminReportsTab: React.FC = () => {
                 </tbody>
               </table>
             </div>
+            <MiniPagination
+              currentPage={categoryPage}
+              totalPages={categoryTotalPages}
+              totalItems={categoryRevenue.length}
+              pageSize={categoryPageSize}
+              itemName="danh mục"
+              onPageChange={setCategoryPage}
+            />
           </div>
 
-          {/* Daily Revenue Table */}
+          {/* Daily Revenue Table with Mini Pagination */}
           <div className="bg-white dark:bg-ink-900 rounded-3xl border border-cream-200 dark:border-ink-800 shadow-2xs overflow-hidden">
             <div className="p-5 border-b border-cream-100 dark:border-ink-800 flex items-center justify-between">
               <div>
                 <h4 className="font-bold text-base text-ink-900 dark:text-cream-50">Doanh thu theo ngày (30 ngày gần nhất)</h4>
-                <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">Biến động doanh thu và lượng đơn thanh toán mỗi ngày</p>
+                <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">Biến động doanh thu và lượng đơn thanh toán mỗi ngày (7 ngày / trang)</p>
               </div>
+              <span className="text-xs font-bold text-ink-500 dark:text-ink-400 bg-cream-100 dark:bg-ink-800 px-2.5 py-1 rounded-xl">
+                Trang {dailyPage} / {dailyTotalPages}
+              </span>
             </div>
-            <div className="overflow-x-auto max-h-[340px]">
+            <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
-                <thead className="sticky top-0 bg-cream-50 dark:bg-ink-800 z-10">
-                  <tr className="border-b border-cream-200 dark:border-ink-700 text-xs font-bold text-ink-600 dark:text-ink-300 uppercase">
+                <thead>
+                  <tr className="bg-cream-50 dark:bg-ink-800/60 border-b border-cream-200 dark:border-ink-800 text-xs font-bold text-ink-600 dark:text-ink-300 uppercase">
                     <th className="py-3 px-6">Ngày</th>
                     <th className="py-3 px-6 text-right">Số đơn đã thanh toán</th>
                     <th className="py-3 px-6 text-right">Doanh thu</th>
@@ -457,7 +602,7 @@ export const AdminReportsTab: React.FC = () => {
                       </td>
                     </tr>
                   ) : (
-                    revenueByDate.map((row, idx) => (
+                    paginatedDaily.map((row, idx) => (
                       <tr key={idx} className="hover:bg-cream-50/50 dark:hover:bg-ink-800/40 transition-colors">
                         <td className="py-3 px-6 font-mono text-ink-700 dark:text-ink-300">{row.date}</td>
                         <td className="py-3 px-6 text-right font-bold">
@@ -474,86 +619,126 @@ export const AdminReportsTab: React.FC = () => {
                 </tbody>
               </table>
             </div>
+            <MiniPagination
+              currentPage={dailyPage}
+              totalPages={dailyTotalPages}
+              totalItems={revenueByDate.length}
+              pageSize={dailyPageSize}
+              itemName="ngày"
+              onPageChange={setDailyPage}
+            />
           </div>
 
-          {/* Monthly & Yearly Revenue Tables Grid */}
+          {/* Monthly & Yearly Revenue Tables Grid with Mini Pagination */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Monthly */}
-            <div className="bg-white dark:bg-ink-900 rounded-3xl border border-cream-200 dark:border-ink-800 shadow-2xs overflow-hidden">
-              <div className="p-5 border-b border-cream-100 dark:border-ink-800">
-                <h4 className="font-bold text-base text-ink-900 dark:text-cream-50">Doanh thu theo tháng (12 tháng)</h4>
-              </div>
-              <div className="overflow-x-auto max-h-[300px]">
-                <table className="w-full text-left border-collapse text-sm">
-                  <thead className="sticky top-0 bg-cream-50 dark:bg-ink-800">
-                    <tr className="border-b border-cream-200 dark:border-ink-700 text-xs font-bold text-ink-600 dark:text-ink-300 uppercase">
-                      <th className="py-3 px-5">Tháng</th>
-                      <th className="py-3 px-5 text-right">Số đơn</th>
-                      <th className="py-3 px-5 text-right">Doanh thu</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-cream-100 dark:divide-ink-800">
-                    {revenueByMonth.length === 0 ? (
-                      <tr>
-                        <td colSpan={3} className="py-6 text-center text-ink-400 dark:text-ink-500 text-xs">
-                          Chưa có dữ liệu.
-                        </td>
+            <div className="bg-white dark:bg-ink-900 rounded-3xl border border-cream-200 dark:border-ink-800 shadow-2xs overflow-hidden flex flex-col justify-between">
+              <div>
+                <div className="p-5 border-b border-cream-100 dark:border-ink-800 flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold text-base text-ink-900 dark:text-cream-50">Doanh thu theo tháng</h4>
+                    <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">12 tháng gần nhất (6 tháng / trang)</p>
+                  </div>
+                  <span className="text-xs font-bold text-ink-500 dark:text-ink-400 bg-cream-100 dark:bg-ink-800 px-2 py-0.5 rounded-lg">
+                    {monthlyPage}/{monthlyTotalPages}
+                  </span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-cream-50 dark:bg-ink-800/60 border-b border-cream-200 dark:border-ink-800 text-xs font-bold text-ink-600 dark:text-ink-300 uppercase">
+                        <th className="py-3 px-5">Tháng</th>
+                        <th className="py-3 px-5 text-right">Số đơn</th>
+                        <th className="py-3 px-5 text-right">Doanh thu</th>
                       </tr>
-                    ) : (
-                      revenueByMonth.map((m, idx) => (
-                        <tr key={idx} className="hover:bg-cream-50/50 dark:hover:bg-ink-800/40 transition-colors">
-                          <td className="py-3 px-5 font-mono text-ink-700 dark:text-ink-300">{m.month}</td>
-                          <td className="py-3 px-5 text-right font-semibold text-ink-800 dark:text-ink-200 font-mono">
-                            {m.order_count}
-                          </td>
-                          <td className="py-3 px-5 text-right font-bold text-accent-600 dark:text-accent-400 font-mono">
-                            {formatCurrency(m.total_revenue)}
+                    </thead>
+                    <tbody className="divide-y divide-cream-100 dark:divide-ink-800">
+                      {revenueByMonth.length === 0 ? (
+                        <tr>
+                          <td colSpan={3} className="py-6 text-center text-ink-400 dark:text-ink-500 text-xs">
+                            Chưa có dữ liệu.
                           </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                      ) : (
+                        paginatedMonthly.map((m, idx) => (
+                          <tr key={idx} className="hover:bg-cream-50/50 dark:hover:bg-ink-800/40 transition-colors">
+                            <td className="py-3 px-5 font-mono text-ink-700 dark:text-ink-300">{m.month}</td>
+                            <td className="py-3 px-5 text-right font-semibold text-ink-800 dark:text-ink-200 font-mono">
+                              {m.order_count}
+                            </td>
+                            <td className="py-3 px-5 text-right font-bold text-accent-600 dark:text-accent-400 font-mono">
+                              {formatCurrency(m.total_revenue)}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
+              <MiniPagination
+                currentPage={monthlyPage}
+                totalPages={monthlyTotalPages}
+                totalItems={revenueByMonth.length}
+                pageSize={monthlyPageSize}
+                itemName="tháng"
+                onPageChange={setMonthlyPage}
+              />
             </div>
 
             {/* Yearly */}
-            <div className="bg-white dark:bg-ink-900 rounded-3xl border border-cream-200 dark:border-ink-800 shadow-2xs overflow-hidden">
-              <div className="p-5 border-b border-cream-100 dark:border-ink-800">
-                <h4 className="font-bold text-base text-ink-900 dark:text-cream-50">Doanh thu theo năm</h4>
-              </div>
-              <div className="overflow-x-auto max-h-[300px]">
-                <table className="w-full text-left border-collapse text-sm">
-                  <thead className="sticky top-0 bg-cream-50 dark:bg-ink-800">
-                    <tr className="border-b border-cream-200 dark:border-ink-700 text-xs font-bold text-ink-600 dark:text-ink-300 uppercase">
-                      <th className="py-3 px-5">Năm</th>
-                      <th className="py-3 px-5 text-right">Số đơn</th>
-                      <th className="py-3 px-5 text-right">Doanh thu</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-cream-100 dark:divide-ink-800">
-                    {revenueByYear.length === 0 ? (
-                      <tr>
-                        <td colSpan={3} className="py-6 text-center text-ink-400 dark:text-ink-500 text-xs">
-                          Chưa có dữ liệu.
-                        </td>
+            <div className="bg-white dark:bg-ink-900 rounded-3xl border border-cream-200 dark:border-ink-800 shadow-2xs overflow-hidden flex flex-col justify-between">
+              <div>
+                <div className="p-5 border-b border-cream-100 dark:border-ink-800 flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold text-base text-ink-900 dark:text-cream-50">Doanh thu theo năm</h4>
+                    <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">Tổng kết lũy kế theo từng năm tài chính</p>
+                  </div>
+                  <span className="text-xs font-bold text-ink-500 dark:text-ink-400 bg-cream-100 dark:bg-ink-800 px-2 py-0.5 rounded-lg">
+                    {revenueByYear.length} năm
+                  </span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-cream-50 dark:bg-ink-800/60 border-b border-cream-200 dark:border-ink-800 text-xs font-bold text-ink-600 dark:text-ink-300 uppercase">
+                        <th className="py-3 px-5">Năm</th>
+                        <th className="py-3 px-5 text-right">Số đơn</th>
+                        <th className="py-3 px-5 text-right">Doanh thu</th>
                       </tr>
-                    ) : (
-                      revenueByYear.map((y, idx) => (
-                        <tr key={idx} className="hover:bg-cream-50/50 dark:hover:bg-ink-800/40 transition-colors">
-                          <td className="py-3 px-5 font-mono font-bold text-ink-800 dark:text-cream-50">{y.year}</td>
-                          <td className="py-3 px-5 text-right font-semibold text-ink-800 dark:text-ink-200 font-mono">
-                            {y.order_count}
-                          </td>
-                          <td className="py-3 px-5 text-right font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                            {formatCurrency(y.total_revenue)}
+                    </thead>
+                    <tbody className="divide-y divide-cream-100 dark:divide-ink-800">
+                      {revenueByYear.length === 0 ? (
+                        <tr>
+                          <td colSpan={3} className="py-6 text-center text-ink-400 dark:text-ink-500 text-xs">
+                            Chưa có dữ liệu.
                           </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                      ) : (
+                        paginatedYearly.map((y, idx) => (
+                          <tr key={idx} className="hover:bg-cream-50/50 dark:hover:bg-ink-800/40 transition-colors">
+                            <td className="py-3 px-5 font-mono font-bold text-ink-800 dark:text-cream-50">{y.year}</td>
+                            <td className="py-3 px-5 text-right font-semibold text-ink-800 dark:text-ink-200 font-mono">
+                              {y.order_count}
+                            </td>
+                            <td className="py-3 px-5 text-right font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                              {formatCurrency(y.total_revenue)}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
+              <MiniPagination
+                currentPage={yearlyPage}
+                totalPages={yearlyTotalPages}
+                totalItems={revenueByYear.length}
+                pageSize={yearlyPageSize}
+                itemName="năm"
+                onPageChange={setYearlyPage}
+              />
             </div>
           </div>
         </div>
