@@ -13,7 +13,7 @@ export default defineConfig({
         tailwindcss(),
     ],
     server: {
-        host: true, // Lắng nghe trên tất cả network interfaces (localhost, 127.0.0.1, LAN IP, vhost)
+        host: 'localhost', // Chỉ hiển thị gọn gàng localhost, không liệt kê danh sách IP máy ảo/mạng LAN phức tạp
         strictPort: false, // TỰ ĐỘNG DÒ CỔNG: Nếu 5173 bận, tự động nhảy sang 5174, 5175... không bao giờ báo lỗi
         cors: true, // Cho phép mọi origin/host truy cập không bị chặn CORS
         watch: {
