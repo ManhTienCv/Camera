@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import {
   X,
   MapPin,
-  Sparkles,
   Check,
   Navigation,
   Loader2,
@@ -153,10 +152,7 @@ export function AddressModal({ isOpen, onClose, onSave, initialAddress }: Props)
           {/* Header */}
           <div className="px-6 pt-5 pb-3.5 border-b border-cream-100 dark:border-ink-800 flex items-start justify-between bg-cream-50/50 dark:bg-ink-950/50">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 bg-accent-50 dark:bg-accent-950/60 text-accent-700 dark:text-accent-400 rounded-full text-[11px] font-bold mb-1 border border-accent-200/70 dark:border-accent-800/60">
-                <MapPin size={12} className="text-accent-500" />
-                <span>Định Vị Vận Chuyển Số</span>
-              </div>
+
               <h2 className="font-display font-bold text-lg text-ink-900 dark:text-cream-50 leading-tight">
                 {initialAddress ? 'Chỉnh Sửa Địa Chỉ Nhận Hàng' : 'Thêm Địa Chỉ Nhận Hàng Mới'}
               </h2>
@@ -176,16 +172,12 @@ export function AddressModal({ isOpen, onClose, onSave, initialAddress }: Props)
             {/* Banner Map Picker Card */}
             <div className="p-3.5 bg-accent-50/70 dark:bg-accent-950/40 border border-accent-200 dark:border-accent-800/60 rounded-2xl flex items-center justify-between gap-3 shadow-2xs">
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-xl bg-accent-500 text-white flex items-center justify-center shrink-0 shadow-xs">
-                  <Sparkles size={16} />
-                </div>
+
                 <div>
-                  <h4 className="text-xs font-bold text-ink-900 dark:text-cream-50">
+                  <h4 className="text-sm text-ink-900 dark:text-cream-50">
                     Chọn vị trí trực tiếp qua Bản đồ OpenStreetMap / Google Maps
                   </h4>
-                  <p className="text-[11px] text-ink-500 dark:text-cream-200/80 mt-0.5">
-                    Kéo ghim định vị toạ độ GPS để lấy tên đường & số nhà tự động
-                  </p>
+
                 </div>
               </div>
               <button

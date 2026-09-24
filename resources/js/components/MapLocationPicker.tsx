@@ -8,7 +8,6 @@ import {
   MapPin,
   Check,
   X,
-  Sparkles,
   Loader2,
   Navigation,
   Building,
@@ -363,16 +362,11 @@ export function MapLocationPicker({
         {/* Header - Compact */}
         <div className="px-6 py-3.5 border-b border-cream-100 dark:border-ink-800 flex items-center justify-between bg-cream-50/60 dark:bg-ink-950/60 shrink-0">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 bg-accent-50 dark:bg-accent-950/60 text-accent-700 dark:text-accent-400 rounded-full text-[11px] font-bold mb-0.5 border border-accent-200/70 dark:border-accent-800/60">
-              <MapPin size={12} className="text-accent-500" />
-              <span>Định Vị Vận Chuyển Số</span>
-            </div>
+
             <h2 className="font-display font-bold text-lg text-ink-900 dark:text-cream-50 leading-tight">
               Chọn Vị Trí Nhận Hàng Trên Bản Đồ
             </h2>
-            <p className="text-[11px] text-ink-500 dark:text-ink-400">
-              Kéo thả ghim đỏ hoặc click trên bản đồ để lấy toạ độ & số nhà tự động
-            </p>
+
           </div>
           <button
             onClick={onClose}

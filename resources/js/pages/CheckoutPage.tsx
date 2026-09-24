@@ -411,9 +411,7 @@ export function CheckoutPage({ onNavigate }: Props) {
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-        <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
-          Nếu cần chọn thêm sản phẩm, bạn có thể quay lại giỏ hàng. Khi quay lại trang thanh toán, thời gian 15:00 sẽ tự động bắt đầu lại từ đầu.
-        </p>
+
       </div>
 
       <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-8">
@@ -473,16 +471,12 @@ export function CheckoutPage({ onNavigate }: Props) {
             {/* Smart Map Banner Card (Matches Image 1) */}
             <div className="p-4 bg-accent-50/60 border border-accent-200/80 rounded-2xl flex items-center justify-between gap-3 shadow-2xs">
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl bg-accent-500 text-white flex items-center justify-center shrink-0 shadow-xs">
-                  <Sparkles size={18} />
-                </div>
+
                 <div>
-                  <h4 className="text-xs font-bold text-ink-900">
+                  <h4 className="text-sm text-ink-900 dark:text-cream-50">
                     Chọn vị trí trực tiếp qua Bản đồ OpenStreetMap / Google Maps
                   </h4>
-                  <p className="text-[11px] text-accent-700 mt-0.5">
-                    Kéo ghim định vị toạ độ GPS để lấy tên đường & số nhà tự động
-                  </p>
+
                 </div>
               </div>
               <button
@@ -578,7 +572,7 @@ export function CheckoutPage({ onNavigate }: Props) {
               </h2>
               {subtotal >= FREE_SHIPPING_THRESHOLD && (
                 <span className="px-3 py-1 bg-accent-50 text-accent-700 rounded-full text-xs font-bold border border-accent-200">
-                  🎉 Miễn phí vận chuyển đơn &gt; 1.000.000đ
+                  Miễn phí vận chuyển đơn &gt; 1.000.000đ
                 </span>
               )}
             </div>
@@ -660,27 +654,10 @@ export function CheckoutPage({ onNavigate }: Props) {
 
             <div className="space-y-3">
               {[
-                {
-                  id: 'vietqr',
-                  label: 'Chuyển khoản VietQR (Napas 24/7 - Khuyên dùng)',
-                  desc: 'Quét mã QR bằng App mọi ngân hàng (VCB, MB, Techcombank, MoMo...). Tự động duyệt đơn.',
-                  badge: 'Khuyên dùng • Xử lý tức thì',
-                },
-                {
-                  id: 'cod',
-                  label: 'Thanh toán khi nhận hàng (COD)',
-                  desc: 'Kiểm tra máy ảnh và thanh toán tiền mặt khi shipper giao tận nơi',
-                },
-                {
-                  id: 'vnpay',
-                  label: 'Cổng VNPAY (ATM / Visa / QR Code)',
-                  desc: 'Thanh toán bảo mật trực tuyến qua VNPAY an toàn 100%',
-                },
-                {
-                  id: 'momo',
-                  label: 'Ví điện tử MoMo',
-                  desc: 'Quét mã QR qua ứng dụng MoMo tiện lợi',
-                },
+                { id: 'vietqr', label: 'Chuyển khoản VietQR (Napas 24/7 - Khuyên dùng)' },
+                { id: 'cod', label: 'Thanh toán khi nhận hàng (COD)' },
+                { id: 'vnpay', label: 'Cổng VNPAY (ATM / Visa / QR Code)' },
+                { id: 'momo', label: 'Ví điện tử MoMo' },
               ].map((method) => {
                 const isSelected = form.payment === method.id;
                 return (
@@ -703,13 +680,9 @@ export function CheckoutPage({ onNavigate }: Props) {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-bold text-sm text-ink-900 dark:text-cream-50">{method.label}</p>
-                          {method.badge && (
-                            <span className="px-2 py-0.5 bg-accent-50 dark:bg-accent-950/60 text-accent-700 dark:text-accent-300 text-[10px] font-bold rounded-full border border-accent-200 dark:border-accent-800">
-                              {method.badge}
-                            </span>
-                          )}
+
                         </div>
-                        <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">{method.desc}</p>
+
                       </div>
                     </label>
                   </div>
@@ -988,10 +961,10 @@ export function CheckoutPage({ onNavigate }: Props) {
                       <div
                         key={v.id}
                         className={`p-4 rounded-2xl border transition-all ${isApplied
-                            ? 'border-emerald-500 bg-emerald-50/40 ring-2 ring-emerald-500/10'
-                            : isEligible
-                              ? 'border-cream-200 hover:border-accent-300 hover:bg-cream-50/50'
-                              : 'border-cream-200 bg-cream-50/40 opacity-75'
+                          ? 'border-emerald-500 bg-emerald-50/40 ring-2 ring-emerald-500/10'
+                          : isEligible
+                            ? 'border-cream-200 hover:border-accent-300 hover:bg-cream-50/50'
+                            : 'border-cream-200 bg-cream-50/40 opacity-75'
                           }`}
                       >
                         <div className="flex items-center justify-between gap-3">
