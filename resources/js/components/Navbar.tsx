@@ -89,7 +89,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             key={item.id}
             type="button"
             onClick={() => onNavigate(item.page)}
-            className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-colors duration-200 cursor-pointer select-none outline-none focus-visible:ring-2 focus-visible:ring-accent-500/50 ${
+            className={`relative flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-colors duration-200 cursor-pointer select-none outline-none focus-visible:ring-2 focus-visible:ring-accent-500/50 ${
               isActive
                 ? 'text-white'
                 : 'text-ink-600 dark:text-cream-300 hover:text-ink-900 dark:hover:text-white'
@@ -108,7 +108,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Icon */}
             <Icon
-              size={15}
+              size={17}
               className={`relative z-10 transition-colors duration-200 ${
                 isActive ? 'text-white' : 'text-ink-400 dark:text-cream-400'
               }`}
@@ -120,7 +120,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Badge if available */}
             {item.badge && (
               <span
-                className={`relative z-10 text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded-full border transition-colors ${
+                className={`relative z-10 text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded-full border transition-colors ${
                   isActive
                     ? 'bg-white/20 text-white border-white/30'
                     : 'bg-accent-100 text-accent-700 dark:bg-accent-950 dark:text-accent-300 border-accent-200 dark:border-accent-800'
