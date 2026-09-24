@@ -128,6 +128,15 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // Tự động kích hoạt tỉ lệ thu nhỏ -10% khi truy cập trang admin
+  useEffect(() => {
+    if (page.name === 'admin') {
+      document.documentElement.classList.add('admin-mode');
+    } else {
+      document.documentElement.classList.remove('admin-mode');
+    }
+  }, [page.name]);
+
   const navigate = useCallback((p: Page) => {
     setPage(p);
     // Tự động cuộn ngay về đầu trang

@@ -571,6 +571,9 @@ html.dark input[type="date"]::-webkit-calendar-picker-indicator {
 /* -------------------------------------------------------------
  * 10. ADMIN & TABLE SPECIFIC STYLING
  * ----------------------------------------------------------- */
+html.admin-mode {
+  zoom: 0.9;
+}
 html.dark .admin-content-area tr:hover {
   background-color: rgba(255, 255, 255, 0.03) !important;
 }

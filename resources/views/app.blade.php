@@ -23,6 +23,11 @@
         (function() {
             try {
                 var isAdmin = window.location.pathname.indexOf('/admin') === 0;
+                if (isAdmin) {
+                    document.documentElement.classList.add('admin-mode');
+                } else {
+                    document.documentElement.classList.remove('admin-mode');
+                }
                 var key = isAdmin ? 'camerahub_admin_theme' : 'camerahub_client_theme';
                 var saved = localStorage.getItem(key);
                 if (saved === 'dark') {

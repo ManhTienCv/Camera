@@ -517,7 +517,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
   // VIEW 2: FULL ADMIN DASHBOARD (Fixed Full-Height Sticky Navbar)
   // -------------------------------------------------------------
   return (
-    <div className="h-screen w-screen overflow-hidden flex flex-col md:flex-row bg-cream-100 dark:bg-ink-950 text-ink-900 dark:text-cream-100 antialiased transition-colors duration-200">
+    <div className="h-screen w-full overflow-hidden flex flex-col md:flex-row bg-cream-100 dark:bg-ink-950 text-ink-900 dark:text-cream-100 antialiased transition-colors duration-200">
       {/* FIXED FULL-HEIGHT SIDEBAR */}
       <AdminSidebar
         activeTab={activeTab}
