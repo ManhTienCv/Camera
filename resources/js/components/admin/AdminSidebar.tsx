@@ -225,9 +225,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         </div>
       </div>
 
-      {/* User profile at bottom (Chuẩn theo Ảnh 2: Avatar A xanh + Chức vụ + Nút Đăng xuất riêng) */}
+      {/* User profile at bottom (Cố định ở đáy sidebar) */}
       {!isCollapsed ? (
-        <div className="p-3.5 border-t border-cream-200 dark:border-ink-800 flex flex-col flex-shrink-0 bg-cream-50/70 dark:bg-ink-950/60 gap-3">
+        <div className="p-3.5 border-t border-cream-200 dark:border-ink-800 flex flex-col flex-shrink-0 bg-white/95 dark:bg-ink-900/95 backdrop-blur-md gap-3 mt-auto sticky bottom-0 z-20">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="w-10 h-10 bg-blue-100 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center font-bold text-sm shadow-xs shrink-0 select-none">
               {adminUser?.fullName?.charAt(0) || 'A'}
@@ -253,7 +253,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           )}
         </div>
       ) : (
-        <div className="p-3 border-t border-cream-200 dark:border-ink-800 flex flex-col items-center gap-2.5 flex-shrink-0 bg-cream-50/70 dark:bg-ink-950/60">
+        <div className="p-3 border-t border-cream-200 dark:border-ink-800 flex flex-col items-center gap-2.5 flex-shrink-0 bg-white/95 dark:bg-ink-900/95 backdrop-blur-md mt-auto sticky bottom-0 z-20">
           <div
             className="w-9 h-9 bg-blue-100 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center font-bold text-xs shadow-xs shrink-0 cursor-pointer"
             title={`${adminUser?.fullName || 'Admin'} - Tổng quản trị hệ thống`}

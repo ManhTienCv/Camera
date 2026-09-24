@@ -573,7 +573,37 @@ html.dark input[type="date"]::-webkit-calendar-picker-indicator {
  * ----------------------------------------------------------- */
 html.admin-mode {
   zoom: 0.9;
+  height: calc(100vh / 0.9);
+  min-height: calc(100vh / 0.9);
+  width: calc(100vw / 0.9);
 }
+
+html.admin-mode body {
+  height: 100%;
+  min-height: calc(100vh / 0.9);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+html.admin-mode #root {
+  height: 100%;
+  width: 100%;
+}
+
+html.admin-mode .h-screen {
+  height: calc(100vh / 0.9) !important;
+}
+
+html.admin-mode .min-h-screen {
+  min-height: calc(100vh / 0.9) !important;
+}
+
+html.admin-mode .w-screen {
+  width: calc(100vw / 0.9) !important;
+}
+
 html.dark .admin-content-area tr:hover {
   background-color: rgba(255, 255, 255, 0.03) !important;
 }
