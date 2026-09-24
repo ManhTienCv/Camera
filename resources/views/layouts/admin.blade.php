@@ -59,6 +59,11 @@
                             <i class="fa-solid fa-users me-2"></i>Quản lý người dùng
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('admin/finance*') ? 'active' : '' }}" href="{{ route('admin.finance.index') }}">
+                            <i class="fa-solid fa-wallet me-2"></i>Quản lý tài chính (Lab 09)
+                        </a>
+                    </li>
                     <li class="nav-item mt-3 pt-3 border-top border-secondary">
                         <a class="nav-link text-warning" href="/">
                             <i class="fa-solid fa-arrow-left me-2"></i>Về cửa hàng

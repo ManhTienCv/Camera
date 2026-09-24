@@ -43,6 +43,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{id}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::put('/orders/{id}', [AdminOrderController::class, 'updateStatus'])->name('orders.update');
+
+    // Lab 09: Admin Finance Routes
+    Route::get('/finance', [\App\Http\Controllers\Admin\FinanceController::class, 'index'])->name('finance.index');
+    Route::get('/finance/transactions', [\App\Http\Controllers\Admin\FinanceController::class, 'transactions'])->name('finance.transactions');
+    Route::patch('/finance/{order}/status', [\App\Http\Controllers\Admin\FinanceController::class, 'updateStatus'])->name('finance.update-status');
 });
 
 // Main React SPA Entrypoint
