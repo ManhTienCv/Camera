@@ -18,6 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { api } from '../lib/api';
 import { formatCurrency } from '../lib/utils';
+import { Navbar } from './Navbar';
 import type { Page, Category, Product } from '../types';
 
 interface Props {
@@ -134,67 +135,9 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
               </button>
 
               {/* Desktop Navigation Links with Framer Motion Shared Layout Gliding Pill */}
-              <nav className="hidden lg:flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => onNavigate({ name: 'home' })}
-                  className={`relative flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-colors duration-200 cursor-pointer ${
-                    currentPage.name === 'home'
-                      ? 'text-white'
-                      : 'text-ink-700 dark:text-ink-300 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70 dark:hover:bg-ink-800/70'
-                  }`}
-                >
-                  {currentPage.name === 'home' && (
-                    <motion.div
-                      layoutId="header-navbar-pill"
-                      className="absolute inset-0 bg-accent-500 rounded-full shadow-xs z-0"
-                      transition={{
-                        type: 'spring',
-                        stiffness: 380,
-                        damping: 30,
-                        mass: 0.8,
-                      }}
-                    />
-                  )}
-                  <Home
-                    size={17}
-                    className={`relative z-10 transition-colors duration-200 ${
-                      currentPage.name === 'home' ? 'text-white' : 'text-ink-400 dark:text-ink-400'
-                    }`}
-                  />
-                  <span className="relative z-10">Trang chủ</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => onNavigate({ name: 'catalog' })}
-                  className={`relative flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-colors duration-200 cursor-pointer ${
-                    currentPage.name === 'catalog'
-                      ? 'text-white'
-                      : 'text-ink-700 dark:text-ink-300 hover:text-ink-900 dark:hover:text-white hover:bg-cream-100/70 dark:hover:bg-ink-800/70'
-                  }`}
-                >
-                  {currentPage.name === 'catalog' && (
-                    <motion.div
-                      layoutId="header-navbar-pill"
-                      className="absolute inset-0 bg-accent-500 rounded-full shadow-xs z-0"
-                      transition={{
-                        type: 'spring',
-                        stiffness: 380,
-                        damping: 30,
-                        mass: 0.8,
-                      }}
-                    />
-                  )}
-                  <ShoppingBag
-                    size={17}
-                    className={`relative z-10 transition-colors duration-200 ${
-                      currentPage.name === 'catalog' ? 'text-white' : 'text-ink-400 dark:text-ink-400'
-                    }`}
-                  />
-                  <span className="relative z-10">Sản phẩm</span>
-                </button>
-              </nav>
+              <div className="hidden lg:flex items-center">
+                <Navbar currentPage={currentPage} onNavigate={onNavigate} />
+              </div>
             </div>
 
             {/* 2. Middle & Right: Search, Cart & Prominent Login / User Pill */}

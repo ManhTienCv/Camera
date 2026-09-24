@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { AuthProvider } from './context/AuthContext';
@@ -8,18 +9,33 @@ import { AuthModal } from './components/AuthModal';
 import { LiveChatWidget } from './components/LiveChatWidget';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
-import { HomePage } from './pages/HomePage';
-import { CatalogPage } from './pages/CatalogPage';
-import { ProductDetailPage } from './pages/ProductDetailPage';
-import { CartPage } from './pages/CartPage';
-import { CheckoutPage } from './pages/CheckoutPage';
-import { OrderSuccessPage } from './pages/OrderSuccessPage';
-import { SearchPage } from './pages/SearchPage';
-import { ProfilePage } from './pages/ProfilePage';
-import { OrdersPage } from './pages/OrdersPage';
-import { AdminPage } from './pages/AdminPage';
 import { api } from './lib/api';
 import type { Page, Category } from './types';
+
+// Code Splitting (Tải trang lười qua React.lazy để tối ưu Bundle Size)
+const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })));
+const CatalogPage = lazy(() => import('./pages/CatalogPage').then((m) => ({ default: m.CatalogPage })));
+const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage').then((m) => ({ default: m.ProductDetailPage })));
+const CartPage = lazy(() => import('./pages/CartPage').then((m) => ({ default: m.CartPage })));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage').then((m) => ({ default: m.CheckoutPage })));
+const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage').then((m) => ({ default: m.OrderSuccessPage })));
+const SearchPage = lazy(() => import('./pages/SearchPage').then((m) => ({ default: m.SearchPage })));
+const ProfilePage = lazy(() => import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage })));
+const OrdersPage = lazy(() => import('./pages/OrdersPage').then((m) => ({ default: m.OrdersPage })));
+const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })));
+
+// Loading Spinner tinh gọn hiển thị trong lúc nạp Chunk
+const PageFallback: React.FC = () => (
+  <div className="flex-1 min-h-[55vh] flex flex-col items-center justify-center p-8 space-y-3">
+    <div className="relative w-9 h-9">
+      <div className="absolute inset-0 rounded-full border-2 border-cream-200 dark:border-ink-800" />
+      <div className="absolute inset-0 rounded-full border-2 border-accent-500 border-t-transparent animate-spin" />
+    </div>
+    <span className="text-xs font-semibold text-ink-400 dark:text-cream-400 animate-pulse tracking-wide">
+      Đang tải dữ liệu...
+    </span>
+  </div>
+);
 
 // Helper to parse page from current browser URL
 const parseLocation = (): Page => {
@@ -86,6 +102,7 @@ const GoogleAuthHandler: React.FC = () => {
 export default function App() {
   const [page, setPage] = useState<Page>(() => parseLocation());
   const [categories, setCategories] = useState<Category[]>([]);
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     (async () => {
@@ -103,6 +120,7 @@ export default function App() {
   useEffect(() => {
     const handlePopState = () => {
       setPage(parseLocation());
+      window.scrollTo(0, 0);
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -110,7 +128,8 @@ export default function App() {
 
   const navigate = useCallback((p: Page) => {
     setPage(p);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Tự động cuộn mượt về đầu trang khi chuyển Route
+    window.scrollTo(0, 0);
 
     // Sync browser URL bar so reloads (F5) stay on the exact same page/tab
     let targetUrl = '/';
@@ -140,6 +159,61 @@ export default function App() {
     window.dispatchEvent(new Event('camerahub_route_change'));
   }, []);
 
+  // Xác định Transition Key duy nhất cho từng màn hình
+  const pageTransitionKey = (() => {
+    switch (page.name) {
+      case 'home':
+        return 'home';
+      case 'catalog':
+        return `catalog-${page.categorySlug || 'all'}`;
+      case 'product':
+        return `product-${page.slug}`;
+      case 'cart':
+        return 'cart';
+      case 'checkout':
+        return 'checkout';
+      case 'order-success':
+        return `order-success-${page.orderId || ''}`;
+      case 'search':
+        return `search-${page.query}`;
+      case 'orders':
+        return 'orders';
+      case 'profile':
+        return `profile-${page.tab || 'profile'}`;
+      case 'admin':
+        return `admin-${page.tab || 'dashboard'}`;
+      default:
+        return (page as any).name || 'page';
+    }
+  })();
+
+  // Cấu hình chuyển cảnh theo chuẩn: exit trôi nhẹ lên và mờ, enter từ dưới lên và rõ dần
+  const pageVariants = {
+    initial: shouldReduceMotion
+      ? { opacity: 1 }
+      : { opacity: 0, y: 14, scale: 0.99 },
+    animate: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        duration: shouldReduceMotion ? 0 : 0.28,
+        ease: [0.22, 1, 0.36, 1],
+      },
+    },
+    exit: shouldReduceMotion
+      ? { opacity: 0 }
+      : {
+          opacity: 0,
+          y: -14,
+          scale: 0.99,
+          transition: {
+            duration: shouldReduceMotion ? 0 : 0.22,
+            ease: [0.22, 1, 0.36, 1],
+          },
+        },
+  };
+
   return (
     <ThemeProvider>
       <ToastProvider>
@@ -148,37 +222,52 @@ export default function App() {
             <GoogleAuthHandler />
             <CartProvider>
               {page.name === 'admin' ? (
-                <AdminPage onNavigate={navigate} initialTab={page.tab || 'dashboard'} />
+                <Suspense fallback={<PageFallback />}>
+                  <AdminPage onNavigate={navigate} initialTab={page.tab || 'dashboard'} />
+                </Suspense>
               ) : (
                 <div className="min-h-screen flex flex-col bg-cream-50 dark:bg-ink-950 text-ink-800 dark:text-cream-100 transition-colors duration-200">
                   <Header onNavigate={navigate} currentPage={page} categories={categories} />
 
-                  <main className="flex-1">
-                    {page.name === 'home' && <HomePage onNavigate={navigate} categories={categories} />}
-                    {page.name === 'catalog' && (
-                      <CatalogPage
-                        onNavigate={navigate}
-                        categories={categories}
-                        categorySlug={page.categorySlug}
-                      />
-                    )}
-                    {page.name === 'product' && (
-                      <ProductDetailPage
-                        slug={page.slug}
-                        onNavigate={navigate}
-                        categories={categories}
-                      />
-                    )}
-                    {page.name === 'cart' && <CartPage onNavigate={navigate} />}
-                    {page.name === 'checkout' && <CheckoutPage onNavigate={navigate} />}
-                    {page.name === 'order-success' && (
-                      <OrderSuccessPage orderId={page.orderId} onNavigate={navigate} />
-                    )}
-                    {page.name === 'search' && <SearchPage query={page.query} onNavigate={navigate} />}
-                    {page.name === 'orders' && <OrdersPage onNavigate={navigate} />}
-                    {page.name === 'profile' && (
-                      <ProfilePage initialTab={page.tab || 'profile'} onNavigate={navigate} />
-                    )}
+                  <main className="flex-1 relative overflow-hidden flex flex-col">
+                    <AnimatePresence mode="sync" initial={false}>
+                      <motion.div
+                        key={pageTransitionKey}
+                        variants={pageVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        className="w-full flex-1 flex flex-col will-change-transform"
+                      >
+                        <Suspense fallback={<PageFallback />}>
+                          {page.name === 'home' && <HomePage onNavigate={navigate} categories={categories} />}
+                          {page.name === 'catalog' && (
+                            <CatalogPage
+                              onNavigate={navigate}
+                              categories={categories}
+                              categorySlug={page.categorySlug}
+                            />
+                          )}
+                          {page.name === 'product' && (
+                            <ProductDetailPage
+                              slug={page.slug}
+                              onNavigate={navigate}
+                              categories={categories}
+                            />
+                          )}
+                          {page.name === 'cart' && <CartPage onNavigate={navigate} />}
+                          {page.name === 'checkout' && <CheckoutPage onNavigate={navigate} />}
+                          {page.name === 'order-success' && (
+                            <OrderSuccessPage orderId={page.orderId} onNavigate={navigate} />
+                          )}
+                          {page.name === 'search' && <SearchPage query={page.query} onNavigate={navigate} />}
+                          {page.name === 'orders' && <OrdersPage onNavigate={navigate} />}
+                          {page.name === 'profile' && (
+                            <ProfilePage initialTab={page.tab || 'profile'} onNavigate={navigate} />
+                          )}
+                        </Suspense>
+                      </motion.div>
+                    </AnimatePresence>
                   </main>
 
                   <Footer onNavigate={navigate} categories={categories} />
