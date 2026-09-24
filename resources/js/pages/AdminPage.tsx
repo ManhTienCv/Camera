@@ -522,7 +522,14 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
 
       {/* RIGHT CONTENT AREA: Independently Scrollable */}
       <div ref={contentAreaRef} className="flex-1 flex flex-col h-screen min-w-0 overflow-y-auto overflow-x-hidden scrollbar-none bg-cream-100 dark:bg-ink-950 admin-content-area">
-        <AdminHeader onNavigate={onNavigate} adminUser={adminUser} onLogout={() => setShowLogoutConfirm(true)} />
+        <AdminHeader
+          onNavigate={onNavigate}
+          adminUser={adminUser}
+          onLogout={() => setShowLogoutConfirm(true)}
+          setActiveTab={handleTabChange}
+          orders={orders}
+          products={products}
+        />
 
         <main className="p-6 sm:p-8 max-w-7xl mx-auto w-full space-y-8 flex-1">
           {activeTab === 'dashboard' && (
