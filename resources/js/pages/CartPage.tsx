@@ -157,6 +157,7 @@ export function CartPage({ onNavigate }: Props) {
                   openAuthModal('login');
                   return;
                 }
+                sessionStorage.removeItem('camerahub_checkout_deadline');
                 onNavigate({ name: 'checkout' });
               }}
               className="w-full btn-accent py-3.5 mb-3 cursor-pointer"

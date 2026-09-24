@@ -4,6 +4,7 @@
     "type": "module",
     "scripts": {
         "dev": "concurrently -c \"bgBlue.bold,bgMagenta.bold\" --names \"LARAVEL,VITE\" \"php artisan serve\" \"vite\"",
+        "vite": "vite",
         "build": "vite build",
         "serve": "php artisan serve"
     },

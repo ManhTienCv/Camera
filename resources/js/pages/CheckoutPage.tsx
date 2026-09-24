@@ -283,6 +283,7 @@ export function CheckoutPage({ onNavigate }: Props) {
         }
       }
 
+      sessionStorage.removeItem('camerahub_checkout_deadline');
       onNavigate({ name: 'order-success', orderId: order.id });
     } catch (err) {
       console.error('Failed to create order:', err);
@@ -307,7 +308,10 @@ export function CheckoutPage({ onNavigate }: Props) {
         <div className="flex flex-wrap items-center justify-center gap-4">
           <button
             type="button"
-            onClick={() => onNavigate({ name: 'cart' })}
+            onClick={() => {
+              sessionStorage.removeItem('camerahub_checkout_deadline');
+              onNavigate({ name: 'cart' });
+            }}
             className="btn-secondary px-6 py-3 text-sm font-bold cursor-pointer"
           >
             Quay lại giỏ hàng
@@ -343,7 +347,13 @@ export function CheckoutPage({ onNavigate }: Props) {
       {/* Breadcrumb & Navigation Header */}
       <div className="flex items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-2 text-sm text-ink-400">
-          <button onClick={() => onNavigate({ name: 'home' })} className="hover:text-ink-700 cursor-pointer">
+          <button
+            onClick={() => {
+              sessionStorage.removeItem('camerahub_checkout_deadline');
+              onNavigate({ name: 'home' });
+            }}
+            className="hover:text-ink-700 cursor-pointer"
+          >
             Trang chủ
           </button>
           <ChevronRight size={14} />
@@ -422,8 +432,8 @@ export function CheckoutPage({ onNavigate }: Props) {
                     key={addr.id}
                     onClick={() => handleSelectSavedAddress(addr)}
                     className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${selectedAddressId === addr.id
-                        ? 'border-accent-500 bg-accent-50/40 dark:bg-accent-500/10 shadow-2xs'
-                        : 'border-cream-200 dark:border-ink-700 hover:border-cream-300 dark:hover:border-ink-600 bg-white dark:bg-ink-800'
+                      ? 'border-accent-500 bg-accent-50/40 dark:bg-accent-500/10 shadow-2xs'
+                      : 'border-cream-200 dark:border-ink-700 hover:border-cream-300 dark:hover:border-ink-600 bg-white dark:bg-ink-800'
                       }`}
                   >
                     <div className="flex items-center justify-between mb-1">
@@ -586,8 +596,8 @@ export function CheckoutPage({ onNavigate }: Props) {
                   <label
                     key={carrier.id}
                     className={`flex items-start justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all ${isSelected
-                        ? 'border-accent-500 bg-accent-50/40 dark:bg-accent-500/10 shadow-xs'
-                        : 'border-cream-200 dark:border-ink-700 hover:border-cream-300 dark:hover:border-ink-600 bg-white dark:bg-ink-800'
+                      ? 'border-accent-500 bg-accent-50/40 dark:bg-accent-500/10 shadow-xs'
+                      : 'border-cream-200 dark:border-ink-700 hover:border-cream-300 dark:hover:border-ink-600 bg-white dark:bg-ink-800'
                       }`}
                   >
                     <div className="flex items-start gap-3">
@@ -677,8 +687,8 @@ export function CheckoutPage({ onNavigate }: Props) {
                   <div
                     key={method.id}
                     className={`rounded-2xl border-2 transition-all overflow-hidden ${isSelected
-                        ? 'border-accent-500 bg-accent-50/40 dark:bg-accent-500/10 shadow-xs'
-                        : 'border-cream-200 dark:border-ink-700 hover:border-cream-300 dark:hover:border-ink-600 bg-white dark:bg-ink-800'
+                      ? 'border-accent-500 bg-accent-50/40 dark:bg-accent-500/10 shadow-xs'
+                      : 'border-cream-200 dark:border-ink-700 hover:border-cream-300 dark:hover:border-ink-600 bg-white dark:bg-ink-800'
                       }`}
                   >
                     <label className="flex items-start gap-3 p-4 cursor-pointer">
@@ -920,6 +930,7 @@ export function CheckoutPage({ onNavigate }: Props) {
                   type="button"
                   onClick={() => {
                     setIsLeaveModalOpen(false);
+                    sessionStorage.removeItem('camerahub_checkout_deadline');
                     onNavigate({ name: 'cart' });
                   }}
                   className="flex-1 py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95"
@@ -976,13 +987,12 @@ export function CheckoutPage({ onNavigate }: Props) {
                     return (
                       <div
                         key={v.id}
-                        className={`p-4 rounded-2xl border transition-all ${
-                          isApplied
+                        className={`p-4 rounded-2xl border transition-all ${isApplied
                             ? 'border-emerald-500 bg-emerald-50/40 ring-2 ring-emerald-500/10'
                             : isEligible
-                            ? 'border-cream-200 hover:border-accent-300 hover:bg-cream-50/50'
-                            : 'border-cream-200 bg-cream-50/40 opacity-75'
-                        }`}
+                              ? 'border-cream-200 hover:border-accent-300 hover:bg-cream-50/50'
+                              : 'border-cream-200 bg-cream-50/40 opacity-75'
+                          }`}
                       >
                         <div className="flex items-center justify-between gap-3">
                           <div className="space-y-1 flex-1 min-w-0">
@@ -1069,7 +1079,10 @@ export function CheckoutPage({ onNavigate }: Props) {
 
               <div className="pt-2">
                 <button
-                  onClick={() => onNavigate({ name: 'cart' })}
+                  onClick={() => {
+                    sessionStorage.removeItem('camerahub_checkout_deadline');
+                    onNavigate({ name: 'cart' });
+                  }}
                   className="w-full btn-accent py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md"
                 >
                   <ArrowLeft size={16} />

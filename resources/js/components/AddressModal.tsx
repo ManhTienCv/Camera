@@ -137,9 +137,8 @@ export function AddressModal({ isOpen, onClose, onSave, initialAddress }: Props)
     <>
       {/* Backdrop: Fullscreen portal covering 100% viewport */}
       <div
-        className={`fixed inset-0 w-screen h-screen min-h-[100dvh] z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/65 backdrop-blur-xs animate-fade-in overflow-y-auto cursor-pointer ${
-          isMapOpen ? 'hidden' : ''
-        }`}
+        className={`fixed inset-0 w-screen h-screen min-h-[100dvh] z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/65 backdrop-blur-xs animate-fade-in overflow-y-auto cursor-pointer ${isMapOpen ? 'hidden' : ''
+          }`}
         onClick={(e) => {
           if (e.target === e.currentTarget) {
             onClose();

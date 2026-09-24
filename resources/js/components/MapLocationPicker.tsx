@@ -510,10 +510,6 @@ export function MapLocationPicker({
                 />
               </div>
             </div>
-
-            <p className="text-[10px] text-accent-800 dark:text-accent-400 font-medium italic flex items-center gap-1">
-              👉 Bấm <strong>"Xác Nhận Dùng Địa Chỉ Này"</strong> để áp dụng thông tin vị trí vào biểu mẫu.
-            </p>
           </div>
 
           {/* Action Buttons - Always Visible and Prominent */}

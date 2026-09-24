@@ -95,11 +95,10 @@ export const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
 
         {profileMsg && (
           <div
-            className={`p-3.5 rounded-2xl text-xs flex items-center gap-2 ${
-              profileMsg.type === 'success'
-                ? 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
-                : 'bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300'
-            }`}
+            className={`p-3.5 rounded-2xl text-xs flex items-center gap-2 ${profileMsg.type === 'success'
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
+              : 'bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300'
+              }`}
           >
             {profileMsg.type === 'success' ? (
               <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -224,11 +223,10 @@ export const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                 Mật khẩu tài khoản:
               </span>
               <span
-                className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                  user.hasPassword !== false
-                    ? 'text-ink-700 dark:text-cream-300 bg-cream-200/80 dark:bg-ink-700'
-                    : 'text-amber-700 bg-amber-50 border border-amber-200 dark:bg-amber-950/50 dark:border-amber-800 dark:text-amber-300'
-                }`}
+                className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${user.hasPassword !== false
+                  ? 'text-ink-700 dark:text-cream-300 bg-cream-200/80 dark:bg-ink-700'
+                  : 'text-amber-700 bg-amber-50 border border-amber-200 dark:bg-amber-950/50 dark:border-amber-800 dark:text-amber-300'
+                  }`}
               >
                 {user.hasPassword !== false ? 'Đã thiết lập' : 'Chưa thiết lập'}
               </span>
@@ -257,7 +255,7 @@ export const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
               </h3>
             </div>
             <p className="text-xs text-ink-500 dark:text-ink-400">
-              Tùy chỉnh phong cách giao diện Sáng / Tối theo sở thích cá nhân của bạn.
+              Tùy chỉnh giao diện
             </p>
           </div>
 
@@ -272,11 +270,10 @@ export const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                   toast.success('Đã chuyển sang Chế độ Sáng (Mặc định)!');
                 }
               }}
-              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between ${
-                clientTheme === 'light'
-                  ? 'bg-amber-50/60 dark:bg-amber-950/30 border-amber-400 dark:border-amber-500 ring-2 ring-amber-400/20 shadow-xs'
-                  : 'bg-cream-50/60 dark:bg-ink-800/40 border-cream-200 dark:border-ink-700 hover:border-amber-300 dark:hover:border-ink-600'
-              }`}
+              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between ${clientTheme === 'light'
+                ? 'bg-amber-50/60 dark:bg-amber-950/30 border-amber-400 dark:border-amber-500 ring-2 ring-amber-400/20 shadow-xs'
+                : 'bg-cream-50/60 dark:bg-ink-800/40 border-cream-200 dark:border-ink-700 hover:border-amber-300 dark:hover:border-ink-600'
+                }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
@@ -294,9 +291,7 @@ export const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
               </div>
               <div>
                 <p className="font-bold text-sm text-ink-900 dark:text-cream-50">Chế độ Sáng</p>
-                <p className="text-[11px] text-ink-500 dark:text-ink-400 mt-0.5 leading-snug">
-                  Nền sáng thanh lịch, rõ nét ban ngày (Mặc định).
-                </p>
+
               </div>
             </button>
 
@@ -309,11 +304,10 @@ export const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
                   toast.success('Đã chuyển sang Chế độ Tối (Dark Mode)!');
                 }
               }}
-              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between ${
-                clientTheme === 'dark'
-                  ? 'bg-indigo-950/40 border-indigo-500 ring-2 ring-indigo-500/25 shadow-xs'
-                  : 'bg-cream-50/60 dark:bg-ink-800/40 border-cream-200 dark:border-ink-700 hover:border-indigo-400 dark:hover:border-ink-600'
-              }`}
+              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between ${clientTheme === 'dark'
+                ? 'bg-indigo-950/40 border-indigo-500 ring-2 ring-indigo-500/25 shadow-xs'
+                : 'bg-cream-50/60 dark:bg-ink-800/40 border-cream-200 dark:border-ink-700 hover:border-indigo-400 dark:hover:border-ink-600'
+                }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
@@ -331,19 +325,9 @@ export const ProfileInfoTab: React.FC<ProfileInfoTabProps> = ({
               </div>
               <div>
                 <p className="font-bold text-sm text-ink-900 dark:text-cream-50">Chế độ Tối</p>
-                <p className="text-[11px] text-ink-500 dark:text-ink-400 mt-0.5 leading-snug">
-                  Dịu mắt ban đêm, bảo vệ thị lực và tiết kiệm pin.
-                </p>
+
               </div>
             </button>
-          </div>
-
-          {/* Preference Note */}
-          <div className="p-3 bg-cream-50 dark:bg-ink-800/50 rounded-2xl border border-cream-200 dark:border-ink-700/60 flex items-start gap-2 text-[11px] text-ink-500 dark:text-ink-400 leading-relaxed">
-            <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
-            <span>
-              Hệ thống ưu tiên nền sáng làm mặc định. Lựa chọn của bạn sẽ được lưu tự động trên thiết bị này và giữ nguyên khi đăng nhập lại.
-            </span>
           </div>
         </div>
       </div>
