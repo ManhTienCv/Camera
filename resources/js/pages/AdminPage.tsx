@@ -586,10 +586,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
             />
           )}
         </main>
-
-        <footer className="py-6 border-t border-cream-200 dark:border-ink-800 text-center text-xs text-ink-400 dark:text-ink-500 bg-white dark:bg-ink-900 flex-shrink-0 transition-colors">
-          © 2026 CameraHub Management System - Laravel 11 & React 18 Architecture
-        </footer>
       </div>
 
       {/* ALL MODALS */}

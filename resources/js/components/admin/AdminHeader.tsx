@@ -45,9 +45,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onNavigate }) => {
           <span className="text-sm font-display font-bold text-ink-900 dark:text-cream-50 leading-none">
             CameraHub Admin
           </span>
-          <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-cream-100 dark:bg-ink-800 text-ink-600 dark:text-cream-300 border border-cream-200 dark:border-ink-700">
-            v2.6
-          </span>
+
         </div>
       </div>
 
