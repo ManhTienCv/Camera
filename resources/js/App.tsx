@@ -12,19 +12,21 @@ import { Footer } from './components/Footer';
 import { api } from './lib/api';
 import type { Page, Category } from './types';
 
-// Code Splitting (Tải trang lười qua React.lazy để tối ưu Bundle Size)
-const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })));
-const CatalogPage = lazy(() => import('./pages/CatalogPage').then((m) => ({ default: m.CatalogPage })));
-const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage').then((m) => ({ default: m.ProductDetailPage })));
-const CartPage = lazy(() => import('./pages/CartPage').then((m) => ({ default: m.CartPage })));
-const CheckoutPage = lazy(() => import('./pages/CheckoutPage').then((m) => ({ default: m.CheckoutPage })));
-const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage').then((m) => ({ default: m.OrderSuccessPage })));
-const SearchPage = lazy(() => import('./pages/SearchPage').then((m) => ({ default: m.SearchPage })));
-const ProfilePage = lazy(() => import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage })));
-const OrdersPage = lazy(() => import('./pages/OrdersPage').then((m) => ({ default: m.OrdersPage })));
+// Import trực tiếp các trang chính của người dùng để chuyển trang tức thì (0ms latency, không chờ nạp chunk)
+import { HomePage } from './pages/HomePage';
+import { CatalogPage } from './pages/CatalogPage';
+import { ProductDetailPage } from './pages/ProductDetailPage';
+import { CartPage } from './pages/CartPage';
+import { CheckoutPage } from './pages/CheckoutPage';
+import { OrderSuccessPage } from './pages/OrderSuccessPage';
+import { SearchPage } from './pages/SearchPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { OrdersPage } from './pages/OrdersPage';
+
+// Chỉ tải lười (lazy) đối với trang Quản trị (Admin) vì dung lượng lớn và chỉ dành cho Admin
 const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })));
 
-// Loading Spinner tinh gọn hiển thị trong lúc nạp Chunk
+// Loading Spinner tinh gọn chỉ dành cho lúc nạp trang Admin
 const PageFallback: React.FC = () => (
   <div className="flex-1 min-h-[55vh] flex flex-col items-center justify-center p-8 space-y-3">
     <div className="relative w-9 h-9">
@@ -32,7 +34,7 @@ const PageFallback: React.FC = () => (
       <div className="absolute inset-0 rounded-full border-2 border-accent-500 border-t-transparent animate-spin" />
     </div>
     <span className="text-xs font-semibold text-ink-400 dark:text-cream-400 animate-pulse tracking-wide">
-      Đang tải dữ liệu...
+      Đang tải trang quản trị...
     </span>
   </div>
 );
@@ -128,7 +130,7 @@ export default function App() {
 
   const navigate = useCallback((p: Page) => {
     setPage(p);
-    // Tự động cuộn mượt về đầu trang khi chuyển Route
+    // Tự động cuộn ngay về đầu trang
     window.scrollTo(0, 0);
 
     // Sync browser URL bar so reloads (F5) stay on the exact same page/tab
@@ -187,17 +189,16 @@ export default function App() {
     }
   })();
 
-  // Cấu hình chuyển cảnh theo chuẩn: exit trôi nhẹ lên và mờ, enter từ dưới lên và rõ dần
+  // Chuyển cảnh cực nhanh, nhẹ nhàng, không gây cảm giác chờ đợi
   const pageVariants = {
     initial: shouldReduceMotion
       ? { opacity: 1 }
-      : { opacity: 0, y: 14, scale: 0.99 },
+      : { opacity: 0, y: 6 },
     animate: {
       opacity: 1,
       y: 0,
-      scale: 1,
       transition: {
-        duration: shouldReduceMotion ? 0 : 0.28,
+        duration: shouldReduceMotion ? 0 : 0.16,
         ease: [0.22, 1, 0.36, 1],
       },
     },
@@ -205,10 +206,9 @@ export default function App() {
       ? { opacity: 0 }
       : {
           opacity: 0,
-          y: -14,
-          scale: 0.99,
+          y: -6,
           transition: {
-            duration: shouldReduceMotion ? 0 : 0.22,
+            duration: shouldReduceMotion ? 0 : 0.12,
             ease: [0.22, 1, 0.36, 1],
           },
         },
@@ -230,7 +230,7 @@ export default function App() {
                   <Header onNavigate={navigate} currentPage={page} categories={categories} />
 
                   <main className="flex-1 relative overflow-hidden flex flex-col">
-                    <AnimatePresence mode="sync" initial={false}>
+                    <AnimatePresence mode="wait" initial={false}>
                       <motion.div
                         key={pageTransitionKey}
                         variants={pageVariants}
@@ -239,33 +239,31 @@ export default function App() {
                         exit="exit"
                         className="w-full flex-1 flex flex-col will-change-transform"
                       >
-                        <Suspense fallback={<PageFallback />}>
-                          {page.name === 'home' && <HomePage onNavigate={navigate} categories={categories} />}
-                          {page.name === 'catalog' && (
-                            <CatalogPage
-                              onNavigate={navigate}
-                              categories={categories}
-                              categorySlug={page.categorySlug}
-                            />
-                          )}
-                          {page.name === 'product' && (
-                            <ProductDetailPage
-                              slug={page.slug}
-                              onNavigate={navigate}
-                              categories={categories}
-                            />
-                          )}
-                          {page.name === 'cart' && <CartPage onNavigate={navigate} />}
-                          {page.name === 'checkout' && <CheckoutPage onNavigate={navigate} />}
-                          {page.name === 'order-success' && (
-                            <OrderSuccessPage orderId={page.orderId} onNavigate={navigate} />
-                          )}
-                          {page.name === 'search' && <SearchPage query={page.query} onNavigate={navigate} />}
-                          {page.name === 'orders' && <OrdersPage onNavigate={navigate} />}
-                          {page.name === 'profile' && (
-                            <ProfilePage initialTab={page.tab || 'profile'} onNavigate={navigate} />
-                          )}
-                        </Suspense>
+                        {page.name === 'home' && <HomePage onNavigate={navigate} categories={categories} />}
+                        {page.name === 'catalog' && (
+                          <CatalogPage
+                            onNavigate={navigate}
+                            categories={categories}
+                            categorySlug={page.categorySlug}
+                          />
+                        )}
+                        {page.name === 'product' && (
+                          <ProductDetailPage
+                            slug={page.slug}
+                            onNavigate={navigate}
+                            categories={categories}
+                          />
+                        )}
+                        {page.name === 'cart' && <CartPage onNavigate={navigate} />}
+                        {page.name === 'checkout' && <CheckoutPage onNavigate={navigate} />}
+                        {page.name === 'order-success' && (
+                          <OrderSuccessPage orderId={page.orderId} onNavigate={navigate} />
+                        )}
+                        {page.name === 'search' && <SearchPage query={page.query} onNavigate={navigate} />}
+                        {page.name === 'orders' && <OrdersPage onNavigate={navigate} />}
+                        {page.name === 'profile' && (
+                          <ProfilePage initialTab={page.tab || 'profile'} onNavigate={navigate} />
+                        )}
                       </motion.div>
                     </AnimatePresence>
                   </main>
