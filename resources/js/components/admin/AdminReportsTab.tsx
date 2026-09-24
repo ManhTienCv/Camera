@@ -33,6 +33,51 @@ interface MiniPaginationProps {
   onPageChange: (page: number) => void;
 }
 
+type PaginationItem =
+  | { type: 'page'; page: number }
+  | { type: 'ellipsis'; jumpTo: number };
+
+const getPaginationItems = (currentPage: number, totalPages: number): PaginationItem[] => {
+  if (totalPages <= 3) {
+    return Array.from({ length: totalPages }, (_, i) => ({ type: 'page', page: i + 1 }));
+  }
+
+  const items: PaginationItem[] = [];
+
+  // Luôn có trang 1
+  items.push({ type: 'page', page: 1 });
+
+  if (currentPage <= 2) {
+    // Kiểu 1, 2, ... N
+    items.push({ type: 'page', page: 2 });
+    if (totalPages > 2) {
+      const jumpTo = Math.min(totalPages - 1, Math.ceil((2 + totalPages) / 2));
+      items.push({ type: 'ellipsis', jumpTo });
+      items.push({ type: 'page', page: totalPages });
+    }
+    return items;
+  }
+
+  if (currentPage >= totalPages - 1) {
+    // Kiểu 1, ... N-1, N
+    const jumpTo = Math.max(2, Math.floor((1 + totalPages - 1) / 2));
+    items.push({ type: 'ellipsis', jumpTo });
+    items.push({ type: 'page', page: totalPages - 1 });
+    items.push({ type: 'page', page: totalPages });
+    return items;
+  }
+
+  // Ở giữa: 1, ..., current, ..., N
+  const jumpLeft = Math.max(2, Math.floor((1 + currentPage) / 2));
+  items.push({ type: 'ellipsis', jumpTo: jumpLeft });
+  items.push({ type: 'page', page: currentPage });
+  const jumpRight = Math.min(totalPages - 1, Math.ceil((currentPage + totalPages) / 2));
+  items.push({ type: 'ellipsis', jumpTo: jumpRight });
+  items.push({ type: 'page', page: totalPages });
+
+  return items;
+};
+
 const MiniPagination: React.FC<MiniPaginationProps> = ({
   currentPage,
   totalPages,
@@ -46,11 +91,8 @@ const MiniPagination: React.FC<MiniPaginationProps> = ({
   const startIdx = (currentPage - 1) * pageSize + 1;
   const endIdx = Math.min(currentPage * pageSize, totalItems);
 
-  // Generate page numbers
-  const pages: number[] = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pages.push(i);
-  }
+  // Sinh danh sách trang rút gọn dạng 1, 2, ...
+  const paginationItems = getPaginationItems(currentPage, totalPages);
 
   return (
     <div className="px-5 py-3 border-t border-cream-100 dark:border-ink-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-cream-50/40 dark:bg-ink-950/40 text-xs">
@@ -75,20 +117,34 @@ const MiniPagination: React.FC<MiniPaginationProps> = ({
             <ChevronLeft size={14} />
           </button>
 
-          {pages.map((p) => {
-            const isActive = p === currentPage;
+          {paginationItems.map((item, idx) => {
+            if (item.type === 'ellipsis') {
+              return (
+                <button
+                  key={`ellipsis-${idx}`}
+                  type="button"
+                  onClick={() => onPageChange(item.jumpTo)}
+                  className="min-w-[24px] h-6 px-1 rounded-lg text-xs font-bold text-ink-400 dark:text-ink-500 hover:text-accent-600 dark:hover:text-accent-400 hover:bg-cream-100 dark:hover:bg-ink-800 transition-colors cursor-pointer select-none font-mono"
+                  title={`Chuyển đến trang ${item.jumpTo}`}
+                >
+                  ...
+                </button>
+              );
+            }
+
+            const isActive = item.page === currentPage;
             return (
               <button
-                key={p}
+                key={item.page}
                 type="button"
-                onClick={() => onPageChange(p)}
+                onClick={() => onPageChange(item.page)}
                 className={`min-w-[26px] h-6 px-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer font-mono ${
                   isActive
                     ? 'bg-accent-500 text-white shadow-2xs'
                     : 'border border-cream-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-600 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800'
                 }`}
               >
-                {p}
+                {item.page}
               </button>
             );
           })}
