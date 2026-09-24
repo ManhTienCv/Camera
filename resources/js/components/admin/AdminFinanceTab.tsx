@@ -451,57 +451,60 @@ export const AdminFinanceTab: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* Hero Overview Card */}
-              <div className="bg-gradient-to-br from-ink-900 to-ink-950 text-white p-6 sm:p-8 rounded-3xl border border-ink-800 shadow-xl relative overflow-hidden">
-                <div className="absolute right-0 bottom-0 translate-x-8 translate-y-8 w-64 h-64 bg-accent-500/10 rounded-full blur-3xl pointer-events-none" />
+              {/* Hero Overview Card - Redesigned to match CameraHub page theme */}
+              <div className="bg-gradient-to-br from-white via-cream-50/80 to-accent-50/30 dark:from-ink-900 dark:via-ink-900/90 dark:to-accent-950/20 p-6 sm:p-8 rounded-3xl border border-cream-200 dark:border-ink-800 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+                {/* Soft ambient background glow */}
+                <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-80 h-80 bg-accent-500/8 dark:bg-accent-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute left-1/3 bottom-0 translate-y-1/2 w-64 h-64 bg-amber-400/8 dark:bg-amber-400/5 rounded-full blur-3xl pointer-events-none" />
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
-                  <div className="lg:col-span-7 space-y-3">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                      <CircleDollarSign size={14} />
+                  <div className="lg:col-span-7 space-y-3.5">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 shadow-2xs">
+                      <CircleDollarSign size={14} className="text-amber-600 dark:text-amber-400" />
                       Tổng Doanh Thu Đơn Hàng Theo Bộ Lọc
                     </span>
-                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display font-black tracking-tight text-white">
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display font-black tracking-tight text-ink-900 dark:text-cream-50">
                       {formatCurrency(summaryData?.summary?.total_amount || 0)}
                     </h1>
-                    <p className="text-xs text-ink-300 max-w-lg leading-relaxed">
+                    <p className="text-xs text-ink-500 dark:text-cream-400/80 max-w-lg leading-relaxed">
                       Bao gồm toàn bộ các đơn hàng phù hợp với điều kiện tìm kiếm và khoảng thời gian đã chọn.
                     </p>
                   </div>
 
-                  <div className="lg:col-span-5 flex flex-col justify-center border-t lg:border-t-0 lg:border-l border-ink-800 pt-4 lg:pt-0 lg:pl-6 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white shrink-0">
+                  <div className="lg:col-span-5 flex flex-col justify-center border-t lg:border-t-0 lg:border-l border-cream-200 dark:border-ink-800 pt-4 lg:pt-0 lg:pl-8 space-y-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-12 h-12 rounded-2xl bg-accent-100 dark:bg-accent-950/60 text-accent-600 dark:text-accent-400 flex items-center justify-center shrink-0 shadow-2xs">
                         <Receipt size={24} />
                       </div>
                       <div>
-                        <span className="text-xs text-ink-400 block font-medium">Tổng số đơn hàng ghi nhận</span>
-                        <span className="text-2xl font-bold font-display text-white">
+                        <span className="text-xs text-ink-500 dark:text-cream-400 block font-medium">Tổng số đơn hàng ghi nhận</span>
+                        <span className="text-2xl font-bold font-display text-ink-900 dark:text-cream-50">
                           {summaryData?.summary?.order_count || 0} đơn
                         </span>
-                        <span className="text-[11px] text-accent-400 block mt-0.5">
-                          ✓ Mỗi đơn được tính duy nhất 1 lần
+                        <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
+                          <span>✓</span>
+                          <span>Mỗi đơn được tính duy nhất 1 lần</span>
                         </span>
                       </div>
                     </div>
 
                     {/* Breakdown by Payment Gateway */}
-                    <div className="pt-2 grid grid-cols-2 gap-2 border-t border-ink-800/80">
-                      <div className="bg-ink-800/60 p-2.5 rounded-xl border border-ink-700/60">
-                        <span className="text-[10px] text-ink-400 block uppercase font-bold">Thu qua COD</span>
-                        <p className="text-xs font-bold text-amber-300 truncate">
+                    <div className="pt-2 grid grid-cols-2 gap-2.5 border-t border-cream-200/80 dark:border-ink-800/80">
+                      <div className="bg-amber-50/80 dark:bg-amber-950/25 p-3 rounded-2xl border border-amber-200/70 dark:border-amber-800/50 shadow-2xs">
+                        <span className="text-[10px] text-amber-800 dark:text-amber-400 block uppercase font-bold tracking-wider">Thu qua COD</span>
+                        <p className="text-sm font-bold text-ink-900 dark:text-cream-50 truncate mt-0.5 font-mono">
                           {formatCurrency(summaryData?.methodTotals?.cod?.total_amount || 0)}
                         </p>
-                        <span className="text-[10px] text-ink-400">
+                        <span className="text-[11px] text-amber-700/80 dark:text-amber-400/80 font-medium">
                           {summaryData?.methodTotals?.cod?.order_count || 0} đơn
                         </span>
                       </div>
-                      <div className="bg-ink-800/60 p-2.5 rounded-xl border border-ink-700/60">
-                        <span className="text-[10px] text-ink-400 block uppercase font-bold">Thu qua MoMo</span>
-                        <p className="text-xs font-bold text-pink-300 truncate">
+                      <div className="bg-pink-50/80 dark:bg-pink-950/25 p-3 rounded-2xl border border-pink-200/70 dark:border-pink-800/50 shadow-2xs">
+                        <span className="text-[10px] text-pink-800 dark:text-pink-400 block uppercase font-bold tracking-wider">Thu qua MoMo</span>
+                        <p className="text-sm font-bold text-ink-900 dark:text-cream-50 truncate mt-0.5 font-mono">
                           {formatCurrency(summaryData?.methodTotals?.momo?.total_amount || 0)}
                         </p>
-                        <span className="text-[10px] text-ink-400">
+                        <span className="text-[11px] text-pink-700/80 dark:text-pink-400/80 font-medium">
                           {summaryData?.methodTotals?.momo?.order_count || 0} đơn
                         </span>
                       </div>
