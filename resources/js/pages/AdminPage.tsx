@@ -22,6 +22,7 @@ import { AdminProductsTab } from '../components/admin/AdminProductsTab';
 import { AdminCategoriesTab } from '../components/admin/AdminCategoriesTab';
 import { AdminOrdersTab } from '../components/admin/AdminOrdersTab';
 import { AdminReportsTab } from '../components/admin/AdminReportsTab';
+import { AdminFinanceTab } from '../components/admin/AdminFinanceTab';
 import { AdminUsersTab } from '../components/admin/AdminUsersTab';
 import { AdminChatTab } from '../components/admin/AdminChatTab';
 import { AdminVouchersTab } from '../components/admin/AdminVouchersTab';
@@ -42,7 +43,14 @@ interface AdminPageProps {
 
 export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = 'dashboard' }) => {
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<AdminTab>(initialTab);
+  const [activeTab, setActiveTab] = useState<AdminTab>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab') as AdminTab;
+      if (tabParam) return tabParam;
+    } catch (_) {}
+    return initialTab || 'dashboard';
+  });
   const contentAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -578,6 +586,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
           {activeTab === 'vouchers' && <AdminVouchersTab />}
 
           {activeTab === 'reports' && <AdminReportsTab />}
+
+          {activeTab === 'finance' && <AdminFinanceTab />}
 
           {activeTab === 'users' && <AdminUsersTab />}
 

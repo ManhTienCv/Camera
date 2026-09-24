@@ -1,4 +1,4 @@
-import type { Category, Product, Cart, Order, User, Address, AuthResponse, ChatMessage, ChatUserItem, ReportSummaryData, ReportChartsData, AdminUserItem, AdminVoucherItem, AdminReviewItem } from '../types';
+import type { Category, Product, Cart, Order, User, Address, AuthResponse, ChatMessage, ChatUserItem, ReportSummaryData, ReportChartsData, AdminUserItem, AdminVoucherItem, AdminReviewItem, FinanceFilterParams, FinanceSummaryData, FinanceTransactionsData } from '../types';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '') + '/api/v1';
 
@@ -27,7 +27,7 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
   const method = (options.method || 'GET').toUpperCase();
   const isGet = method === 'GET';
 
-  const isRealtime = url.includes('/chat') || url.includes('/admin/reports') || url.includes('/admin/users');
+  const isRealtime = url.includes('/chat') || url.includes('/admin/reports') || url.includes('/admin/users') || url.includes('/admin/finance');
   if (isGet && !isRealtime && apiCache.has(url)) {
     const cached = apiCache.get(url)!;
     if (Date.now() - cached.timestamp < CACHE_TTL) {
@@ -616,6 +616,33 @@ export const api = {
   deleteAdminReview: (id: number | string) =>
     request<{ message: string }>(`/admin/reviews/${id}`, {
       method: 'DELETE',
+    }),
+
+  // ==========================================
+  // Lab 09: Admin Finance & Transactions Management
+  // ==========================================
+  getAdminFinanceSummary: (params?: FinanceFilterParams) => {
+    const query = params ? '?' + new URLSearchParams(Object.entries(params).filter(([_, v]) => v !== undefined && v !== '') as any).toString() : '';
+    return request<FinanceSummaryData>(`/admin/finance/summary${query}`);
+  },
+
+  getAdminFinanceTransactions: (params?: FinanceFilterParams) => {
+    const query = params ? '?' + new URLSearchParams(Object.entries(params).filter(([_, v]) => v !== undefined && v !== '') as any).toString() : '';
+    return request<FinanceTransactionsData>(`/admin/finance/transactions${query}`);
+  },
+
+  updateAdminFinanceStatus: (
+    orderId: number | string,
+    data: {
+      payment_status: string;
+      current_payment_status: string;
+      current_order_status: string;
+      current_payment_id: number;
+    }
+  ) =>
+    request<{ success: boolean; message: string }>(`/admin/finance/${orderId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
     }),
 
   // ==========================================

@@ -137,5 +137,10 @@ Route::prefix('v1')->group(function () {
         Route::patch('/admin/reviews/{id}/toggle-status', [\App\Http\Controllers\Api\ReviewController::class, 'adminToggleStatus']);
         Route::post('/admin/reviews/{id}/reply', [\App\Http\Controllers\Api\ReviewController::class, 'adminReply']);
         Route::delete('/admin/reviews/{id}', [\App\Http\Controllers\Api\ReviewController::class, 'adminDestroy']);
+
+        // Finance & Transactions Management (Lab 09)
+        Route::get('/admin/finance/summary', [\App\Http\Controllers\Admin\FinanceController::class, 'index']);
+        Route::get('/admin/finance/transactions', [\App\Http\Controllers\Admin\FinanceController::class, 'transactions']);
+        Route::patch('/admin/finance/{order}/status', [\App\Http\Controllers\Admin\FinanceController::class, 'updateStatus']);
     });
 });

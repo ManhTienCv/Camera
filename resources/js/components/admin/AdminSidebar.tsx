@@ -10,13 +10,14 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   BarChart3,
+  CircleDollarSign,
   Users,
   MessageSquare,
   Ticket,
 } from 'lucide-react';
 import type { Page, User } from '../../types';
 
-export type AdminTab = 'dashboard' | 'products' | 'categories' | 'orders' | 'vouchers' | 'reports' | 'users' | 'chat' | 'reviews' | 'settings';
+export type AdminTab = 'dashboard' | 'products' | 'categories' | 'orders' | 'vouchers' | 'reports' | 'finance' | 'users' | 'chat' | 'reviews' | 'settings';
 
 interface AdminSidebarProps {
   activeTab: AdminTab;
@@ -65,6 +66,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
   const navItemsSection2 = [
     { id: 'reports' as AdminTab, label: 'Báo cáo doanh thu', icon: BarChart3 },
+    { id: 'finance' as AdminTab, label: 'Thống kê tài chính', icon: CircleDollarSign },
     { id: 'users' as AdminTab, label: 'Người dùng', icon: Users },
     { id: 'chat' as AdminTab, label: 'Live Chat hỗ trợ', icon: MessageSquare },
   ];

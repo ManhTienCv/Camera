@@ -44,9 +44,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/orders/{id}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::put('/orders/{id}', [AdminOrderController::class, 'updateStatus'])->name('orders.update');
 
-    // Lab 09: Admin Finance Routes
-    Route::get('/finance', [\App\Http\Controllers\Admin\FinanceController::class, 'index'])->name('finance.index');
-    Route::get('/finance/transactions', [\App\Http\Controllers\Admin\FinanceController::class, 'transactions'])->name('finance.transactions');
+    // Lab 09: Admin Finance Routes (Redirect to unified React SPA Admin)
+    Route::get('/finance', function () {
+        return redirect('/admin?tab=finance');
+    })->name('finance.index');
+    Route::get('/finance/transactions', function () {
+        return redirect('/admin?tab=finance&subtab=transactions');
+    })->name('finance.transactions');
     Route::patch('/finance/{order}/status', [\App\Http\Controllers\Admin\FinanceController::class, 'updateStatus'])->name('finance.update-status');
 });
 

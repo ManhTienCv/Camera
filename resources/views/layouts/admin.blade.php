@@ -60,8 +60,8 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('admin/finance*') ? 'active' : '' }}" href="{{ route('admin.finance.index') }}">
-                            <i class="fa-solid fa-wallet me-2"></i>Quản lý tài chính (Lab 09)
+                        <a class="nav-link" href="/admin?tab=finance">
+                            <i class="fa-solid fa-wallet me-2"></i>Thống kê tài chính
                         </a>
                     </li>
                     <li class="nav-item mt-3 pt-3 border-top border-secondary">

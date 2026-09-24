@@ -157,6 +157,24 @@ class FinanceController extends Controller
             ->selectRaw("SUM(CASE WHEN payment_status IN ('paid', 'completed') THEN total_price ELSE 0 END) as paid_amount")
             ->groupBy('gateway')->get()->keyBy('gateway');
 
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'filters' => $filters,
+                'summary' => [
+                    'order_count' => (int) ($summary->order_count ?? 0),
+                    'total_amount' => (float) ($summary->total_amount ?? 0),
+                ],
+                'statusTotals' => $statusTotals,
+                'methodTotals' => $methodTotals,
+                'statuses' => self::STATUSES,
+                'methods' => [
+                    'cod' => 'COD (Thanh toán khi nhận hàng)',
+                    'momo' => 'Ví điện tử MoMo',
+                    'unknown' => 'Chưa xác định',
+                ],
+            ]);
+        }
+
         return view('admin.finance.index', [
             'filters' => $filters,
             'summary' => $summary,
@@ -183,6 +201,20 @@ class FinanceController extends Controller
         };
 
         $orders = $query->orderBy($column, $direction)->orderBy('id', $direction)->paginate(15)->withQueryString();
+
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'orders' => $orders,
+                'filters' => $filters,
+                'statuses' => self::STATUSES,
+                'codTransitions' => self::COD_TRANSITIONS,
+                'methods' => [
+                    'cod' => 'COD',
+                    'momo' => 'MoMo',
+                    'unknown' => 'Chưa xác định',
+                ],
+            ]);
+        }
 
         return view('admin.finance.transactions', [
             'orders' => $orders,
@@ -276,6 +308,13 @@ class FinanceController extends Controller
                 ]);
             }
         });
+
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã lưu trạng thái thanh toán đơn COD #'.($order->order_code ?: $order->id).'.',
+            ]);
+        }
 
         return back()->with('success', 'Đã lưu trạng thái thanh toán đơn COD #'.($order->order_code ?: $order->id).'.');
     }

@@ -249,6 +249,70 @@ export interface AdminReviewItem {
   created_at: string;
 }
 
+export interface FinanceFilterParams {
+  search?: string;
+  date_from?: string;
+  date_to?: string;
+  min_amount?: string | number;
+  max_amount?: string | number;
+  gateway?: string;
+  payment_status?: string;
+  sort?: string;
+  page?: number;
+}
+
+export interface FinanceSummaryData {
+  filters: Record<string, any>;
+  summary: {
+    order_count: number;
+    total_amount: number;
+  };
+  statusTotals: Record<string, { order_count: number; total_amount: number }>;
+  methodTotals: Record<string, { order_count: number; total_amount: number; paid_amount: number }>;
+  statuses: Record<string, string>;
+  methods: Record<string, string>;
+}
+
+export interface FinanceTransactionItem {
+  id: number;
+  order_code: string;
+  user_id: number | null;
+  customer_name: string;
+  name: string;
+  customer_email: string;
+  customer_phone: string;
+  phone: string;
+  shipping_address: string;
+  city: string;
+  payment_method: string;
+  total_amount: number;
+  total_price: number;
+  order_status: string;
+  status: string;
+  payment_id: number | null;
+  paid_at: string | null;
+  gateway: string;
+  payment_status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FinanceTransactionsData {
+  orders: {
+    data: FinanceTransactionItem[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number;
+    to: number;
+  };
+  filters: Record<string, any>;
+  statuses: Record<string, string>;
+  codTransitions: Record<string, string[]>;
+  methods: Record<string, string>;
+}
+
 export type Page =
   | { name: 'home' }
   | { name: 'catalog'; categorySlug?: string }
@@ -259,5 +323,5 @@ export type Page =
   | { name: 'search'; query: string }
   | { name: 'orders' }
   | { name: 'profile'; tab?: 'profile' | 'addresses' | 'orders' }
-  | { name: 'admin'; tab?: 'dashboard' | 'products' | 'categories' | 'orders' | 'vouchers' | 'reviews' | 'settings' | 'reports' | 'users' | 'chat' };
+  | { name: 'admin'; tab?: 'dashboard' | 'products' | 'categories' | 'orders' | 'vouchers' | 'reviews' | 'settings' | 'reports' | 'finance' | 'users' | 'chat' };
 
