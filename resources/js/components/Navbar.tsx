@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Home, ShoppingBag, Package, ShieldCheck } from 'lucide-react';
+import { Home, ShoppingBag, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import type { Page } from '../types';
 
@@ -31,14 +31,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   const getActiveItemId = (): string => {
     if (currentPage.name === 'home') return 'home';
     if (currentPage.name === 'catalog') return 'catalog';
-    if (currentPage.name === 'orders') return 'orders';
     if (currentPage.name === 'admin') return 'admin';
     return '';
   };
 
   const activeId = getActiveItemId();
 
-  // Danh mục điều hướng chính
+  // Danh mục điều hướng chính (Chỉ gồm Trang chủ & Sản phẩm, Đơn hàng đã có trong Hồ sơ cá nhân)
   const navItems: NavItem[] = [
     {
       id: 'home',
@@ -51,12 +50,6 @@ export const Navbar: React.FC<NavbarProps> = ({
       label: 'Sản phẩm',
       icon: ShoppingBag,
       page: { name: 'catalog' },
-    },
-    {
-      id: 'orders',
-      label: 'Đơn hàng',
-      icon: Package,
-      page: { name: 'orders' },
     },
   ];
 
