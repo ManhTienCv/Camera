@@ -13,7 +13,6 @@ import {
   Clock,
   Sparkles,
   ExternalLink,
-  ShieldCheck,
   RefreshCw,
   Bell,
   Smartphone,
@@ -767,29 +766,6 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ onSaveSucces
                   Khôi phục mặc định
                 </button>
               </div>
-            </div>
-          </div>
-
-          {/* System Specs Environment Card */}
-          <div className="bg-cream-100/60 dark:bg-ink-800/40 p-5 rounded-2xl border border-cream-200 dark:border-ink-800 text-xs space-y-2 text-ink-500 dark:text-ink-400">
-            <div className="flex items-center justify-between font-mono">
-              <span>Hệ thống Backend:</span>
-              <span className="font-semibold text-ink-800 dark:text-cream-200">Laravel 11.x (PHP 8.2 XAMPP)</span>
-            </div>
-            <div className="flex items-center justify-between font-mono">
-              <span>Frontend Core:</span>
-              <span className="font-semibold text-ink-800 dark:text-cream-200">React 18 + Vite 6 + Tailwind CSS</span>
-            </div>
-            <div className="flex items-center justify-between font-mono">
-              <span>Cơ sở dữ liệu:</span>
-              <span className="font-semibold text-ink-800 dark:text-cream-200">MySQL InnoDB (camerahub_db)</span>
-            </div>
-            <div className="flex items-center justify-between font-mono">
-              <span>Trạng thái bảo mật:</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                <ShieldCheck size={14} />
-                Strict Token & Owner Authorization Verified
-              </span>
             </div>
           </div>
         </div>
