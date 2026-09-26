@@ -171,7 +171,7 @@ const MiniPagination: React.FC<MiniPaginationProps> = ({
 
 export const AdminReportsTab: React.FC = () => {
   const [subTab, setSubTab] = useState<'tables' | 'charts'>('tables');
-  const [dataMode, setDataMode] = useState<'mock' | 'real'>('mock');
+  const [dataMode, setDataMode] = useState<'mock' | 'real'>('real');
   const [summaryData, setSummaryData] = useState<ReportSummaryData | null>(null);
   const [chartsData, setChartsData] = useState<ReportChartsData | null>(null);
   const [loading, setLoading] = useState(true);

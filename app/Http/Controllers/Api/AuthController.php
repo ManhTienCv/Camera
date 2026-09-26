@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Address;
 use App\Models\Order;
+use App\Models\Review;
 use App\Services\EmailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -540,6 +541,19 @@ class AuthController extends Controller
             return response()->json([]);
         }
 
+        $reviewedOrderIds = Review::where('user_id', $user->id)
+            ->whereNotNull('order_id')
+            ->pluck('order_id')
+            ->map(fn ($id) => (string) $id)
+            ->flip()
+            ->all();
+
+        $reviewedProductIds = Review::where('user_id', $user->id)
+            ->pluck('product_id')
+            ->map(fn ($id) => (string) $id)
+            ->flip()
+            ->all();
+
         $orders = Order::with('items')
             ->where(function ($q) use ($user) {
                 $q->where('user_id', $user->id)
@@ -547,7 +561,10 @@ class AuthController extends Controller
             })
             ->orderByDesc('created_at')
             ->get()
-            ->map(function ($order) {
+            ->map(function ($order) use ($reviewedOrderIds, $reviewedProductIds) {
+                $isReviewed = isset($reviewedOrderIds[(string) $order->id]) || 
+                              ($order->items->isNotEmpty() && $order->items->every(fn ($i) => isset($reviewedProductIds[(string) $i->product_id])));
+
                 return [
                     'id' => (string) $order->id,
                     'order_code' => $order->order_code,
@@ -561,6 +578,7 @@ class AuthController extends Controller
                     'payment_status' => $order->payment_status,
                     'total_amount' => (float) $order->total_amount,
                     'status' => $order->order_status,
+                    'is_reviewed' => (bool) $isReviewed,
                     'created_at' => $order->created_at ? $order->created_at->toISOString() : null,
                     'items' => $order->items->map(function ($i) {
                         return [

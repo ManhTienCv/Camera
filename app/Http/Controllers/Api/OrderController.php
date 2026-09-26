@@ -400,18 +400,57 @@ class OrderController extends Controller
         ]);
     }
 
-    public function confirmPayment($id)
+    public function confirmPayment(Request $request, $id)
     {
         $order = Order::where('id', $id)->orWhere('order_code', $id)->firstOrFail();
 
-        $order->payment_status = 'completed';
-        $order->order_status = 'shipping'; // Tự động duyệt sang shipping
-        $order->save();
+        // 1. Kiểm tra tính toàn vẹn trạng thái (State machine guard)
+        if ($order->order_status === 'cancelled') {
+            return response()->json([
+                'message' => 'Không thể xác nhận thanh toán cho đơn hàng đã bị hủy.',
+            ], 422);
+        }
 
-        return response()->json([
-            'message' => 'Xác nhận thanh toán thành công! Đơn hàng đã được tự động duyệt.',
-            'order' => $this->formatOrder($order->fresh('items'), true),
-        ]);
+        if (in_array($order->payment_status, ['completed', 'paid'], true)) {
+            return response()->json([
+                'message' => 'Đơn hàng này đã được xác nhận thanh toán trước đó.',
+                'order' => $this->formatOrder($order->fresh('items'), true),
+            ]);
+        }
+
+        $currentUser = $this->resolveCurrentUser($request);
+        $actorNote = $currentUser ? "Admin #{$currentUser->id} ({$currentUser->name})" : "Quản trị viên Hệ thống";
+
+        return DB::transaction(function () use ($order, $actorNote) {
+            $order->payment_status = 'completed';
+            if ($order->order_status === 'pending') {
+                $order->order_status = 'shipping'; // Tự động duyệt sang shipping khi thanh toán thành công
+            }
+            $order->save();
+
+            // 2. Ghi nhận giao dịch vào sổ cái PaymentTransaction để đồng bộ Phân hệ Tài chính
+            $gateway = in_array($order->payment_method, ['vietqr', 'bank_transfer'], true) ? 'vietqr' : ($order->payment_method ?: 'vietqr');
+            $refId = 'ADM-PAY-' . ($order->order_code ?: $order->id) . '-' . time();
+
+            PaymentTransaction::create([
+                'order_id' => $order->id,
+                'gateway' => $gateway,
+                'gateway_order_id' => $order->order_code ?: (string) $order->id,
+                'transaction_id' => $refId,
+                'amount' => $order->total_amount,
+                'status' => 'paid',
+                'result_code' => 0,
+                'message' => "Xác nhận đối soát thanh toán thủ công bởi {$actorNote}",
+                'paid_at' => now(),
+            ]);
+
+            Log::info("Payment confirmed for order {$order->id} ({$order->order_code}) by {$actorNote}");
+
+            return response()->json([
+                'message' => 'Xác nhận thanh toán thành công! Giao dịch đã được đồng bộ vào sổ cái tài chính.',
+                'order' => $this->formatOrder($order->fresh('items'), true),
+            ]);
+        });
     }
 
     /**

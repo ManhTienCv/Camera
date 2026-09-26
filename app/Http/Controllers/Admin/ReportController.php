@@ -297,11 +297,9 @@ class ReportController extends Controller
      */
     public function index(Request $request)
     {
-        $realRevenue = (float) $this->dailyRevenue()->sum('total_revenue');
-
-        // Mặc định trả về dữ liệu giả định (mock), trừ khi yêu cầu rõ ràng dữ liệu thực tế (?real=1 hoặc ?mock=0)
-        $isReal = $request->boolean('real') || ($request->has('mock') && !$request->boolean('mock'));
-        $useMock = !$isReal;
+        // Mặc định luôn là dữ liệu thực tế từ Database (100% Real Data)
+        // Chỉ dùng mock nếu được yêu cầu tường minh qua ?mock=1
+        $useMock = $request->boolean('mock');
 
         if ($useMock) {
             $data = $this->getStaticMockReport();
@@ -340,8 +338,9 @@ class ReportController extends Controller
      */
     public function charts(Request $request)
     {
-        $isReal = $request->boolean('real') || ($request->has('mock') && !$request->boolean('mock'));
-        $useMock = !$isReal;
+        // Mặc định luôn là dữ liệu thực tế từ Database (100% Real Data)
+        // Chỉ dùng mock nếu được yêu cầu tường minh qua ?mock=1
+        $useMock = $request->boolean('mock');
 
         if ($useMock) {
             $chartData = $this->getStaticMockCharts();

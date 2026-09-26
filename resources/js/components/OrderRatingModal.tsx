@@ -9,7 +9,6 @@ import {
   Loader2,
   Package,
 } from 'lucide-react';
-import { reviewService } from '../services/review.service';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -134,11 +133,6 @@ export function OrderRatingModal({ isOpen = true, onClose, order, orderCode, ite
         comment: comment.trim(),
         images: attachedImages,
       });
-
-      // 2. Đánh dấu order đã được đánh giá thành công
-      if (effectiveOrderCode) {
-        reviewService.markOrderAsReviewed(effectiveOrderCode);
-      }
 
       toast.success('Cảm ơn bạn đã gửi đánh giá sản phẩm thành công!');
       window.dispatchEvent(new Event('camerahub_reviews_updated'));

@@ -22,7 +22,6 @@ import { formatCurrency } from '../lib/utils';
 import { api } from '../lib/api';
 import type { Page } from '../types';
 import { OrderRatingModal } from '../components/OrderRatingModal';
-import { reviewService } from '../services/review.service';
 
 interface OrdersPageProps {
   onNavigate: (page: Page) => void;
@@ -51,6 +50,7 @@ interface EnhancedOrder {
   bankAccountHolder?: string;
   refundRefCode?: string;
   refundedAt?: string;
+  isReviewed?: boolean;
   items: Array<{
     product_id?: string;
     categoryTag: string;
@@ -90,7 +90,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
   const [refundAccountHolder, setRefundAccountHolder] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
 
-  const [, setRefreshKey] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Orders Data (purely fetched from real backend database)
   const [orders, setOrders] = useState<EnhancedOrder[]>([]);
@@ -147,6 +147,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                 bankAccountHolder: o.bank_account_holder,
                 refundRefCode: o.refund_ref_code,
                 refundedAt: o.refunded_at,
+                isReviewed: Boolean((o as any).is_reviewed),
                 cancelReason: o.cancel_reason,
                 items: (o.items || []).map((i: any) => ({
                   product_id: i.product_id,
@@ -196,7 +197,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
       setOrders([]);
       setLoadingOrders(false);
     }
-  }, [user]);
+  }, [user, refreshKey]);
 
   // Lock body scroll when any modal is open
   useEffect(() => {
@@ -736,7 +737,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
 
                     {ord.status === 'delivered' && (
                       <>
-                        {reviewService.hasReviewedOrder(ord.order_code) ? (
+                        {ord.isReviewed ? (
                           <button
                             onClick={() => setRatingOrder(ord)}
                             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-accent-50 hover:bg-accent-100 text-accent-700 border border-accent-200/80 text-xs font-bold transition-colors cursor-pointer"
