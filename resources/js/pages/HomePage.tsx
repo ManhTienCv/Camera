@@ -523,7 +523,7 @@ export function HomePage({ onNavigate, categories }: Props) {
           </div>
           <div className="relative px-8 py-16 lg:px-16 lg:py-20 text-center max-w-2xl mx-auto">
             <span className="inline-block px-4 py-1.5 bg-accent-500 text-white text-xs font-semibold rounded-full mb-4">
-              ƯU ĐÃI KHỦNG THÁNG 8
+              ƯU ĐÃI ĐẶC BIỆT
             </span>
             <h2 className="font-display font-bold text-3xl lg:text-4xl text-cream-50 mb-4">
               Giảm đến 15% cho Máy ảnh & Ống kính Sony, Canon

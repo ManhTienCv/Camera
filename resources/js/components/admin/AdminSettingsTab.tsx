@@ -675,7 +675,7 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ onSaveSucces
                 value={formData.announcementText}
                 onChange={(e) => handleInputChange('announcementText', e.target.value)}
                 className="input-field text-sm"
-                placeholder="Ví dụ: 🔥 Khuyến mãi Tháng 8: Miễn phí vận chuyển toàn quốc cho đơn máy ảnh từ 5.000.000đ!"
+                placeholder="Ví dụ: 🔥 Miễn phí vận chuyển toàn quốc cho đơn máy ảnh từ 5.000.000đ!"
               />
             </div>
 

@@ -12,14 +12,12 @@ import {
   Package,
   LogOut,
   ArrowRight,
-  Sparkles,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { api } from '../lib/api';
 import { formatCurrency } from '../lib/utils';
-import { getStoreSettings } from '../lib/settings';
 import { Navbar } from './Navbar';
 import type { Page, Category, Product } from '../types';
 
@@ -44,15 +42,6 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
-
-  const [storeSettings, setStoreSettings] = useState(() => getStoreSettings());
-  const [bannerDismissed, setBannerDismissed] = useState(false);
-
-  useEffect(() => {
-    const handleUpdate = () => setStoreSettings(getStoreSettings());
-    window.addEventListener('store_settings_updated', handleUpdate);
-    return () => window.removeEventListener('store_settings_updated', handleUpdate);
-  }, []);
 
   // Scroll listener
   useEffect(() => {
@@ -129,21 +118,6 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
             : 'bg-white/90 dark:bg-ink-950/90 backdrop-blur-xs border-b border-cream-100 dark:border-ink-800/80'
         }`}
       >
-        {/* Top Announcement Bar from Store Settings */}
-        {storeSettings.announcementEnabled && storeSettings.announcementText && !bannerDismissed && (
-          <div className="bg-gradient-to-r from-accent-600 via-accent-500 to-accent-600 text-white text-xs py-1.5 px-4 text-center font-medium relative flex items-center justify-center gap-2 shadow-2xs">
-            <Sparkles size={13} className="shrink-0 animate-pulse text-amber-200" />
-            <span className="truncate max-w-4xl">{storeSettings.announcementText}</span>
-            <button
-              type="button"
-              onClick={() => setBannerDismissed(true)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100 transition-opacity p-0.5 cursor-pointer"
-              title="Đóng thông báo"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        )}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-18 lg:h-22">
             {/* 1. Logo & Left Navigation (Bigger & Clearer) */}

@@ -63,8 +63,8 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   returnPolicy: 'Bảo hành chính hãng 24 tháng, 1 đổi 1 trong 30 ngày đối với lỗi kỹ thuật từ nhà sản xuất.',
 
   maintenanceMode: false,
-  announcementText: '🔥 Khuyến mãi Tháng 8: Miễn phí vận chuyển toàn quốc cho đơn hàng máy ảnh từ 5.000.000đ!',
-  announcementEnabled: true,
+  announcementText: '',
+  announcementEnabled: false,
 };
 
 export function getStoreSettings(): StoreSettings {
