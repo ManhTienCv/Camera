@@ -14,7 +14,6 @@ import {
   Sparkles,
   ExternalLink,
   RefreshCw,
-  Bell,
   Smartphone,
 } from 'lucide-react';
 import { getStoreSettings, saveStoreSettings, resetStoreSettings, type StoreSettings } from '../../lib/settings';
@@ -643,50 +642,6 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ onSaveSucces
       {/* Sub-tab 4: Vận hành & Hệ thống */}
       {activeSubTab === 'system' && (
         <div className="space-y-6">
-          {/* Top Announcement Bar Configuration */}
-          <div className="bg-white dark:bg-ink-900 p-6 sm:p-8 rounded-3xl border border-cream-200 dark:border-ink-800 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-cream-100 dark:border-ink-800 pb-4">
-              <div>
-                <h3 className="text-base font-bold text-ink-900 dark:text-cream-50 flex items-center gap-2">
-                  <Bell size={18} className="text-accent-500" />
-                  Thanh Thông Báo Toàn Website (Top Announcement Banner)
-                </h3>
-                <p className="text-xs text-ink-400 mt-1">
-                  Hiển thị thông điệp khuyến mãi hoặc thông báo nghỉ lễ ở đầu trang cho toàn bộ khách hàng
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.announcementEnabled}
-                  onChange={(e) => handleInputChange('announcementEnabled', e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-cream-300 peer-focus:outline-none rounded-full peer dark:bg-ink-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-500" />
-              </label>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-ink-700 dark:text-ink-300 uppercase mb-2">
-                Nội dung dòng chữ thông báo
-              </label>
-              <input
-                type="text"
-                value={formData.announcementText}
-                onChange={(e) => handleInputChange('announcementText', e.target.value)}
-                className="input-field text-sm"
-                placeholder="Ví dụ: 🔥 Miễn phí vận chuyển toàn quốc cho đơn máy ảnh từ 5.000.000đ!"
-              />
-            </div>
-
-            {formData.announcementEnabled && formData.announcementText && (
-              <div className="p-3 bg-accent-500 text-white text-xs font-medium rounded-xl flex items-center justify-center gap-2 shadow-xs">
-                <Sparkles size={14} className="shrink-0" />
-                <span>Xem trước: {formData.announcementText}</span>
-              </div>
-            )}
-          </div>
-
           {/* Maintenance Mode */}
           <div className="bg-white dark:bg-ink-900 p-6 sm:p-8 rounded-3xl border border-cream-200 dark:border-ink-800 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-cream-100 dark:border-ink-800 pb-4">

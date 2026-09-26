@@ -31,8 +31,6 @@ export interface StoreSettings {
 
   // System & Operations
   maintenanceMode: boolean;
-  announcementText: string;
-  announcementEnabled: boolean;
 }
 
 export const DEFAULT_SETTINGS: StoreSettings = {
@@ -63,8 +61,6 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   returnPolicy: 'Bảo hành chính hãng 24 tháng, 1 đổi 1 trong 30 ngày đối với lỗi kỹ thuật từ nhà sản xuất.',
 
   maintenanceMode: false,
-  announcementText: '',
-  announcementEnabled: false,
 };
 
 export function getStoreSettings(): StoreSettings {
@@ -81,7 +77,6 @@ export function getStoreSettings(): StoreSettings {
         isVietQrEnabled: parsed.isVietQrEnabled !== undefined ? Boolean(parsed.isVietQrEnabled) : DEFAULT_SETTINGS.isVietQrEnabled,
         isMomoEnabled: parsed.isMomoEnabled !== undefined ? Boolean(parsed.isMomoEnabled) : DEFAULT_SETTINGS.isMomoEnabled,
         maintenanceMode: parsed.maintenanceMode !== undefined ? Boolean(parsed.maintenanceMode) : DEFAULT_SETTINGS.maintenanceMode,
-        announcementEnabled: parsed.announcementEnabled !== undefined ? Boolean(parsed.announcementEnabled) : DEFAULT_SETTINGS.announcementEnabled,
       };
     }
   } catch (e) {
