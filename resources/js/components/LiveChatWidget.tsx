@@ -20,6 +20,11 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
   const chatPopupRef = useRef<HTMLDivElement>(null);
   const lastMsgIdRef = useRef<number>(0);
 
+  // Thông báo trạng thái đóng/mở chat cho các floating widget khác phối hợp vị trí
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('camerahub_chat_state', { detail: { isOpen } }));
+  }, [isOpen]);
+
   // Close chat window when clicking outside or pressing Escape key
   useEffect(() => {
     if (!isOpen) return;
