@@ -70,28 +70,37 @@ export function Footer({ onNavigate, categories }: Props) {
             </ul>
           </div>
 
-          {/* Col 3: Customer Care */}
+          {/* Col 3: Customer Care & Specialist Tools */}
           <div>
-            <h4 className="font-display font-semibold text-cream-50 text-sm mb-4">Hỗ trợ khách hàng</h4>
+            <h4 className="font-display font-semibold text-cream-50 text-sm mb-4">Dịch vụ & Tiện ích</h4>
             <ul className="space-y-2.5 text-sm text-ink-300">
               <li>
-                <button onClick={() => onNavigate({ name: 'home' })} className="hover:text-accent-400 transition-colors">
-                  Chính sách bảo hành
+                <button
+                  onClick={() => onNavigate({ name: 'warranty' })}
+                  className="hover:text-accent-400 transition-colors cursor-pointer"
+                >
+                  Tra cứu bảo hành điện tử
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate({ name: 'compare' })}
+                  className="hover:text-accent-400 transition-colors cursor-pointer"
+                >
+                  So sánh thông số máy ảnh
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => window.dispatchEvent(new Event('camerahub_open_selector'))}
+                  className="hover:text-accent-400 transition-colors cursor-pointer"
+                >
+                  Trợ lý AI tư vấn chọn máy
                 </button>
               </li>
               <li>
                 <button onClick={() => onNavigate({ name: 'home' })} className="hover:text-accent-400 transition-colors">
-                  Chính sách đổi trả
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate({ name: 'home' })} className="hover:text-accent-400 transition-colors">
-                  Vận chuyển & Giao nhận
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate({ name: 'home' })} className="hover:text-accent-400 transition-colors">
-                  Phương thức thanh toán
+                  Chính sách 1 đổi 1 trong 30 ngày
                 </button>
               </li>
             </ul>

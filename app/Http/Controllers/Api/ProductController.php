@@ -183,6 +183,44 @@ class ProductController extends Controller
         return response()->json($related->map(fn ($p) => $this->formatProduct($p)));
     }
 
+    public function compare(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (is_string($ids)) {
+            $ids = array_filter(explode(',', $ids));
+        }
+
+        if (empty($ids) || !is_array($ids)) {
+            return response()->json([
+                'products' => [],
+                'allSpecs' => [],
+            ]);
+        }
+
+        $products = Product::where('status', 'active')
+            ->where(function ($q) use ($ids) {
+                $q->whereIn('id', $ids)->orWhereIn('slug', $ids);
+            })
+            ->with(['category:id,name,slug', 'brandModel:id,name,slug', 'images', 'specifications', 'features'])
+            ->get();
+
+        $formatted = $products->map(fn ($p) => $this->formatProduct($p));
+
+        $allSpecs = [];
+        foreach ($products as $p) {
+            foreach ($p->specifications as $spec) {
+                if (!in_array($spec->spec_key, $allSpecs, true)) {
+                    $allSpecs[] = $spec->spec_key;
+                }
+            }
+        }
+
+        return response()->json([
+            'products' => $formatted,
+            'allSpecs' => $allSpecs,
+        ]);
+    }
+
     public function show($slug)
     {
         $product = Product::where('slug', $slug)->orWhere('id', $slug)

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, ShoppingBag, ShieldCheck } from 'lucide-react';
+import { Home, ShoppingBag, ShieldCheck, ArrowLeftRight, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import type { Page } from '../types';
 import { GlidingIndicator } from './ui/GlidingIndicator';
@@ -30,13 +30,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   const getActiveItemId = (): string => {
     if (currentPage.name === 'home') return 'home';
     if (currentPage.name === 'catalog') return 'catalog';
+    if (currentPage.name === 'compare') return 'compare';
+    if (currentPage.name === 'warranty') return 'warranty';
     if (currentPage.name === 'admin') return 'admin';
     return '';
   };
 
   const activeId = getActiveItemId();
 
-  // Danh mục điều hướng chính (Chỉ gồm Trang chủ & Sản phẩm, Đơn hàng đã có trong Hồ sơ cá nhân)
+  // Danh mục điều hướng chính
   const navItems: NavItem[] = [
     {
       id: 'home',
@@ -50,6 +52,18 @@ export const Navbar: React.FC<NavbarProps> = ({
       icon: ShoppingBag,
       page: { name: 'catalog' },
     },
+    {
+      id: 'compare',
+      label: 'So sánh',
+      icon: ArrowLeftRight,
+      page: { name: 'compare' },
+    },
+    {
+      id: 'warranty',
+      label: 'Bảo hành',
+      icon: ShieldCheck,
+      page: { name: 'warranty' },
+    },
   ];
 
   // Nếu người dùng có quyền admin, bổ sung menu Quản trị
@@ -57,11 +71,12 @@ export const Navbar: React.FC<NavbarProps> = ({
     navItems.push({
       id: 'admin',
       label: 'Quản trị',
-      icon: ShieldCheck,
+      icon: Shield,
       page: { name: 'admin', tab: 'dashboard' },
       badge: 'Admin',
     });
   }
+
 
   return (
     <nav

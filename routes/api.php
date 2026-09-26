@@ -42,6 +42,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/products/featured', [ProductController::class, 'featured']);
     Route::get('/products/best-sellers', [ProductController::class, 'bestSellers']);
     Route::get('/products/search', [ProductController::class, 'search']);
+    Route::get('/products/compare', [ProductController::class, 'compare']);
     Route::get('/products/{slug}/related', [ProductController::class, 'related']);
     Route::get('/products/{slug}', [ProductController::class, 'show']);
 
@@ -58,6 +59,9 @@ Route::prefix('v1')->group(function () {
     Route::get('/wishlist', [\App\Http\Controllers\Api\WishlistController::class, 'index']);
     Route::get('/wishlist/ids', [\App\Http\Controllers\Api\WishlistController::class, 'ids']);
     Route::post('/wishlist/toggle', [\App\Http\Controllers\Api\WishlistController::class, 'toggle']);
+
+    // 4.4 Electronic Warranty Lookup (Tra cứu bảo hành điện tử chính hãng)
+    Route::get('/warranty/check', [\App\Http\Controllers\Api\WarrantyController::class, 'check']);
 
     // 5. Cart
     Route::get('/cart', [CartController::class, 'show']);

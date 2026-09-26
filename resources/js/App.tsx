@@ -2,11 +2,14 @@ import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
+import { CompareProvider } from './context/CompareContext';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider, useToast } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthModal } from './components/AuthModal';
 import { LiveChatWidget } from './components/LiveChatWidget';
+import { CompareTray } from './components/CompareTray';
+import { CameraSelectorModal } from './components/CameraSelectorModal';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { api } from './lib/api';
@@ -22,6 +25,9 @@ import { OrderSuccessPage } from './pages/OrderSuccessPage';
 import { SearchPage } from './pages/SearchPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { OrdersPage } from './pages/OrdersPage';
+import { ComparePage } from './pages/ComparePage';
+import { WarrantyLookupPage } from './pages/WarrantyLookupPage';
+
 
 // Chỉ tải lười (lazy) đối với trang Quản trị (Admin) vì dung lượng lớn và chỉ dành cho Admin
 const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })));
@@ -78,6 +84,14 @@ const parseLocation = (): Page => {
   if (path.startsWith('/search')) {
     return { name: 'search', query: search.get('q') || '' };
   }
+  if (path.startsWith('/compare')) {
+    const idsParam = search.get('ids');
+    const ids = idsParam ? idsParam.split(',').filter(Boolean) : undefined;
+    return { name: 'compare', ids };
+  }
+  if (path.startsWith('/warranty') || path.startsWith('/tra-cuu-bao-hanh')) {
+    return { name: 'warranty' };
+  }
   return { name: 'home' };
 };
 
@@ -108,7 +122,15 @@ const GoogleAuthHandler: React.FC = () => {
 export default function App() {
   const [page, setPage] = useState<Page>(() => parseLocation());
   const [categories, setCategories] = useState<Category[]>([]);
+  const [selectorModalOpen, setSelectorModalOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    const handleOpenSelector = () => setSelectorModalOpen(true);
+    window.addEventListener('camerahub_open_selector', handleOpenSelector);
+    return () => window.removeEventListener('camerahub_open_selector', handleOpenSelector);
+  }, []);
+
 
   useEffect(() => {
     (async () => {
@@ -170,6 +192,10 @@ export default function App() {
       targetUrl = p.tab && p.tab !== 'profile' ? `/profile?tab=${p.tab}` : '/profile';
     } else if (p.name === 'search') {
       targetUrl = `/search?q=${encodeURIComponent(p.query)}`;
+    } else if (p.name === 'compare') {
+      targetUrl = p.ids && p.ids.length > 0 ? `/compare?ids=${p.ids.join(',')}` : '/compare';
+    } else if (p.name === 'warranty') {
+      targetUrl = '/warranty';
     }
 
     if (window.location.pathname + window.location.search !== targetUrl) {
@@ -199,6 +225,10 @@ export default function App() {
         return 'orders';
       case 'profile':
         return `profile-${page.tab || 'profile'}`;
+      case 'compare':
+        return `compare-${(page.ids || []).join('-')}`;
+      case 'warranty':
+        return 'warranty';
       case 'admin':
         return `admin-${page.tab || 'dashboard'}`;
       default:
@@ -238,59 +268,73 @@ export default function App() {
           <WishlistProvider>
             <GoogleAuthHandler />
             <CartProvider>
-              {page.name === 'admin' ? (
-                <Suspense fallback={<PageFallback />}>
-                  <AdminPage onNavigate={navigate} initialTab={page.tab || 'dashboard'} />
-                </Suspense>
-              ) : (
-                <div className="min-h-screen flex flex-col bg-cream-50 dark:bg-ink-950 text-ink-800 dark:text-cream-100 transition-colors duration-200">
-                  <Header onNavigate={navigate} currentPage={page} categories={categories} />
+              <CompareProvider>
+                {page.name === 'admin' ? (
+                  <Suspense fallback={<PageFallback />}>
+                    <AdminPage onNavigate={navigate} initialTab={page.tab || 'dashboard'} />
+                  </Suspense>
+                ) : (
+                  <div className="min-h-screen flex flex-col bg-cream-50 dark:bg-ink-950 text-ink-800 dark:text-cream-100 transition-colors duration-200">
+                    <Header onNavigate={navigate} currentPage={page} categories={categories} />
 
-                  <main className="flex-1 relative overflow-hidden flex flex-col">
-                    <AnimatePresence mode="wait" initial={false}>
-                      <motion.div
-                        key={pageTransitionKey}
-                        variants={pageVariants}
-                        initial="initial"
-                        animate="animate"
-                        exit="exit"
-                        className="w-full flex-1 flex flex-col will-change-transform"
-                      >
-                        {page.name === 'home' && <HomePage onNavigate={navigate} categories={categories} />}
-                        {page.name === 'catalog' && (
-                          <CatalogPage
-                            onNavigate={navigate}
-                            categories={categories}
-                            categorySlug={page.categorySlug}
-                            brand={page.brand}
-                          />
-                        )}
-                        {page.name === 'product' && (
-                          <ProductDetailPage
-                            slug={page.slug}
-                            onNavigate={navigate}
-                            categories={categories}
-                          />
-                        )}
-                        {page.name === 'cart' && <CartPage onNavigate={navigate} />}
-                        {page.name === 'checkout' && <CheckoutPage onNavigate={navigate} />}
-                        {page.name === 'order-success' && (
-                          <OrderSuccessPage orderId={page.orderId} onNavigate={navigate} />
-                        )}
-                        {page.name === 'search' && <SearchPage query={page.query} onNavigate={navigate} />}
-                        {page.name === 'orders' && <OrdersPage onNavigate={navigate} />}
-                        {page.name === 'profile' && (
-                          <ProfilePage initialTab={page.tab || 'profile'} onNavigate={navigate} />
-                        )}
-                      </motion.div>
-                    </AnimatePresence>
-                  </main>
+                    <main className="flex-1 relative overflow-hidden flex flex-col">
+                      <AnimatePresence mode="wait" initial={false}>
+                        <motion.div
+                          key={pageTransitionKey}
+                          variants={pageVariants}
+                          initial="initial"
+                          animate="animate"
+                          exit="exit"
+                          className="w-full flex-1 flex flex-col will-change-transform"
+                        >
+                          {page.name === 'home' && <HomePage onNavigate={navigate} categories={categories} />}
+                          {page.name === 'catalog' && (
+                            <CatalogPage
+                              onNavigate={navigate}
+                              categories={categories}
+                              categorySlug={page.categorySlug}
+                              brand={page.brand}
+                            />
+                          )}
+                          {page.name === 'product' && (
+                            <ProductDetailPage
+                              slug={page.slug}
+                              onNavigate={navigate}
+                              categories={categories}
+                            />
+                          )}
+                          {page.name === 'cart' && <CartPage onNavigate={navigate} />}
+                          {page.name === 'checkout' && <CheckoutPage onNavigate={navigate} />}
+                          {page.name === 'order-success' && (
+                            <OrderSuccessPage orderId={page.orderId} onNavigate={navigate} />
+                          )}
+                          {page.name === 'search' && <SearchPage query={page.query} onNavigate={navigate} />}
+                          {page.name === 'orders' && <OrdersPage onNavigate={navigate} />}
+                          {page.name === 'profile' && (
+                            <ProfilePage initialTab={page.tab || 'profile'} onNavigate={navigate} />
+                          )}
+                          {page.name === 'compare' && (
+                            <ComparePage onNavigate={navigate} initialProductIds={page.ids} />
+                          )}
+                          {page.name === 'warranty' && (
+                            <WarrantyLookupPage onNavigate={navigate} />
+                          )}
+                        </motion.div>
+                      </AnimatePresence>
+                    </main>
 
-                  <Footer onNavigate={navigate} categories={categories} />
-                  <AuthModal />
-                  <LiveChatWidget onNavigate={navigate} />
-                </div>
-              )}
+                    <Footer onNavigate={navigate} categories={categories} />
+                    <AuthModal />
+                    <LiveChatWidget onNavigate={navigate} />
+                    <CompareTray currentPage={page} onNavigate={navigate} />
+                    <CameraSelectorModal
+                      isOpen={selectorModalOpen}
+                      onClose={() => setSelectorModalOpen(false)}
+                      onNavigate={navigate}
+                    />
+                  </div>
+                )}
+              </CompareProvider>
             </CartProvider>
           </WishlistProvider>
         </AuthProvider>

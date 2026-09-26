@@ -12,6 +12,9 @@ import {
   Package,
   LogOut,
   ArrowRight,
+  Sparkles,
+  ArrowLeftRight,
+  ShieldCheck,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -233,6 +236,17 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
                 )}
               </div>
 
+              {/* Camera Selector Wizard button */}
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new Event('camerahub_open_selector'))}
+                className="hidden xl:flex items-center gap-1.5 px-3 py-2 bg-accent-50 dark:bg-accent-950/60 hover:bg-accent-100 dark:hover:bg-accent-900/60 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-800 rounded-full text-xs font-bold transition-all cursor-pointer shadow-2xs hover:scale-102"
+                title="Trợ lý AI tư vấn chọn máy ảnh phù hợp trong 60 giây"
+              >
+                <Sparkles size={14} className="text-accent-500 animate-pulse" />
+                <span>Tư vấn chọn máy</span>
+              </button>
+
               {/* Cart Button */}
               <button
                 onClick={() => {
@@ -383,6 +397,41 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
               }`}
             >
               <ShoppingBag size={18} /> Tất cả sản phẩm
+            </button>
+            <button
+              onClick={() => {
+                onNavigate({ name: 'compare' });
+                setMobileOpen(false);
+              }}
+              className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
+                currentPage.name === 'compare'
+                  ? 'bg-accent-500 text-white'
+                  : 'text-ink-700 dark:text-ink-200 hover:bg-cream-100 dark:hover:bg-ink-800'
+              }`}
+            >
+              <ArrowLeftRight size={18} /> So sánh thông số
+            </button>
+            <button
+              onClick={() => {
+                onNavigate({ name: 'warranty' });
+                setMobileOpen(false);
+              }}
+              className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
+                currentPage.name === 'warranty'
+                  ? 'bg-accent-500 text-white'
+                  : 'text-ink-700 dark:text-ink-200 hover:bg-cream-100 dark:hover:bg-ink-800'
+              }`}
+            >
+              <ShieldCheck size={18} /> Tra cứu bảo hành
+            </button>
+            <button
+              onClick={() => {
+                setMobileOpen(false);
+                window.dispatchEvent(new Event('camerahub_open_selector'));
+              }}
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-bold bg-accent-50 dark:bg-accent-950/60 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-800 transition-all text-left"
+            >
+              <Sparkles size={18} className="text-accent-500" /> Tư vấn chọn máy AI
             </button>
             {(Array.isArray(categories) ? categories : []).map((cat) => (
               <button

@@ -18,6 +18,8 @@ import {
   ShieldCheck,
   ChevronRight,
   BadgeCheck,
+  Sparkles,
+  ArrowLeftRight,
 } from 'lucide-react';
 import type { Page, Product, Category } from '../types';
 import { ProductCard } from '../components/ProductCard';
@@ -275,6 +277,92 @@ export function HomePage({ onNavigate, categories }: Props) {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 2.5 CÔNG CỤ CHUYÊN BIỆT NGÀNH MÁY ẢNH: TƯ VẤN AI, SO SÁNH THÔNG SỐ & BẢO HÀNH ĐIỆN TỬ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* Card 1: Trợ lý AI Tư vấn */}
+          <div
+            onClick={() => window.dispatchEvent(new Event('camerahub_open_selector'))}
+            className="p-6 rounded-3xl bg-gradient-to-br from-accent-500/10 via-accent-500/5 to-transparent dark:from-accent-500/15 dark:via-accent-950/20 dark:to-transparent border border-accent-300/60 dark:border-accent-800/80 shadow-xs hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer group flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-accent-500 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                  <Sparkles size={22} className="animate-pulse" />
+                </div>
+                <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-accent-100 dark:bg-accent-950 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-800">
+                  AI Finder 60s
+                </span>
+              </div>
+              <h3 className="font-display font-extrabold text-lg text-ink-900 dark:text-cream-50 group-hover:text-accent-500 transition-colors">
+                Trợ lý Tư vấn Chọn máy ảnh
+              </h3>
+              <p className="text-xs text-ink-500 dark:text-cream-400 mt-2 leading-relaxed">
+                Chưa biết chọn body hay lens nào? Trả lời 4 câu hỏi nhanh để tìm combo hoàn hảo cho ngân sách và nhu cầu của bạn.
+              </p>
+            </div>
+            <div className="mt-5 flex items-center gap-1.5 text-xs font-bold text-accent-600 dark:text-accent-400 group-hover:gap-2.5 transition-all">
+              <span>Bắt đầu làm bài test</span>
+              <ArrowRight size={14} />
+            </div>
+          </div>
+
+          {/* Card 2: So sánh thông số */}
+          <div
+            onClick={() => onNavigate({ name: 'compare' })}
+            className="p-6 rounded-3xl bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent dark:from-blue-500/15 dark:via-blue-950/20 dark:to-transparent border border-blue-200 dark:border-blue-900/60 shadow-xs hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer group flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                  <ArrowLeftRight size={22} />
+                </div>
+                <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                  So sánh 1:1
+                </span>
+              </div>
+              <h3 className="font-display font-extrabold text-lg text-ink-900 dark:text-cream-50 group-hover:text-blue-500 transition-colors">
+                So sánh Thông số Chuyên sâu
+              </h3>
+              <p className="text-xs text-ink-500 dark:text-cream-400 mt-2 leading-relaxed">
+                Đặt 2–4 máy ảnh cạnh nhau: đối chiếu cảm biến Full-Frame vs APS-C, chống rung IBIS, quay 4K 10-bit và hệ thống lấy nét AI.
+              </p>
+            </div>
+            <div className="mt-5 flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:gap-2.5 transition-all">
+              <span>Mở bảng đối chiếu</span>
+              <ArrowRight size={14} />
+            </div>
+          </div>
+
+          {/* Card 3: Tra cứu bảo hành điện tử */}
+          <div
+            onClick={() => onNavigate({ name: 'warranty' })}
+            className="p-6 rounded-3xl bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent dark:from-emerald-500/15 dark:via-emerald-950/20 dark:to-transparent border border-emerald-200 dark:border-emerald-900/60 shadow-xs hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer group flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                  <ShieldCheck size={22} />
+                </div>
+                <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                  CameraHub Care
+                </span>
+              </div>
+              <h3 className="font-display font-extrabold text-lg text-ink-900 dark:text-cream-50 group-hover:text-emerald-500 transition-colors">
+                Tra cứu Bảo hành & Serial
+              </h3>
+              <p className="text-xs text-ink-500 dark:text-cream-400 mt-2 leading-relaxed">
+                Nhập số Serial hoặc Mã đơn hàng để kiểm tra thời hạn bảo hành 24 tháng chính hãng, tình trạng thiết bị và nhật ký kiểm định.
+              </p>
+            </div>
+            <div className="mt-5 flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 group-hover:gap-2.5 transition-all">
+              <span>Tra cứu trực tuyến</span>
+              <ArrowRight size={14} />
+            </div>
           </div>
         </div>
       </section>

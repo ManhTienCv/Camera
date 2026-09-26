@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Minus, Plus, ChevronRight, Check, Truck, Shield, RotateCcw, MessageSquare, Info, FileText, Heart } from 'lucide-react';
+import { ShoppingBag, Minus, Plus, ChevronRight, Check, Truck, Shield, RotateCcw, MessageSquare, Info, FileText, Heart, ArrowLeftRight } from 'lucide-react';
 import type { Page, Product, Category } from '../types';
 import { api } from '../lib/api';
 import { formatCurrency } from '../lib/utils';
 import { StarRating } from '../components/StarRating';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { useCompare } from '../context/CompareContext';
 import { ProductCard } from '../components/ProductCard';
 import { ProductReviewsSection } from '../components/ProductReviewsSection';
 
@@ -27,6 +28,8 @@ export function ProductDetailPage({ slug, onNavigate, categories }: Props) {
   const [reviewCount, setReviewCount] = useState(3);
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const { isInCompare, addToCompare, removeFromCompare } = useCompare();
+  const inCompare = product ? isInCompare(product.id) : false;
 
   useEffect(() => {
     (async () => {
@@ -310,6 +313,26 @@ export function ProductDetailPage({ slug, onNavigate, categories }: Props) {
                 }`}
               >
                 <Heart size={20} className={isInWishlist(product.id) ? 'fill-rose-500 text-rose-500' : ''} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (!product) return;
+                  if (inCompare) {
+                    removeFromCompare(product.id);
+                  } else {
+                    addToCompare(product);
+                  }
+                }}
+                title={inCompare ? 'Bỏ khỏi so sánh' : 'Thêm vào so sánh thông số'}
+                className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-center shrink-0 ${
+                  inCompare
+                    ? 'bg-accent-50 border-accent-300 text-accent-600 shadow-xs'
+                    : 'bg-white border-cream-300 text-ink-600 hover:text-accent-500 hover:border-accent-200'
+                }`}
+              >
+                <ArrowLeftRight size={20} className={inCompare ? 'text-accent-600' : ''} />
               </button>
             </div>
           </div>

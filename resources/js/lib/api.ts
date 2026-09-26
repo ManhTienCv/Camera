@@ -225,6 +225,32 @@ export const api = {
   getRelatedProducts: (id: string, limit: number = 4) =>
     request<Product[]>(`/products/${id}/related?limit=${limit}`),
 
+  compareProducts: (ids: (string | number)[]) =>
+    request<{
+      products: Product[];
+      allSpecs: string[];
+    }>(`/products/compare?ids=${encodeURIComponent(ids.join(','))}`),
+
+  checkWarranty: (query: string) =>
+    request<{
+      found: boolean;
+      serialNumber: string;
+      productName: string;
+      productImage: string;
+      brand: string;
+      customerName: string;
+      customerPhone: string;
+      orderCode: string;
+      purchaseDate: string;
+      expiryDate: string;
+      warrantyDuration: string;
+      daysLeft: number;
+      status: 'active' | 'expired';
+      statusLabel: string;
+      serviceCenter: string;
+      history: Array<{ date: string; title: string; desc: string }>;
+    }>(`/warranty/check?query=${encodeURIComponent(query)}`),
+
   // Reviews (Database connected)
   getProductReviews: (productId: string) =>
     request<{
