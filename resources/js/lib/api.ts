@@ -676,6 +676,42 @@ export const api = {
     }),
 
   // ==========================================
+  // Sổ cái Quản lý Kho (Immutable Inventory Ledger)
+  // ==========================================
+  getInventoryMovements: (params?: { page?: number; per_page?: number; type?: string; search?: string }) => {
+    const query = params ? '?' + new URLSearchParams(Object.entries(params).filter(([_, v]) => v !== undefined && v !== '') as any).toString() : '';
+    return request<{
+      data: Array<{
+        id: number;
+        product_id: number;
+        type: 'purchase' | 'cancel_restock' | 'manual_adjust' | 'import_stock';
+        qty_before: number;
+        qty_change: number;
+        qty_after: number;
+        order_id: number | null;
+        actor_id: number | null;
+        actor_name: string | null;
+        note: string | null;
+        created_at: string;
+        product?: Product;
+        order?: { id: number; order_code: string; customer_name: string };
+      }>;
+      meta: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+      };
+      stats: {
+        total_movements: number;
+        total_purchased_qty: number;
+        total_restocked_qty: number;
+        total_manual_adjusted: number;
+      };
+    }>(`/admin/inventory/movements${query}`);
+  },
+
+  // ==========================================
   // Admin Dedicated Authentication
   // ==========================================
   adminLogin: async (data: { email: string; password: string }): Promise<AuthResponse> => {

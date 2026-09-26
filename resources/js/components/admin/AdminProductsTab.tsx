@@ -13,10 +13,12 @@ import {
   ArrowUpDown,
   RotateCcw,
   Sparkles,
+  Boxes,
 } from 'lucide-react';
 import type { Product, Category } from '../../types';
 import { formatCurrency } from '../../lib/utils';
 import { GlidingIndicator } from '../ui/GlidingIndicator';
+import { AdminInventoryModal } from './AdminInventoryModal';
 
 interface AdminProductsTabProps {
   products: Product[];
@@ -116,6 +118,7 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
   const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [adminPageNum, setAdminPageNum] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [showInventoryLedger, setShowInventoryLedger] = useState(false);
 
   // Active products with mock fallback if no database products
   const activeProducts = useMemo(() => {
@@ -209,13 +212,24 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
           </p>
         </div>
 
-        <button
-          onClick={onOpenAddModal}
-          className="btn-accent px-5 py-2.5 rounded-2xl shadow-sm hover:shadow-md flex items-center gap-2 text-sm font-bold active:scale-95 transition-all cursor-pointer"
-        >
-          <Plus size={18} />
-          Đăng sản phẩm mới
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowInventoryLedger(true)}
+            className="px-4 py-2.5 rounded-2xl border border-cream-300 dark:border-ink-700 bg-white dark:bg-ink-800 text-ink-700 dark:text-cream-200 hover:border-accent-500 hover:text-accent-600 dark:hover:text-accent-400 flex items-center gap-2 text-sm font-bold shadow-2xs transition-all cursor-pointer"
+          >
+            <Boxes size={18} className="text-accent-500" />
+            <span>Sổ cái Biến động Kho</span>
+          </button>
+
+          <button
+            onClick={onOpenAddModal}
+            className="btn-accent px-5 py-2.5 rounded-2xl shadow-sm hover:shadow-md flex items-center gap-2 text-sm font-bold active:scale-95 transition-all cursor-pointer"
+          >
+            <Plus size={18} />
+            Đăng sản phẩm mới
+          </button>
+        </div>
       </div>
 
       {/* 2. STATS MINI CARDS */}
@@ -605,6 +619,11 @@ export const AdminProductsTab: React.FC<AdminProductsTabProps> = ({
           </div>
         )}
       </div>
+
+      <AdminInventoryModal
+        isOpen={showInventoryLedger}
+        onClose={() => setShowInventoryLedger(false)}
+      />
     </div>
   );
 };

@@ -336,7 +336,26 @@ class ProductController extends Controller
         if ($request->has('category_id')) $product->category_id = $request->category_id;
         if ($request->has('price')) $product->price = $request->price;
         if ($request->has('original_price')) $product->original_price = $request->original_price;
-        if ($request->has('stock')) $product->stock = $request->stock;
+        if ($request->has('stock')) {
+            $newStock = (int) $request->stock;
+            if ($newStock !== (int) $product->stock) {
+                $qtyBefore = (int) $product->stock;
+                $qtyChange = $newStock - $qtyBefore;
+                $product->stock = $newStock;
+
+                \App\Models\InventoryMovement::recordMovement(
+                    $product->id,
+                    'manual_adjust',
+                    $qtyBefore,
+                    $qtyChange,
+                    $newStock,
+                    null,
+                    auth()->id(),
+                    auth()->user()?->name ?? 'Admin',
+                    'Quản trị viên điều chỉnh tồn kho thủ công'
+                );
+            }
+        }
         if ($request->has('description')) $product->description = $request->description;
         if ($request->has('image_url')) $product->image_url = $request->image_url;
         if ($request->has('status')) $product->status = $request->status;

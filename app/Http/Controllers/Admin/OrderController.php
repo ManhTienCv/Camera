@@ -156,6 +156,24 @@ class OrderController extends Controller
     }
 
     /**
+     * Xác định Admin user từ Session hoặc Bearer Token
+     */
+    protected function resolveCurrentUser(Request $request): ?\App\Models\User
+    {
+        if (\Illuminate\Support\Facades\Auth::check()) {
+            return \Illuminate\Support\Facades\Auth::user();
+        }
+
+        $authHeader = $request->header('Authorization');
+        if ($authHeader && \Illuminate\Support\Str::startsWith($authHeader, 'Bearer ')) {
+            $token = \Illuminate\Support\Str::substr($authHeader, 7);
+            return \App\Models\User::resolveByToken($token);
+        }
+
+        return null;
+    }
+
+    /**
      * Cập nhật trạng thái đơn hàng (Tuân thủ nghiêm ngặt Lab 08: Đang giao KHÔNG cho hủy)
      */
     public function updateStatus(Request $request, $id)
@@ -181,11 +199,26 @@ class OrderController extends Controller
         if ($newStatus === 'cancelled' && $oldStatus !== 'cancelled') {
             $order->cancel_reason = $request->input('reason', 'Admin cập nhật hủy đơn');
 
-            // 1. Hoàn lại tồn kho sản phẩm
+            // 1. Hoàn lại tồn kho sản phẩm và ghi nhận sổ cái biến động kho bất biến
+            $currentUser = $this->resolveCurrentUser($request);
             foreach ($order->items as $item) {
                 $product = Product::find($item->product_id);
                 if ($product) {
+                    $qtyBefore = (int) $product->stock;
                     $product->increment('stock', $item->quantity);
+                    $qtyAfter = $qtyBefore + (int) $item->quantity;
+
+                    \App\Models\InventoryMovement::recordMovement(
+                        $product->id,
+                        'cancel_restock',
+                        $qtyBefore,
+                        (int) $item->quantity,
+                        $qtyAfter,
+                        $order->id,
+                        $currentUser?->id,
+                        $currentUser?->name ?? 'Admin',
+                        "Hoàn trả tồn kho do hủy đơn hàng #{$order->order_code}. Lý do: {$order->cancel_reason}"
+                    );
                 }
             }
 

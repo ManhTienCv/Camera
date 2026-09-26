@@ -146,5 +146,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/admin/finance/summary', [\App\Http\Controllers\Admin\FinanceController::class, 'index']);
         Route::get('/admin/finance/transactions', [\App\Http\Controllers\Admin\FinanceController::class, 'transactions']);
         Route::patch('/admin/finance/{order}/status', [\App\Http\Controllers\Admin\FinanceController::class, 'updateStatus']);
+
+        // Inventory Ledger & Stock Movements
+        Route::get('/admin/inventory/movements', [\App\Http\Controllers\Admin\InventoryController::class, 'index']);
     });
 });

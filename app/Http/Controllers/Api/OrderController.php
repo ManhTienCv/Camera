@@ -156,6 +156,7 @@ class OrderController extends Controller
             $order = DB::transaction(function () use ($request, $sessionId, $orderCode, $userId) {
                 $totalAmount = 0;
                 $orderItemsData = [];
+                $inventoryLogs = [];
 
                 // 1. Kiểm tra tồn kho và TRỪ KHO NGUYÊN TỬ (Atomic Conditional Decrement)
                 foreach ($request->items as $item) {
@@ -167,6 +168,8 @@ class OrderController extends Controller
                         throw new \Exception("Sản phẩm ID #{$productId} không tồn tại trên hệ thống!");
                     }
 
+                    $qtyBefore = (int) $product->stock;
+
                     // Atomic update: Chỉ decrement nếu stock >= quantity trong cùng 1 query InnoDB
                     $affected = Product::where('id', $product->id)
                         ->where('stock', '>=', $quantity)
@@ -175,6 +178,14 @@ class OrderController extends Controller
                     if (!$affected) {
                         throw new \Exception("Sản phẩm \"{$product->name}\" vừa hết hàng hoặc không đủ số lượng trong kho!");
                     }
+
+                    $qtyAfter = $qtyBefore - $quantity;
+                    $inventoryLogs[] = [
+                        'product_id' => $product->id,
+                        'qty_before' => $qtyBefore,
+                        'qty_change' => -$quantity,
+                        'qty_after' => $qtyAfter,
+                    ];
 
                     $price = (float) $product->price;
                     $totalAmount += $price * $quantity;
@@ -253,6 +264,21 @@ class OrderController extends Controller
                         'quantity' => $itemData['quantity'],
                         'image_url' => $itemData['image_url'],
                     ]);
+                }
+
+                // Ghi nhận sổ cái biến động kho bất biến (Immutable Inventory Ledger)
+                foreach ($inventoryLogs as $log) {
+                    \App\Models\InventoryMovement::recordMovement(
+                        $log['product_id'],
+                        'purchase',
+                        $log['qty_before'],
+                        $log['qty_change'],
+                        $log['qty_after'],
+                        $newOrder->id,
+                        $userId,
+                        $request->customer_name,
+                        "Khách đặt đơn hàng mới #{$newOrder->order_code}"
+                    );
                 }
 
                 // 4. Xóa giỏ hàng sau khi tạo đơn thành công
@@ -375,10 +401,28 @@ class OrderController extends Controller
         // Nếu chuyển sang trạng thái đã hủy
         if ($newStatus === 'cancelled' && $oldStatus !== 'cancelled') {
             $order->cancel_reason = $request->input('reason', 'Admin cập nhật hủy đơn');
+            $currentUser = $this->resolveCurrentUser($request);
 
-            // 1. Hoàn lại kho sản phẩm
+            // 1. Hoàn lại kho sản phẩm và ghi nhận sổ cái kho
             foreach ($order->items as $item) {
-                Product::where('id', $item->product_id)->increment('stock', $item->quantity);
+                $p = Product::find($item->product_id);
+                if ($p) {
+                    $qtyBefore = (int) $p->stock;
+                    $p->increment('stock', $item->quantity);
+                    $qtyAfter = $qtyBefore + (int) $item->quantity;
+
+                    \App\Models\InventoryMovement::recordMovement(
+                        $p->id,
+                        'cancel_restock',
+                        $qtyBefore,
+                        (int) $item->quantity,
+                        $qtyAfter,
+                        $order->id,
+                        $currentUser?->id,
+                        $currentUser?->name ?? 'Admin',
+                        "Hoàn trả tồn kho do hủy đơn hàng #{$order->order_code}. Lý do: {$order->cancel_reason}"
+                    );
+                }
             }
 
             // 2. Nếu đã có mã vận đơn GHN thì gọi API hủy đơn trên GHN
@@ -525,10 +569,27 @@ class OrderController extends Controller
                 'bank_account_holder.required' => 'Vui lòng cung cấp tên chủ tài khoản nhận tiền hoàn.',
             ]);
 
-            DB::transaction(function () use ($order, $request, $reason) {
-                // Hoàn lại tồn kho cho sản phẩm
+            DB::transaction(function () use ($order, $request, $reason, $currentUser) {
+                // Hoàn lại tồn kho cho sản phẩm và ghi nhận sổ cái kho
                 foreach ($order->items as $item) {
-                    Product::where('id', $item->product_id)->increment('stock', $item->quantity);
+                    $p = Product::find($item->product_id);
+                    if ($p) {
+                        $qtyBefore = (int) $p->stock;
+                        $p->increment('stock', $item->quantity);
+                        $qtyAfter = $qtyBefore + (int) $item->quantity;
+
+                        \App\Models\InventoryMovement::recordMovement(
+                            $p->id,
+                            'cancel_restock',
+                            $qtyBefore,
+                            (int) $item->quantity,
+                            $qtyAfter,
+                            $order->id,
+                            $currentUser?->id,
+                            $currentUser?->name ?? ($order->customer_name ?: 'Khách hàng'),
+                            "Hoàn trả tồn kho do khách hủy đơn #{$order->order_code} (Chờ hoàn tiền). Lý do: {$reason}"
+                        );
+                    }
                 }
 
                 // Chuyển sang refund_pending để Admin duyệt hoàn tiền
@@ -567,9 +628,26 @@ class OrderController extends Controller
         }
 
         // 4. Nhánh COD hoặc chưa thanh toán: Hủy ngay lập tức trong transaction
-        DB::transaction(function () use ($order, $reason) {
+        DB::transaction(function () use ($order, $reason, $currentUser) {
             foreach ($order->items as $item) {
-                Product::where('id', $item->product_id)->increment('stock', $item->quantity);
+                $p = Product::find($item->product_id);
+                if ($p) {
+                    $qtyBefore = (int) $p->stock;
+                    $p->increment('stock', $item->quantity);
+                    $qtyAfter = $qtyBefore + (int) $item->quantity;
+
+                    \App\Models\InventoryMovement::recordMovement(
+                        $p->id,
+                        'cancel_restock',
+                        $qtyBefore,
+                        (int) $item->quantity,
+                        $qtyAfter,
+                        $order->id,
+                        $currentUser?->id,
+                        $currentUser?->name ?? ($order->customer_name ?: 'Khách hàng'),
+                        "Hoàn trả tồn kho do khách hủy đơn #{$order->order_code}. Lý do: {$reason}"
+                    );
+                }
             }
 
             $order->order_status = 'cancelled';

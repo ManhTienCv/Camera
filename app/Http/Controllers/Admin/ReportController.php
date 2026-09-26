@@ -312,7 +312,7 @@ class ReportController extends Controller
             $revenueByDate = $this->dailyRevenue();
             $revenueByMonth = $this->periodRevenue($revenueByDate, 'month');
             $revenueByYear = $this->periodRevenue($revenueByDate, 'year');
-            $totalRevenue = $realRevenue;
+            $totalRevenue = (float) $this->paidOrders()->sum('total_amount');
             $topSellingProducts = $this->topSellingProducts();
 
             $data = compact(
