@@ -10,6 +10,7 @@ import { AuthModal } from './components/AuthModal';
 import { LiveChatWidget } from './components/LiveChatWidget';
 import { CompareTray } from './components/CompareTray';
 import { CameraSelectorModal } from './components/CameraSelectorModal';
+import { CameraSelectorFloatingButton } from './components/CameraSelectorFloatingButton';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { api } from './lib/api';
@@ -326,6 +327,7 @@ export default function App() {
                     <Footer onNavigate={navigate} categories={categories} />
                     <AuthModal />
                     <LiveChatWidget onNavigate={navigate} />
+                    <CameraSelectorFloatingButton currentPage={page} />
                     <CompareTray currentPage={page} onNavigate={navigate} />
                     <CameraSelectorModal
                       isOpen={selectorModalOpen}

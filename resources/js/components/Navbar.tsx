@@ -38,7 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const activeId = getActiveItemId();
 
-  // Danh mục điều hướng chính
+  // Danh mục điều hướng chính - Tinh gọn chuẩn mực
   const navItems: NavItem[] = [
     {
       id: 'home',
@@ -51,18 +51,6 @@ export const Navbar: React.FC<NavbarProps> = ({
       label: 'Sản phẩm',
       icon: ShoppingBag,
       page: { name: 'catalog' },
-    },
-    {
-      id: 'compare',
-      label: 'So sánh',
-      icon: ArrowLeftRight,
-      page: { name: 'compare' },
-    },
-    {
-      id: 'warranty',
-      label: 'Bảo hành',
-      icon: ShieldCheck,
-      page: { name: 'warranty' },
     },
   ];
 

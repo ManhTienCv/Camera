@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { SlidersHorizontal, ChevronDown, Sparkles, ArrowRight } from 'lucide-react';
 import type { Page, Product, Category } from '../types';
 import { ProductCard } from '../components/ProductCard';
 import { api } from '../lib/api';
@@ -165,9 +165,33 @@ export function CatalogPage({ onNavigate, categories, categorySlug, brand }: Pro
       <h1 className="font-display font-bold text-3xl text-ink-900 mb-2">
         {activeCategory ? activeCategory.name : 'Tất cả sản phẩm Máy ảnh'}
       </h1>
-      <p className="text-ink-400 mb-8">
+      <p className="text-ink-400 mb-6">
         {activeCategory?.description || 'Khám phá bộ sưu tập máy ảnh, ống kính và phụ kiện chuyên nghiệp'}
       </p>
+
+      {/* Banner Trợ lý AI Tư vấn chọn máy 60s */}
+      <div
+        onClick={() => window.dispatchEvent(new Event('camerahub_open_selector'))}
+        className="mb-8 p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-accent-500/10 via-accent-500/5 to-transparent dark:from-accent-500/15 dark:via-accent-950/20 dark:to-transparent border border-accent-300/70 dark:border-accent-800/80 flex items-center justify-between gap-4 cursor-pointer hover:border-accent-500 hover:shadow-xs transition-all group"
+      >
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-2xl bg-accent-500 text-white flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+            <Sparkles size={18} className="animate-pulse" />
+          </div>
+          <div>
+            <p className="text-xs sm:text-sm font-bold text-ink-900 dark:text-cream-50 group-hover:text-accent-500 transition-colors">
+              Bạn đang băn khoăn chưa biết chọn dòng máy hay ống kính nào?
+            </p>
+            <p className="text-[11px] sm:text-xs text-ink-500 dark:text-cream-400 mt-0.5">
+              Trợ lý AI của CameraHub tư vấn combo chuẩn nhu cầu & ngân sách chỉ trong 60 giây.
+            </p>
+          </div>
+        </div>
+        <div className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full bg-accent-500 hover:bg-accent-600 text-white text-xs font-bold shrink-0 shadow-xs transition-colors">
+          <span>Tìm máy ngay</span>
+          <ArrowRight size={13} />
+        </div>
+      </div>
 
       {/* Category pills with Framer Motion Shared Layout Gliding Capsule */}
       <div className="flex flex-wrap gap-2.5 mb-8">

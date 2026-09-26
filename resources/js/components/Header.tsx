@@ -236,17 +236,6 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
                 )}
               </div>
 
-              {/* Camera Selector Wizard button */}
-              <button
-                type="button"
-                onClick={() => window.dispatchEvent(new Event('camerahub_open_selector'))}
-                className="hidden xl:flex items-center gap-1.5 px-3 py-2 bg-accent-50 dark:bg-accent-950/60 hover:bg-accent-100 dark:hover:bg-accent-900/60 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-800 rounded-full text-xs font-bold transition-all cursor-pointer shadow-2xs hover:scale-102"
-                title="Trợ lý AI tư vấn chọn máy ảnh phù hợp trong 60 giây"
-              >
-                <Sparkles size={14} className="text-accent-500 animate-pulse" />
-                <span>Tư vấn chọn máy</span>
-              </button>
-
               {/* Cart Button */}
               <button
                 onClick={() => {
@@ -298,7 +287,7 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
                   </button>
                 )}
 
-                {/* User Dropdown Menu */}
+                {/* User Dropdown Menu - Cột Form tài khoản & Tiện ích máy ảnh */}
                 {user && userDropdownOpen && (
                   <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-ink-900 rounded-3xl shadow-xl border border-cream-200 dark:border-ink-800 overflow-hidden z-50 animate-scale-up p-2">
                     <div className="p-3.5 border-b border-cream-100 dark:border-ink-800">
@@ -306,6 +295,7 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
                       <p className="text-xs text-ink-400 dark:text-ink-500 mt-0.5 truncate">{user.email}</p>
                     </div>
 
+                    {/* Nhóm 1: Quản lý cá nhân */}
                     <div className="py-1 space-y-0.5">
                       <button
                         onClick={() => {
@@ -330,6 +320,46 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
                       </button>
                     </div>
 
+                    {/* Nhóm 2: Tiện ích Máy ảnh Chuyên Sâu */}
+                    <div className="py-1 border-t border-cream-100 dark:border-ink-800 space-y-0.5">
+                      <div className="px-3.5 pt-1.5 pb-1 text-[10px] font-extrabold text-ink-400 dark:text-ink-500 uppercase tracking-wider">
+                        Tiện ích máy ảnh
+                      </div>
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          onNavigate({ name: 'warranty' });
+                        }}
+                        className="w-full px-3.5 py-2 rounded-xl hover:bg-cream-50 dark:hover:bg-ink-800/80 flex items-center gap-3 text-xs font-bold text-ink-700 dark:text-ink-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left cursor-pointer"
+                      >
+                        <ShieldCheck size={16} className="text-emerald-500" />
+                        <span>Tra cứu bảo hành điện tử</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          onNavigate({ name: 'compare' });
+                        }}
+                        className="w-full px-3.5 py-2 rounded-xl hover:bg-cream-50 dark:hover:bg-ink-800/80 flex items-center gap-3 text-xs font-bold text-ink-700 dark:text-ink-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors text-left cursor-pointer"
+                      >
+                        <ArrowLeftRight size={16} className="text-blue-500" />
+                        <span>So sánh máy ảnh</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          window.dispatchEvent(new Event('camerahub_open_selector'));
+                        }}
+                        className="w-full px-3.5 py-2 rounded-xl hover:bg-accent-50 dark:hover:bg-accent-950/60 flex items-center gap-3 text-xs font-bold text-accent-700 dark:text-accent-300 transition-colors text-left cursor-pointer"
+                      >
+                        <Sparkles size={16} className="text-accent-500 animate-pulse" />
+                        <span>Tư vấn chọn máy (AI 60s)</span>
+                      </button>
+                    </div>
+
+                    {/* Nhóm 3: Đăng xuất */}
                     <div className="pt-1 border-t border-cream-100 dark:border-ink-800">
                       <button
                         onClick={() => {

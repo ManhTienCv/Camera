@@ -237,10 +237,11 @@ export function HomePage({ onNavigate, categories }: Props) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => onNavigate({ name: 'catalog', categorySlug: 'may-anh-mirrorless' })}
-                  className="btn-secondary"
+                  onClick={() => window.dispatchEvent(new Event('camerahub_open_selector'))}
+                  className="btn-secondary group flex items-center gap-2 border-accent-300 dark:border-accent-700/60 hover:border-accent-500 text-accent-700 dark:text-accent-300 shadow-2xs hover:scale-102 transition-all"
                 >
-                  Máy ảnh Mirrorless
+                  <Sparkles size={16} className="text-accent-500 animate-pulse" />
+                  <span>Tư vấn chọn máy (60s)</span>
                 </button>
               </div>
             </div>
