@@ -115,11 +115,10 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
             ? 'bg-white/95 dark:bg-ink-950/95 backdrop-blur-md shadow-xs border-b border-cream-200 dark:border-ink-800'
             : 'bg-white/90 dark:bg-ink-950/90 backdrop-blur-xs border-b border-cream-100 dark:border-ink-800/80'
-        }`}
+          }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-18 lg:h-22">
@@ -251,11 +250,10 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
               >
                 <ShoppingBag size={21} className="text-ink-800 dark:text-ink-200 group-hover:text-accent-500 transition-colors" />
                 <span
-                  className={`absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full text-[11px] font-bold flex items-center justify-center shadow-2xs transition-all ${
-                    itemCount > 0
+                  className={`absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full text-[11px] font-bold flex items-center justify-center shadow-2xs transition-all ${itemCount > 0
                       ? 'bg-accent-500 text-white scale-110'
                       : 'bg-cream-300 dark:bg-ink-700 text-ink-600 dark:text-ink-300 border border-cream-200 dark:border-ink-600'
-                  }`}
+                    }`}
                 >
                   {itemCount}
                 </span>
@@ -355,7 +353,7 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
                         className="w-full px-3.5 py-2 rounded-xl hover:bg-accent-50 dark:hover:bg-accent-950/60 flex items-center gap-3 text-xs font-bold text-accent-700 dark:text-accent-300 transition-colors text-left cursor-pointer"
                       >
                         <Sparkles size={16} className="text-accent-500 animate-pulse" />
-                        <span>Tư vấn chọn máy (AI 60s)</span>
+                        <span>Tư vấn chọn máy</span>
                       </button>
                     </div>
 
@@ -407,11 +405,10 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
                 onNavigate({ name: 'home' });
                 setMobileOpen(false);
               }}
-              className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
-                currentPage.name === 'home'
+              className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-bold transition-all ${currentPage.name === 'home'
                   ? 'bg-accent-500 text-white'
                   : 'text-ink-700 dark:text-ink-200 hover:bg-cream-100 dark:hover:bg-ink-800'
-              }`}
+                }`}
             >
               <Home size={18} /> Trang chủ
             </button>
@@ -420,11 +417,10 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
                 onNavigate({ name: 'catalog' });
                 setMobileOpen(false);
               }}
-              className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
-                currentPage.name === 'catalog'
+              className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-bold transition-all ${currentPage.name === 'catalog'
                   ? 'bg-accent-500 text-white'
                   : 'text-ink-700 dark:text-ink-200 hover:bg-cream-100 dark:hover:bg-ink-800'
-              }`}
+                }`}
             >
               <ShoppingBag size={18} /> Tất cả sản phẩm
             </button>
@@ -433,11 +429,10 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
                 onNavigate({ name: 'compare' });
                 setMobileOpen(false);
               }}
-              className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
-                currentPage.name === 'compare'
+              className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-bold transition-all ${currentPage.name === 'compare'
                   ? 'bg-accent-500 text-white'
                   : 'text-ink-700 dark:text-ink-200 hover:bg-cream-100 dark:hover:bg-ink-800'
-              }`}
+                }`}
             >
               <ArrowLeftRight size={18} /> So sánh thông số
             </button>
@@ -446,11 +441,10 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
                 onNavigate({ name: 'warranty' });
                 setMobileOpen(false);
               }}
-              className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
-                currentPage.name === 'warranty'
+              className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-bold transition-all ${currentPage.name === 'warranty'
                   ? 'bg-accent-500 text-white'
                   : 'text-ink-700 dark:text-ink-200 hover:bg-cream-100 dark:hover:bg-ink-800'
-              }`}
+                }`}
             >
               <ShieldCheck size={18} /> Tra cứu bảo hành
             </button>

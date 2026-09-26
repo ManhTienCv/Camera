@@ -44,17 +44,13 @@ export const CameraSelectorFloatingButton: React.FC<Props> = ({ currentPage }) =
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent-500"></span>
         </span>
 
-        <div className="w-6 h-6 rounded-full bg-accent-50 dark:bg-accent-950/80 text-accent-600 dark:text-accent-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-          <Sparkles size={14} className="animate-pulse" />
-        </div>
+
 
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold tracking-tight text-ink-900 dark:text-white">
             Tư vấn chọn máy
           </span>
-          <span className="text-[10px] font-extrabold text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-950/80 px-1.5 py-0.5 rounded-full border border-accent-200 dark:border-accent-800">
-            AI 60s
-          </span>
+
         </div>
       </button>
     </div>

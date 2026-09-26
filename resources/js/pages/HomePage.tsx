@@ -241,7 +241,7 @@ export function HomePage({ onNavigate, categories }: Props) {
                   className="btn-secondary group flex items-center gap-2 border-accent-300 dark:border-accent-700/60 hover:border-accent-500 text-accent-700 dark:text-accent-300 shadow-2xs hover:scale-102 transition-all"
                 >
                   <Sparkles size={16} className="text-accent-500 animate-pulse" />
-                  <span>Tư vấn chọn máy (60s)</span>
+                  <span>Tư vấn chọn máy</span>
                 </button>
               </div>
             </div>
@@ -296,7 +296,7 @@ export function HomePage({ onNavigate, categories }: Props) {
                   <Sparkles size={22} className="animate-pulse" />
                 </div>
                 <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-accent-100 dark:bg-accent-950 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-800">
-                  AI Finder 60s
+                  AI Finder
                 </span>
               </div>
               <h3 className="font-display font-extrabold text-lg text-ink-900 dark:text-cream-50 group-hover:text-accent-500 transition-colors">
@@ -478,11 +478,10 @@ export function HomePage({ onNavigate, categories }: Props) {
                       <button
                         type="button"
                         onClick={() => handleCopyVoucher(v.code)}
-                        className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                          isCopied
+                        className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${isCopied
                             ? 'bg-emerald-500 text-white'
                             : 'bg-accent-50 dark:bg-accent-950/60 text-accent-600 dark:text-accent-400 hover:bg-accent-500 hover:text-white'
-                        }`}
+                          }`}
                       >
                         {isCopied ? <Check size={12} /> : <Copy size={12} />}
                         {isCopied ? 'Đã sao chép' : 'Sao chép mã'}
