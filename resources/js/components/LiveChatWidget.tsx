@@ -149,20 +149,21 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 select-none print:hidden">
+    <div className={`fixed bottom-6 ${isOpen ? 'right-4 sm:right-6' : 'right-0'} z-50 select-none print:hidden`}>
       {/* 1. Toggle Button */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="group relative flex items-center gap-2.5 px-4 py-3.5 bg-gradient-to-r from-accent-500 to-accent-600 hover:from-accent-600 hover:to-accent-700 text-white font-bold text-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 active:scale-95 cursor-pointer"
+          className="group relative flex items-center gap-2.5 pl-3.5 pr-5 py-3 bg-gradient-to-r from-accent-500 to-accent-600 hover:from-accent-600 hover:to-accent-700 text-white font-bold text-sm rounded-l-full shadow-lg hover:shadow-2xl transition-transform duration-300 ease-out active:scale-95 cursor-pointer translate-x-[calc(100%-54px)] hover:translate-x-0"
           aria-label="Mở live chat hỗ trợ"
+          title="Mở hỗ trợ trực tuyến 24/7"
         >
-          <span className="relative flex h-3 w-3">
+          <span className="relative flex h-3 w-3 shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-400"></span>
           </span>
-          <MessageSquare size={19} className="group-hover:rotate-6 transition-transform" />
-          <span>Hỗ trợ trực tuyến</span>
+          <MessageSquare size={19} className="group-hover:rotate-6 transition-transform shrink-0" />
+          <span className="whitespace-nowrap">Hỗ trợ trực tuyến</span>
         </button>
       )}
 
