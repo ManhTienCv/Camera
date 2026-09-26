@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
 import {
   Camera,
   Search,
@@ -7,7 +6,6 @@ import {
   Menu,
   X,
   Home,
-  Grid3x3,
   User as UserIcon,
   Package,
   LogOut,

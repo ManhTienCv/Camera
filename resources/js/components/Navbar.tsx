@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, ShoppingBag, ShieldCheck, ArrowLeftRight, Shield } from 'lucide-react';
+import { Home, ShoppingBag, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import type { Page } from '../types';
 import { GlidingIndicator } from './ui/GlidingIndicator';
