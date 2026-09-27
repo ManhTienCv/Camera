@@ -255,7 +255,7 @@ export const AdminReportsTab: React.FC = () => {
               Báo cáo & Phân tích Doanh thu
             </h3>
             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700/50 flex items-center gap-1">
-              <Database size={11} /> Dữ liệu CSDL
+              <Database size={11} /> Thời gian thực
             </span>
           </div>
           <p className="text-sm text-ink-500 dark:text-ink-400 mt-1">
@@ -328,7 +328,7 @@ export const AdminReportsTab: React.FC = () => {
               {totalOrders.toLocaleString('vi-VN')}
             </h4>
             <span className="text-[11px] text-ink-500 dark:text-ink-400 mt-0.5 inline-block">
-              Đơn hàng trong CSDL
+              Đã ghi nhận toàn hệ thống
             </span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">

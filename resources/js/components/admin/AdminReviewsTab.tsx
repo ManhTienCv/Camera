@@ -197,7 +197,7 @@ export const AdminReviewsTab: React.FC = () => {
               {stats.total}
             </div>
             <p className="text-xs text-ink-400">
-              Lưu trữ trên cơ sở dữ liệu MySQL
+              Phản hồi thực tế từ khách hàng
             </p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-cream-100 text-ink-500 flex items-center justify-center shrink-0">
