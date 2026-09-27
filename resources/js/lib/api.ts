@@ -542,6 +542,9 @@ export const api = {
   getAdminChatUsers: () =>
     request<ChatUserItem[]>('/admin/chat/users'),
 
+  getAdminChatUnreadCount: () =>
+    request<{ unread_count: number }>('/admin/chat/unread-count?refresh=1'),
+
   getAdminChatMessages: (userId: number | string, afterId?: number) =>
     request<ChatMessage[]>(`/admin/chat/messages/${userId}${afterId ? '?after_id=' + afterId : ''}`),
 

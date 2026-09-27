@@ -236,6 +236,35 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
     }
   }, [adminUser]);
 
+  // Live Chat Unread Count Tracking (Real-time badge support)
+  const [chatUnreadCount, setChatUnreadCount] = useState<number>(0);
+
+  const fetchChatUnreadCount = async () => {
+    try {
+      const res = await api.getAdminChatUnreadCount();
+      if (res && typeof res.unread_count === 'number') {
+        setChatUnreadCount(res.unread_count);
+      }
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    if (!adminUser || adminUser.role !== 'admin') return;
+
+    fetchChatUnreadCount();
+    const interval = setInterval(fetchChatUnreadCount, 5000);
+
+    const handleChatUpdate = () => {
+      fetchChatUnreadCount();
+    };
+    window.addEventListener('camera_admin_chat_updated', handleChatUpdate);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('camera_admin_chat_updated', handleChatUpdate);
+    };
+  }, [adminUser]);
+
   // Handle Admin Login Submit
   const handleAdminLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -543,6 +572,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
         onNavigate={onNavigate}
         adminUser={adminUser}
         orderCount={orders.filter((o) => o.status === 'pending' || o.status === 'processing').length}
+        chatUnreadCount={chatUnreadCount}
         onLogout={() => setShowLogoutConfirm(true)}
       />
 
@@ -553,8 +583,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
           adminUser={adminUser}
           onLogout={() => setShowLogoutConfirm(true)}
           setActiveTab={handleTabChange}
+          activeTab={activeTab}
           orders={orders}
           products={products}
+          chatUnreadCount={chatUnreadCount}
         />
 
         <main className="p-6 sm:p-8 max-w-7xl mx-auto w-full flex-1">

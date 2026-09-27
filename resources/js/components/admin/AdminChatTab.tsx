@@ -37,6 +37,7 @@ export const AdminChatTab: React.FC = () => {
     try {
       const data = await api.getAdminChatUsers();
       setUsers(data || []);
+      window.dispatchEvent(new Event('camera_admin_chat_updated'));
       // If no user selected yet, auto select first user
       if (!selectedUser && data && data.length > 0) {
         setSelectedUser(data[0]);
@@ -75,6 +76,7 @@ export const AdminChatTab: React.FC = () => {
       console.error('Lỗi tải tin nhắn hội thoại:', err);
     } finally {
       if (!silent) setLoadingMessages(false);
+      window.dispatchEvent(new Event('camera_admin_chat_updated'));
     }
   };
 
@@ -139,6 +141,8 @@ export const AdminChatTab: React.FC = () => {
     }
   };
 
+  const totalUnread = users.reduce((acc, u) => acc + (u.unread_count || 0), 0);
+
   const filteredUsers = users.filter((u) => {
     const q = searchQuery.toLowerCase();
     return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
@@ -149,9 +153,13 @@ export const AdminChatTab: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h3 className="text-2xl font-display font-bold text-ink-900 flex items-center gap-2.5">
+          <h3 className="text-2xl font-display font-bold text-ink-900 dark:text-cream-100 flex items-center gap-2.5">
             <span>Hỗ trợ trực tuyến & Live Chat</span>
-
+            {totalUnread > 0 && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500 text-white shadow-xs animate-pulse select-none">
+                {totalUnread > 9 ? '9+' : totalUnread} tin mới
+              </span>
+            )}
           </h3>
           <p className="text-sm text-ink-500 mt-1">
             Trực tiếp trả lời thắc mắc, tư vấn thiết bị máy ảnh và hỗ trợ đơn hàng của khách hàng theo thời gian thực.
@@ -217,8 +225,8 @@ export const AdminChatTab: React.FC = () => {
                         {u.name.substring(0, 1).toUpperCase()}
                       </div>
                       {u.unread_count && u.unread_count > 0 ? (
-                        <span className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-rose-500 text-white text-[10px] font-bold rounded-full shadow-xs">
-                          {u.unread_count}
+                        <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-rose-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center ring-2 ring-white dark:ring-ink-900 shadow-xs select-none">
+                          {u.unread_count > 9 ? '9+' : u.unread_count}
                         </span>
                       ) : null}
                     </div>

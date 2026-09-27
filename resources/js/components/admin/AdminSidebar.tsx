@@ -28,6 +28,7 @@ interface AdminSidebarProps {
   collapsed?: boolean;
   onToggleCollapse?: (collapsed: boolean) => void;
   orderCount?: number;
+  chatUnreadCount?: number;
   onLogout?: () => void;
 }
 
@@ -46,6 +47,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   collapsed: externalCollapsed,
   onToggleCollapse,
   orderCount = 0,
+  chatUnreadCount = 0,
   onLogout,
 }) => {
   const [internalCollapsed, setInternalCollapsed] = useState<boolean>(() => {
@@ -76,13 +78,18 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     { id: 'reports', label: 'Báo cáo doanh thu', icon: BarChart3 },
     { id: 'finance', label: 'Thống kê tài chính', icon: CircleDollarSign },
     { id: 'users', label: 'Người dùng', icon: Users },
-    { id: 'chat', label: 'Live Chat hỗ trợ', icon: MessageSquare },
+    { id: 'chat', label: 'Live Chat hỗ trợ', icon: MessageSquare, badge: chatUnreadCount > 0 ? chatUnreadCount : undefined },
   ];
 
   const navItemsSection3: AdminNavItem[] = [
     { id: 'reviews', label: 'Đánh giá & Phản hồi', icon: Star },
     { id: 'settings', label: 'Cài đặt', icon: Settings },
   ];
+
+  const formatBadge = (num?: number) => {
+    if (!num || num <= 0) return '';
+    return num > 9 ? '9+' : String(num);
+  };
 
   const renderNavItem = (item: AdminNavItem) => {
     const Icon = item.icon;
@@ -108,19 +115,29 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               className="inset-0 bg-accent-500 rounded-2xl shadow-xs"
             />
           )}
-          <Icon size={18} className="shrink-0 relative z-10" />
+          <div className="relative shrink-0 flex items-center justify-center">
+            <Icon size={18} className="relative z-10" />
+            {item.badge !== undefined && item.badge > 0 && (
+              <span
+                className="absolute -top-1.5 -right-2 min-w-[17px] h-[17px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-extrabold flex items-center justify-center ring-2 ring-white dark:ring-ink-900 shadow-xs z-20 animate-pulse select-none"
+                title={`${item.badge} thông báo mới`}
+              >
+                {formatBadge(item.badge)}
+              </span>
+            )}
+          </div>
           {!isCollapsed && (
             <div className="flex items-center justify-between flex-1 min-w-0 relative z-10">
               <span className="truncate">{item.label}</span>
-              {item.badge !== undefined && (
+              {item.badge !== undefined && item.badge > 0 && (
                 <span
-                  className={`px-2 py-0.5 text-[11px] font-bold rounded-full transition-colors ${
+                  className={`px-1.5 py-0.5 text-[10px] font-extrabold rounded-full transition-colors ${
                     isActive
-                      ? 'bg-white text-accent-700'
-                      : 'bg-red-500 text-white'
+                      ? 'bg-white text-rose-600 shadow-2xs'
+                      : 'bg-rose-500 text-white shadow-xs'
                   }`}
                 >
-                  {item.badge}
+                  {formatBadge(item.badge)}
                 </span>
               )}
             </div>

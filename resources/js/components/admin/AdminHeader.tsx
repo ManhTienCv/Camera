@@ -14,6 +14,7 @@ import {
   Info,
   ArrowRight,
   X,
+  MessageSquare,
 } from 'lucide-react';
 import type { Page, User, Order, Product } from '../../types';
 import type { AdminTab } from './AdminSidebar';
@@ -37,15 +38,19 @@ interface AdminHeaderProps {
   adminUser?: User | null;
   onLogout?: () => void;
   setActiveTab?: (tab: AdminTab) => void;
+  activeTab?: AdminTab;
   orders?: Order[];
   products?: Product[];
+  chatUnreadCount?: number;
 }
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({
   onNavigate,
   setActiveTab,
+  activeTab,
   orders = [],
   products = [],
+  chatUnreadCount = 0,
 }) => {
   const { adminTheme, toggleAdminTheme } = useTheme();
   const isDark = adminTheme === 'dark';
@@ -354,6 +359,28 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           <Calendar size={14} className="text-ink-400 dark:text-ink-400 shrink-0" />
           <span className="tracking-wide tabular-nums">{formatDateTime(currentTime)}</span>
         </div>
+
+        {/* 2.5. Nút Live Chat Hỗ Trợ Trực Tuyến Với Thông Báo Đỏ Đỏ (Tối đa 9+) */}
+        <button
+          onClick={() => setActiveTab?.('chat')}
+          className={`relative w-9 h-9 rounded-full border transition-all cursor-pointer shadow-2xs active:scale-95 flex items-center justify-center ${
+            activeTab === 'chat'
+              ? 'border-accent-500 bg-accent-500 text-white shadow-xs'
+              : 'border-cream-200 dark:border-ink-700 bg-white dark:bg-ink-800 text-ink-700 dark:text-cream-200 hover:text-accent-600 dark:hover:text-accent-400 hover:border-accent-300 dark:hover:border-accent-600'
+          }`}
+          title="Live Chat hỗ trợ trực tuyến"
+          aria-label="Live Chat hỗ trợ trực tuyến"
+        >
+          <MessageSquare size={17} />
+          {chatUnreadCount !== undefined && chatUnreadCount > 0 && (
+            <span
+              className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-extrabold flex items-center justify-center ring-2 ring-white dark:ring-ink-900 shadow-xs animate-pulse select-none"
+              title={`${chatUnreadCount} tin nhắn hỗ trợ chưa đọc`}
+            >
+              {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
+            </span>
+          )}
+        </button>
 
         {/* 3. Nút Chuông Thông Báo với Dropdown Popover Tương Tác */}
         <div className="relative" ref={notifRef}>

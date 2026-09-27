@@ -113,6 +113,7 @@ Route::prefix('v1')->group(function () {
 
         // Admin Chat
         Route::get('/admin/chat/users', [\App\Http\Controllers\Admin\ChatController::class, 'getUsers']);
+        Route::get('/admin/chat/unread-count', [\App\Http\Controllers\Admin\ChatController::class, 'getUnreadCount']);
         Route::get('/admin/chat/messages/{userId}', [\App\Http\Controllers\Admin\ChatController::class, 'getMessages']);
         Route::post('/admin/chat/send', [\App\Http\Controllers\Admin\ChatController::class, 'send']);
 

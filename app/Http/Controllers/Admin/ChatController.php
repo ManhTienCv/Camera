@@ -138,4 +138,23 @@ class ChatController extends Controller
 
         return response()->json($message->load(['sender', 'receiver']));
     }
+
+    /**
+     * Lấy tổng số tin nhắn chưa đọc của Admin
+     */
+    public function getUnreadCount(Request $request)
+    {
+        $admin = $this->resolveAdmin($request);
+        $adminId = $admin->id;
+
+        $adminIds = User::where('role', 'admin')->pluck('id')->push($adminId)->unique();
+
+        $unreadCount = Message::whereIn('receiver_id', $adminIds)
+            ->where('is_read', false)
+            ->count();
+
+        return response()->json([
+            'unread_count' => $unreadCount,
+        ]);
+    }
 }
