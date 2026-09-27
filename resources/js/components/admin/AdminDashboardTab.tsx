@@ -58,7 +58,7 @@ export const AdminDashboardTab: React.FC<AdminDashboardTabProps> = ({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [totalCustomerCount, setTotalCustomerCount] = useState<number>(() => {
     const uniquePhones = new Set(orders.map((o) => o.customer_phone).filter(Boolean));
-    return Math.max(uniquePhones.size, 142);
+    return uniquePhones.size;
   });
 
   // Fetch real users count if API is available
@@ -66,8 +66,8 @@ export const AdminDashboardTab: React.FC<AdminDashboardTabProps> = ({
     (async () => {
       try {
         const users = await api.getAdminUsers();
-        if (Array.isArray(users) && users.length > 0) {
-          setTotalCustomerCount(users.filter((u) => u.role !== 'admin').length || users.length);
+        if (Array.isArray(users)) {
+          setTotalCustomerCount(users.filter((u) => u.role !== 'admin').length);
         }
       } catch (_) {
         // Fallback to computed count from orders
@@ -168,16 +168,13 @@ export const AdminDashboardTab: React.FC<AdminDashboardTabProps> = ({
       d.setDate(now.getDate() - i);
       const dateStr = d.toISOString().slice(0, 10);
       const weekdayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-      const dayLabel = `${weekdayNames[d.getDay()]} (${d.getDate()}/${d.getMonth() + 1})`;
 
       // Sum matching orders on that date
       const dayRev = orders
         .filter((o) => o.created_at && o.created_at.slice(0, 10) === dateStr && o.status !== 'cancelled')
         .reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
 
-      // Baseline fallback for aesthetic continuity if no order on specific day in dev
-      const fallbackAmounts = [42.0, 68.5, 54.2, 89.0, 76.4, 95.8, 63.1];
-      const finalAmount = dayRev > 0 ? Math.round(dayRev / 1000000 * 10) / 10 : fallbackAmounts[6 - i];
+      const finalAmount = dayRev > 0 ? Math.round((dayRev / 1000000) * 10) / 10 : 0;
 
       days.push({
         day: weekdayNames[d.getDay()],
@@ -188,40 +185,32 @@ export const AdminDashboardTab: React.FC<AdminDashboardTabProps> = ({
       });
     }
 
-    const maxAmount = Math.max(...days.map((d) => d.amount), 1);
+    const maxAmount = Math.max(...days.map((d) => d.amount), 0);
     return days.map((d) => ({
       ...d,
-      value: Math.max(20, Math.round((d.amount / maxAmount) * 100)),
-      highlight: d.amount === maxAmount,
+      value: maxAmount > 0 ? Math.max(8, Math.round((d.amount / maxAmount) * 100)) : 8,
+      highlight: maxAmount > 0 && d.amount === maxAmount,
     }));
   }, [orders]);
 
-  // 4. CASHFLOW & PAYMENT DISTRIBUTION (Dòng tiền theo cổng thanh toán)
+  // 4. CASHFLOW & PAYMENT DISTRIBUTION (Dòng tiền theo cổng thanh toán thực tế)
   const paymentBreakdown = useMemo(() => {
     const validOrders = orders.filter((o) => o.status !== 'cancelled');
-    const totalValid = validOrders.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0) || 1;
 
-    let vietqrTotal = validOrders
+    const vietqrTotal = validOrders
       .filter((o) => o.payment_method === 'vietqr' || o.payment_method === 'bank_transfer')
       .reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
-    let momoTotal = validOrders
+    const momoTotal = validOrders
       .filter((o) => o.payment_method === 'momo')
       .reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
-    let codTotal = validOrders
+    const codTotal = validOrders
       .filter((o) => o.payment_method === 'cod')
       .reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
 
-    // Fallbacks if fresh db with few orders
-    if (vietqrTotal === 0 && momoTotal === 0 && codTotal === 0) {
-      vietqrTotal = 190190000;
-      momoTotal = 86450000;
-      codTotal = 69160000;
-    }
-
     const sum = vietqrTotal + momoTotal + codTotal;
-    const vietqrPct = Math.round((vietqrTotal / sum) * 100);
-    const momoPct = Math.round((momoTotal / sum) * 100);
-    const codPct = Math.max(0, 100 - vietqrPct - momoPct);
+    const vietqrPct = sum > 0 ? Math.round((vietqrTotal / sum) * 100) : 0;
+    const momoPct = sum > 0 ? Math.round((momoTotal / sum) * 100) : 0;
+    const codPct = sum > 0 ? Math.max(0, 100 - vietqrPct - momoPct) : 0;
 
     return {
       vietqr: { total: vietqrTotal, pct: vietqrPct },
@@ -231,24 +220,44 @@ export const AdminDashboardTab: React.FC<AdminDashboardTabProps> = ({
     };
   }, [orders]);
 
-  // 5. TOP SELLING PRODUCTS LEADERBOARD (Top thiết bị bán chạy)
+  // 5. TOP SELLING PRODUCTS LEADERBOARD (Top thiết bị bán chạy từ đơn hàng thật)
   const topProducts = useMemo(() => {
-    const sorted = [...products].sort((a, b) => (b.price || 0) - (a.price || 0));
-    return sorted.slice(0, 4).map((p, idx) => {
-      const soldQtys = [48, 36, 29, 18];
-      const qty = soldQtys[idx] || 12;
+    const salesMap = new Map<string, { soldQty: number; revenue: number }>();
+    const validOrders = orders.filter((o) => o.status !== 'cancelled');
+
+    for (const order of validOrders) {
+      if (order.items && Array.isArray(order.items)) {
+        for (const item of order.items) {
+          const pid = String(item.product_id);
+          const current = salesMap.get(pid) || { soldQty: 0, revenue: 0 };
+          current.soldQty += Number(item.quantity) || 1;
+          current.revenue += (Number(item.price) || 0) * (Number(item.quantity) || 1);
+          salesMap.set(pid, current);
+        }
+      }
+    }
+
+    const productsWithSales = products.map((p) => {
+      const sales = salesMap.get(String(p.id)) || { soldQty: 0, revenue: 0 };
       return {
         id: p.id,
         name: p.name,
-        brand: p.brand || 'Sony',
+        brand: p.brand || '',
         image_url: p.image_url,
         price: p.price,
         stock: p.stock,
-        soldQty: qty,
-        revenue: (p.price || 0) * qty,
+        soldQty: sales.soldQty,
+        revenue: sales.revenue,
       };
     });
-  }, [products]);
+
+    productsWithSales.sort((a, b) => {
+      if (b.soldQty !== a.soldQty) return b.soldQty - a.soldQty;
+      return (b.price || 0) - (a.price || 0);
+    });
+
+    return productsWithSales.slice(0, 4);
+  }, [products, orders]);
 
   return (
     <div className="space-y-8 animate-fade-in pb-12">

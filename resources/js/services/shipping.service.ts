@@ -97,38 +97,3 @@ export interface TrackingStep {
   current?: boolean;
 }
 
-export function getMockTrackingTimeline(orderId: string, carrierCode: string): TrackingStep[] {
-  return [
-    {
-      title: 'Đã nhận đơn hàng',
-      description: 'Hệ thống CameraHub đã ghi nhận thông tin đặt hàng thành công.',
-      time: '10:30 Hôm nay',
-      completed: true,
-    },
-    {
-      title: 'Đã xác nhận & Đóng gói',
-      description: 'Thiết bị camera đã được kiểm định serial và bọc chống sốc 3 lớp.',
-      time: '11:15 Hôm nay',
-      completed: true,
-    },
-    {
-      title: `Bàn giao cho ${carrierCode}`,
-      description: `Đơn vị vận chuyển ${carrierCode} đã nhận kiện hàng tại kho trung tâm.`,
-      time: '14:00 Hôm nay',
-      completed: true,
-      current: true,
-    },
-    {
-      title: 'Đang vận chuyển đến bạn',
-      description: 'Shipper đang trên lộ trình giao hàng đến địa chỉ người nhận.',
-      time: 'Dự kiến ngày mai',
-      completed: false,
-    },
-    {
-      title: 'Giao hàng thành công',
-      description: 'Khách hàng đồng kiểm tra thiết bị và ký nhận hoàn tất.',
-      time: 'Dự kiến 1-2 ngày',
-      completed: false,
-    },
-  ];
-}

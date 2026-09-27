@@ -71,212 +71,6 @@ class ReportController extends Controller
     }
 
     /**
-     * Dữ liệu tĩnh mẫu cho Bảng số liệu Báo cáo doanh thu (Lab 08)
-     */
-    private function getStaticMockReport(): array
-    {
-        $categoryRevenue = collect([
-            (object)[
-                'category_id' => 1,
-                'category_name' => 'Máy ảnh Mirrorless',
-                'total_qty' => 12,
-                'total_revenue' => 285400000,
-            ],
-            (object)[
-                'category_id' => 3,
-                'category_name' => 'Ống kính (Lens)',
-                'total_qty' => 24,
-                'total_revenue' => 164500000,
-            ],
-            (object)[
-                'category_id' => 4,
-                'category_name' => 'Flycam & Drone DJI',
-                'total_qty' => 8,
-                'total_revenue' => 68200000,
-            ],
-            (object)[
-                'category_id' => 5,
-                'category_name' => 'Phụ kiện Camera & Thẻ nhớ',
-                'total_qty' => 65,
-                'total_revenue' => 32800000,
-            ],
-            (object)[
-                'category_id' => 2,
-                'category_name' => 'Máy ảnh DSLR',
-                'total_qty' => 6,
-                'total_revenue' => 18000000,
-            ],
-        ]);
-
-        $totalOrders = 156;
-        $totalCustomers = 48;
-        $totalRevenue = 568900000;
-
-        // 30 ngày gần nhất
-        $revenueByDate = collect([]);
-        $startDay = Carbon::now()->startOfDay()->subDays(29);
-        $dailyAmounts = [
-            12500000, 15800000, 9200000, 18400000, 22000000, 16500000, 14200000, 28000000, 
-            19500000, 17200000, 21400000, 25600000, 18900000, 22400000, 27500000, 31000000, 
-            19800000, 23500000, 18200000, 26400000, 34500000, 21000000, 28900000, 32000000, 
-            24500000, 29800000, 33500000, 38000000, 42500000, 36800000
-        ];
-
-        for ($i = 0; $i < 30; $i++) {
-            $d = $startDay->copy()->addDays($i)->toDateString();
-            $rev = (float)$dailyAmounts[$i];
-            $revenueByDate->push((object)[
-                'date' => $d,
-                'total_revenue' => $rev,
-                'order_count' => max(1, (int)round($rev / 6500000)),
-            ]);
-        }
-
-        // 12 tháng gần nhất
-        $revenueByMonth = collect([]);
-        $startMonth = Carbon::now()->startOfMonth()->subMonths(11);
-        $monthlyAmounts = [
-            28500000, 32000000, 45600000, 52000000, 38400000, 41200000, 
-            49500000, 56800000, 62400000, 71500000, 78200000, 85600000
-        ];
-        for ($i = 0; $i < 12; $i++) {
-            $m = $startMonth->copy()->addMonths($i)->format('Y-m');
-            $rev = (float)$monthlyAmounts[$i];
-            $revenueByMonth->push((object)[
-                'month' => $m,
-                'total_revenue' => $rev,
-                'order_count' => max(4, (int)round($rev / 4000000)),
-            ]);
-        }
-
-        // Từng năm
-        $revenueByYear = collect([
-            (object)['year' => '2024', 'total_revenue' => 185000000, 'order_count' => 42],
-            (object)['year' => '2025', 'total_revenue' => 320000000, 'order_count' => 78],
-            (object)['year' => '2026', 'total_revenue' => 568900000, 'order_count' => 156],
-        ]);
-
-        return compact(
-            'categoryRevenue', 'totalOrders', 'totalCustomers', 'totalRevenue',
-            'revenueByDate', 'revenueByMonth', 'revenueByYear'
-        );
-    }
-
-    /**
-     * Dữ liệu tĩnh mẫu cho 5 Biểu đồ Báo cáo doanh thu (Lab 08)
-     */
-    private function getStaticMockCharts(): array
-    {
-        $catLabels = ['Máy ảnh Mirrorless', 'Ống kính (Lens)', 'Flycam & Drone', 'Phụ kiện Camera', 'Máy ảnh DSLR'];
-        $catRevenue = [285400000, 164500000, 68200000, 32800000, 18000000];
-
-        $startDay = Carbon::now()->startOfDay()->subDays(29);
-        $dailyAmounts = [
-            12500000, 15800000, 9200000, 18400000, 22000000, 16500000, 14200000, 28000000, 
-            19500000, 17200000, 21400000, 25600000, 18900000, 22400000, 27500000, 31000000, 
-            19800000, 23500000, 18200000, 26400000, 34500000, 21000000, 28900000, 32000000, 
-            24500000, 29800000, 33500000, 38000000, 42500000, 36800000
-        ];
-        $revDateLabels = [];
-        $revDateData = [];
-        for ($i = 0; $i < 30; $i++) {
-            $date = $startDay->copy()->addDays($i);
-            $revDateLabels[] = $date->format('d/m');
-            $revDateData[] = (float)$dailyAmounts[$i];
-        }
-
-        $startMonth = Carbon::now()->startOfMonth()->subMonths(11);
-        $monthlyAmounts = [
-            28500000, 32000000, 45600000, 52000000, 38400000, 41200000, 
-            49500000, 56800000, 62400000, 71500000, 78200000, 85600000
-        ];
-        $revMonthLabels = [];
-        $revMonthData = [];
-        for ($i = 0; $i < 12; $i++) {
-            $m = $startMonth->copy()->addMonths($i);
-            $revMonthLabels[] = $m->format('m/Y');
-            $revMonthData[] = (float)$monthlyAmounts[$i];
-        }
-
-        $revYearLabels = ['2024', '2025', '2026'];
-        $revYearData = [185000000, 320000000, 568900000];
-
-        $paymentMethodLabels = ['Ví MoMo', 'Tiền mặt (COD)', 'VietQR'];
-        $paymentMethodRevenue = [345000000, 142500000, 81400000];
-
-        return compact(
-            'catLabels', 'catRevenue', 'revDateLabels', 'revDateData',
-            'revMonthLabels', 'revMonthData', 'revYearLabels', 'revYearData',
-            'paymentMethodLabels', 'paymentMethodRevenue'
-        );
-    }
-
-    /**
-     * Dữ liệu tĩnh mẫu cho top sản phẩm bán chạy nhất
-     */
-    private function mockTopSellingProducts(): Collection
-    {
-        $products = DB::table('products')->take(5)->get();
-        if ($products->count() >= 5) {
-            $soldQtys = [48, 36, 42, 29, 18];
-            return $products->map(function ($p, $idx) use ($soldQtys) {
-                $qty = $soldQtys[$idx] ?? 12;
-                return (object)[
-                    'id' => $p->id,
-                    'name' => $p->name,
-                    'image_url' => $p->image_url,
-                    'price' => (float)$p->price,
-                    'sold_qty' => $qty,
-                    'total_revenue' => (float)($p->price * $qty),
-                ];
-            })->sortByDesc('sold_qty')->values();
-        }
-
-        return collect([
-            (object)[
-                'id' => 1,
-                'name' => 'Sony Alpha A7 Mark IV (Body)',
-                'image_url' => 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=1000',
-                'price' => 54990000,
-                'sold_qty' => 48,
-                'total_revenue' => 2639520000,
-            ],
-            (object)[
-                'id' => 3,
-                'name' => 'Fujifilm X-T5 (Body) - Bạc',
-                'image_url' => 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&q=80&w=1000',
-                'price' => 43900000,
-                'sold_qty' => 42,
-                'total_revenue' => 1843800000,
-            ],
-            (object)[
-                'id' => 2,
-                'name' => 'Canon EOS R6 Mark II (Body)',
-                'image_url' => 'https://images.unsplash.com/photo-1617005082133-548c4dd27f35?auto=format&fit=crop&q=80&w=1000',
-                'price' => 58900000,
-                'sold_qty' => 36,
-                'total_revenue' => 2120400000,
-            ],
-            (object)[
-                'id' => 4,
-                'name' => 'Nikon Z6 III (Body)',
-                'image_url' => 'https://images.unsplash.com/photo-1510127034890-ba27508e9f1c?auto=format&fit=crop&q=80&w=1000',
-                'price' => 62500000,
-                'sold_qty' => 29,
-                'total_revenue' => 1812500000,
-            ],
-            (object)[
-                'id' => 5,
-                'name' => 'Sony Alpha A7R Mark V (Body)',
-                'image_url' => 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=1000',
-                'price' => 84900000,
-                'sold_qty' => 18,
-                'total_revenue' => 1528200000,
-            ],
-        ]);
-    }
-
-    /**
      * Thống kê top sản phẩm bán chạy nhất
      */
     private function topSellingProducts(int $limit = 5): Collection
@@ -293,34 +87,24 @@ class ReportController extends Controller
     }
 
     /**
-     * Bảng số liệu báo cáo
+     * Bảng số liệu báo cáo (100% Real Data từ CSDL)
      */
     public function index(Request $request)
     {
-        // Mặc định luôn là dữ liệu thực tế từ Database (100% Real Data)
-        // Chỉ dùng mock nếu được yêu cầu tường minh qua ?mock=1
-        $useMock = $request->boolean('mock');
+        $categoryRevenue = $this->categoryRevenue();
+        $totalOrders = Order::count();
+        $totalCustomers = DB::table('users')->where('role', '!=', 'admin')->count();
+        $revenueByDate = $this->dailyRevenue();
+        $revenueByMonth = $this->periodRevenue($revenueByDate, 'month');
+        $revenueByYear = $this->periodRevenue($revenueByDate, 'year');
+        $totalRevenue = (float) $this->paidOrders()->sum('total_amount');
+        $topSellingProducts = $this->topSellingProducts();
 
-        if ($useMock) {
-            $data = $this->getStaticMockReport();
-            $data['topSellingProducts'] = $this->mockTopSellingProducts();
-            $data['isMock'] = true;
-        } else {
-            $categoryRevenue = $this->categoryRevenue();
-            $totalOrders = Order::count();
-            $totalCustomers = DB::table('users')->where('role', '!=', 'admin')->count();
-            $revenueByDate = $this->dailyRevenue();
-            $revenueByMonth = $this->periodRevenue($revenueByDate, 'month');
-            $revenueByYear = $this->periodRevenue($revenueByDate, 'year');
-            $totalRevenue = (float) $this->paidOrders()->sum('total_amount');
-            $topSellingProducts = $this->topSellingProducts();
-
-            $data = compact(
-                'categoryRevenue', 'totalOrders', 'totalCustomers', 'totalRevenue',
-                'revenueByDate', 'revenueByMonth', 'revenueByYear', 'topSellingProducts'
-            );
-            $data['isMock'] = false;
-        }
+        $data = compact(
+            'categoryRevenue', 'totalOrders', 'totalCustomers', 'totalRevenue',
+            'revenueByDate', 'revenueByMonth', 'revenueByYear', 'topSellingProducts'
+        );
+        $data['isMock'] = false;
 
         if ($request->wantsJson() || $request->is('api/*')) {
             return response()->json($data);
@@ -334,61 +118,52 @@ class ReportController extends Controller
     }
 
     /**
-     * Dữ liệu biểu đồ báo cáo
+     * Dữ liệu biểu đồ báo cáo (100% Real Data từ CSDL)
      */
     public function charts(Request $request)
     {
-        // Mặc định luôn là dữ liệu thực tế từ Database (100% Real Data)
-        // Chỉ dùng mock nếu được yêu cầu tường minh qua ?mock=1
-        $useMock = $request->boolean('mock');
+        $categories = $this->categoryRevenue();
+        $catLabels = $categories->map(fn ($row) => $row->category_name ?? 'Danh mục #'.$row->category_id)->all();
+        $catRevenue = $categories->pluck('total_revenue')->map(fn ($value) => (float) $value)->all();
 
-        if ($useMock) {
-            $chartData = $this->getStaticMockCharts();
-            $chartData['isMock'] = true;
-        } else {
-            $categories = $this->categoryRevenue();
-            $catLabels = $categories->map(fn ($row) => $row->category_name ?? 'Danh mục #'.$row->category_id)->all();
-            $catRevenue = $categories->pluck('total_revenue')->map(fn ($value) => (float) $value)->all();
+        $daily = $this->dailyRevenue();
+        $byDate = $daily->keyBy('date');
+        $byMonth = $this->periodRevenue($daily, 'month')->keyBy('month');
+        $byYear = $this->periodRevenue($daily, 'year');
 
-            $daily = $this->dailyRevenue();
-            $byDate = $daily->keyBy('date');
-            $byMonth = $this->periodRevenue($daily, 'month')->keyBy('month');
-            $byYear = $this->periodRevenue($daily, 'year');
+        $startDay = Carbon::now()->startOfDay()->subDays(29);
+        $startMonth = Carbon::now()->startOfMonth()->subMonths(11);
 
-            $startDay = Carbon::now()->startOfDay()->subDays(29);
-            $startMonth = Carbon::now()->startOfMonth()->subMonths(11);
+        $revDateLabels = $revDateData = $revMonthLabels = $revMonthData = [];
 
-            $revDateLabels = $revDateData = $revMonthLabels = $revMonthData = [];
-
-            for ($i = 0; $i < 30; $i++) {
-                $date = $startDay->copy()->addDays($i)->toDateString();
-                $revDateLabels[] = Carbon::parse($date)->format('d/m');
-                $revDateData[] = (float) ($byDate->get($date)?->total_revenue ?? 0);
-            }
-
-            for ($i = 0; $i < 12; $i++) {
-                $month = $startMonth->copy()->addMonths($i);
-                $revMonthLabels[] = $month->format('m/Y');
-                $revMonthData[] = (float) ($byMonth->get($month->format('Y-m'))?->total_revenue ?? 0);
-            }
-
-            $revYearLabels = $byYear->pluck('year')->all();
-            $revYearData = $byYear->pluck('total_revenue')->map(fn ($value) => (float) $value)->all();
-
-            $momoRev = (float) $this->paidOrders()->where('payment_method', 'momo')->sum('total_amount');
-            $codRev = (float) $this->paidOrders()->where('payment_method', 'cod')->sum('total_amount');
-            $vietqrRev = (float) $this->paidOrders()->whereIn('payment_method', ['vietqr', 'bank_transfer'])->sum('total_amount');
-
-            $paymentMethodLabels = ['Ví MoMo', 'Tiền mặt (COD)', 'VietQR'];
-            $paymentMethodRevenue = [$momoRev, $codRev, $vietqrRev];
-
-            $chartData = compact(
-                'catLabels', 'catRevenue', 'revDateLabels', 'revDateData',
-                'revMonthLabels', 'revMonthData', 'revYearLabels', 'revYearData',
-                'paymentMethodLabels', 'paymentMethodRevenue'
-            );
-            $chartData['isMock'] = false;
+        for ($i = 0; $i < 30; $i++) {
+            $date = $startDay->copy()->addDays($i)->toDateString();
+            $revDateLabels[] = Carbon::parse($date)->format('d/m');
+            $revDateData[] = (float) ($byDate->get($date)?->total_revenue ?? 0);
         }
+
+        for ($i = 0; $i < 12; $i++) {
+            $month = $startMonth->copy()->addMonths($i);
+            $revMonthLabels[] = $month->format('m/Y');
+            $revMonthData[] = (float) ($byMonth->get($month->format('Y-m'))?->total_revenue ?? 0);
+        }
+
+        $revYearLabels = $byYear->pluck('year')->all();
+        $revYearData = $byYear->pluck('total_revenue')->map(fn ($value) => (float) $value)->all();
+
+        $momoRev = (float) $this->paidOrders()->where('payment_method', 'momo')->sum('total_amount');
+        $codRev = (float) $this->paidOrders()->where('payment_method', 'cod')->sum('total_amount');
+        $vietqrRev = (float) $this->paidOrders()->whereIn('payment_method', ['vietqr', 'bank_transfer'])->sum('total_amount');
+
+        $paymentMethodLabels = ['Ví MoMo', 'Tiền mặt (COD)', 'VietQR'];
+        $paymentMethodRevenue = [$momoRev, $codRev, $vietqrRev];
+
+        $chartData = compact(
+            'catLabels', 'catRevenue', 'revDateLabels', 'revDateData',
+            'revMonthLabels', 'revMonthData', 'revYearLabels', 'revYearData',
+            'paymentMethodLabels', 'paymentMethodRevenue'
+        );
+        $chartData['isMock'] = false;
 
         if ($request->wantsJson() || $request->is('api/*')) {
             return response()->json($chartData);

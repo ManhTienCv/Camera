@@ -18,132 +18,9 @@ import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 import type { AdminUserItem } from '../../types';
 
-export const STATIC_MOCK_USERS: AdminUserItem[] = [
-  {
-    id: 1,
-    name: 'Quản Trị Viên CameraHub',
-    email: 'admin@camerahub.vn',
-    phone: '0909888999',
-    role: 'admin',
-    created_at: '01/08/2026 08:00',
-  },
-  {
-    id: 2,
-    name: 'Hoàng Quốc Việt',
-    email: 'viet.admin@camerahub.vn',
-    phone: '0908777666',
-    role: 'admin',
-    created_at: '07/08/2026 09:30',
-  },
-  {
-    id: 3,
-    name: 'Trần Đức Minh',
-    email: 'minh.tran@gmail.com',
-    phone: '0912345678',
-    role: 'customer',
-    created_at: '12/08/2026 14:15',
-  },
-  {
-    id: 4,
-    name: 'Lê Hoàng Nam (Studio Sài Gòn)',
-    email: 'nam.lephoto@gmail.com',
-    phone: '0987654321',
-    role: 'customer',
-    created_at: '18/08/2026 10:20',
-  },
-  {
-    id: 5,
-    name: 'Phạm Thu Hà',
-    email: 'thuha.studio@gmail.com',
-    phone: '0903112233',
-    role: 'customer',
-    created_at: '22/08/2026 16:45',
-  },
-  {
-    id: 6,
-    name: 'Nguyễn Anh Tuấn',
-    email: 'tuan.camera@gmail.com',
-    phone: '0978998877',
-    role: 'customer',
-    created_at: '25/08/2026 11:10',
-  },
-  {
-    id: 7,
-    name: 'Vũ Bảo Ngọc',
-    email: 'ngoc.vu@gmail.com',
-    phone: '0934567890',
-    role: 'customer',
-    created_at: '28/08/2026 15:30',
-  },
-  {
-    id: 8,
-    name: 'Đặng Hải Đăng (Filmmaker)',
-    email: 'dang.film@gmail.com',
-    phone: '0918223344',
-    role: 'customer',
-    created_at: '01/09/2026 10:05',
-  },
-  {
-    id: 9,
-    name: 'Bùi Phương Linh',
-    email: 'linh.media@gmail.com',
-    phone: '0982334455',
-    role: 'customer',
-    created_at: '05/09/2026 17:22',
-  },
-  {
-    id: 10,
-    name: 'Đỗ Mạnh Cường',
-    email: 'cuong.lens@gmail.com',
-    phone: '0945667788',
-    role: 'customer',
-    created_at: '08/09/2026 13:40',
-  },
-  {
-    id: 11,
-    name: 'Phan Thanh Trúc',
-    email: 'truc.pt@gmail.com',
-    phone: '0938112299',
-    role: 'customer',
-    created_at: '11/09/2026 09:50',
-  },
-  {
-    id: 12,
-    name: 'Hà Quang Huy (Drone Pilot)',
-    email: 'huy.dji@gmail.com',
-    phone: '0915778899',
-    role: 'customer',
-    created_at: '13/09/2026 14:05',
-  },
-  {
-    id: 13,
-    name: 'Trịnh Mai Chi',
-    email: 'maichi.photo@gmail.com',
-    phone: '0966332211',
-    role: 'customer',
-    created_at: '15/09/2026 18:30',
-  },
-  {
-    id: 14,
-    name: 'Võ Minh Trí (Kỹ thuật)',
-    email: 'tri.admin@camerahub.vn',
-    phone: '0933445566',
-    role: 'admin',
-    created_at: '16/09/2026 08:00',
-  },
-  {
-    id: 15,
-    name: 'Nguyễn Mạnh Tiến (VIP Member)',
-    email: 'tien.camera@gmail.com',
-    phone: '0988888888',
-    role: 'customer',
-    created_at: '16/09/2026 19:00',
-  },
-];
-
 export const AdminUsersTab: React.FC = () => {
   const toast = useToast();
-  const [users, setUsers] = useState<AdminUserItem[]>(STATIC_MOCK_USERS);
+  const [users, setUsers] = useState<AdminUserItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
@@ -183,12 +60,10 @@ export const AdminUsersTab: React.FC = () => {
       });
 
       let list: AdminUserItem[] = [];
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         list = data;
-      } else if (data && Array.isArray((data as any).users) && (data as any).users.length > 0) {
+      } else if (data && Array.isArray((data as any).users)) {
         list = (data as any).users;
-      } else {
-        list = STATIC_MOCK_USERS;
       }
 
       // Filter client-side
@@ -209,23 +84,8 @@ export const AdminUsersTab: React.FC = () => {
 
       setUsers(list);
     } catch (err: any) {
-      // Fallback seamlessly to STATIC_MOCK_USERS
-      let list = STATIC_MOCK_USERS;
-      if (roleFilter) {
-        list = list.filter((u) =>
-          roleFilter === 'admin' ? u.role === 'admin' : u.role === 'customer' || u.role === 'user'
-        );
-      }
-      if (search.trim()) {
-        const q = search.trim().toLowerCase();
-        list = list.filter(
-          (u) =>
-            u.name.toLowerCase().includes(q) ||
-            u.email.toLowerCase().includes(q) ||
-            (u.phone && u.phone.toLowerCase().includes(q))
-        );
-      }
-      setUsers(list);
+      console.error('Lỗi tải danh sách người dùng:', err);
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -499,7 +359,7 @@ export const AdminUsersTab: React.FC = () => {
                       onClick={() => {
                         setSearch('');
                         setRoleFilter('');
-                        setUsers(STATIC_MOCK_USERS);
+                        loadUsers();
                       }}
                       className="px-4 py-2 bg-cream-100 hover:bg-cream-200 text-ink-800 rounded-xl text-xs font-bold cursor-pointer transition-colors"
                     >

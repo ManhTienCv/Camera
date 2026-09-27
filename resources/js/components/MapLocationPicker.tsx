@@ -36,6 +36,7 @@ interface Props {
 
 // Prominent Vietnamese Landmarks Database for Instant Matching
 const POPULAR_VN_LANDMARKS = [
+  { name: 'Showroom CameraHub', address: '123 Nguyễn Huệ, Bến Nghé, Quận 1', city: 'TP. Hồ Chí Minh', district: 'Quận 1', lat: 10.7735, lng: 106.7037 },
   { name: 'Khu Đô Thị Phúc Diễn', address: 'Phúc Diễn, Bắc Từ Liêm', city: 'Hà Nội', district: 'Bắc Từ Liêm', lat: 21.0470, lng: 105.7619 },
   { name: 'Keangnam Landmark 72', address: 'Đường Phạm Hùng, Mễ Trì', city: 'Hà Nội', district: 'Nam Từ Liêm', lat: 21.0168, lng: 105.7838 },
   { name: 'Hồ Hoàn Kiếm', address: 'Phố Đinh Tiên Hoàng, Hàng Trống', city: 'Hà Nội', district: 'Hoàn Kiếm', lat: 21.0285, lng: 105.8542 },

@@ -540,14 +540,12 @@ export const api = {
   // ==========================================
   // Lab 08: Admin Reports & Charts APIs
   // ==========================================
-  getAdminReportSummary: (params?: { mock?: boolean; real?: boolean }) => {
-    const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
-    return request<ReportSummaryData>(`/admin/reports${query}`);
+  getAdminReportSummary: () => {
+    return request<ReportSummaryData>('/admin/reports');
   },
 
-  getAdminReportCharts: (params?: { mock?: boolean; real?: boolean }) => {
-    const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
-    return request<ReportChartsData>(`/admin/reports/charts${query}`);
+  getAdminReportCharts: () => {
+    return request<ReportChartsData>('/admin/reports/charts');
   },
 
   // ==========================================

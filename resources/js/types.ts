@@ -197,7 +197,6 @@ export interface ReportSummaryData {
   revenueByMonth: PeriodRevenueItem[];
   revenueByYear: PeriodRevenueItem[];
   topSellingProducts?: TopSellingProductItem[];
-  isMock?: boolean;
 }
 
 export interface ReportChartsData {
@@ -211,7 +210,6 @@ export interface ReportChartsData {
   revYearData: number[];
   paymentMethodLabels: string[];
   paymentMethodRevenue: number[];
-  isMock?: boolean;
 }
 
 export interface AdminUserItem {

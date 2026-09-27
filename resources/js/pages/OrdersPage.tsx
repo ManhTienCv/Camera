@@ -29,7 +29,7 @@ interface OrdersPageProps {
 
 type OrderStatusTab = 'pending' | 'shipping' | 'delivered' | 'refund_pending' | 'cancelled';
 
-interface MockJourneyStep {
+interface OrderJourneyStep {
   time: string;
   title: string;
   desc: string;
@@ -66,7 +66,7 @@ interface EnhancedOrder {
   trackingCode: string;
   paymentMethod: string;
   totalAmount: number;
-  journey: MockJourneyStep[];
+  journey: OrderJourneyStep[];
   cancelReason?: string;
 }
 

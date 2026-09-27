@@ -31,7 +31,6 @@ export const AuthModal: React.FC = () => {
     registerWithOtp,
     setAuthenticatedUser,
     loginWithGoogle,
-    demoGoogleLogin,
     onboardingData,
     completeOnboarding,
     cancelOnboarding,

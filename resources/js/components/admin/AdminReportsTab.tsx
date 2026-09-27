@@ -11,11 +11,9 @@ import {
   Loader2,
   RefreshCw,
   CreditCard,
-  Sparkles,
   Database,
   Award,
   PackageCheck,
-  ArrowUpRight,
   Info,
   ChevronLeft,
   ChevronRight,
@@ -171,7 +169,6 @@ const MiniPagination: React.FC<MiniPaginationProps> = ({
 
 export const AdminReportsTab: React.FC = () => {
   const [subTab, setSubTab] = useState<'tables' | 'charts'>('tables');
-  const [dataMode, setDataMode] = useState<'mock' | 'real'>('real');
   const [summaryData, setSummaryData] = useState<ReportSummaryData | null>(null);
   const [chartsData, setChartsData] = useState<ReportChartsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -190,13 +187,12 @@ export const AdminReportsTab: React.FC = () => {
   const categoryPageSize = 5;
   const topProductsPageSize = 5;
 
-  const loadReportData = async (mode: 'mock' | 'real' = dataMode) => {
+  const loadReportData = async () => {
     setLoading(true);
     try {
-      const params = mode === 'mock' ? { mock: true } : { real: true };
       const [summary, charts] = await Promise.all([
-        api.getAdminReportSummary(params).catch(() => null),
-        api.getAdminReportCharts(params).catch(() => null),
+        api.getAdminReportSummary().catch(() => null),
+        api.getAdminReportCharts().catch(() => null),
       ]);
       setSummaryData(summary);
       setChartsData(charts);
@@ -208,19 +204,8 @@ export const AdminReportsTab: React.FC = () => {
   };
 
   useEffect(() => {
-    loadReportData(dataMode);
+    loadReportData();
   }, []);
-
-  const handleModeChange = (newMode: 'mock' | 'real') => {
-    if (newMode === dataMode && !loading) return;
-    setDataMode(newMode);
-    setDailyPage(1);
-    setMonthlyPage(1);
-    setYearlyPage(1);
-    setCategoryPage(1);
-    setTopProductsPage(1);
-    loadReportData(newMode);
-  };
 
   if (loading && !summaryData) {
     return (
@@ -240,7 +225,6 @@ export const AdminReportsTab: React.FC = () => {
     revenueByMonth = [],
     revenueByYear = [],
     topSellingProducts = [],
-    isMock = dataMode === 'mock',
   } = summaryData || {};
 
   const averageOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
@@ -270,15 +254,9 @@ export const AdminReportsTab: React.FC = () => {
             <h3 className="text-2xl font-display font-bold text-ink-900 dark:text-cream-50">
               Báo cáo & Phân tích Doanh thu
             </h3>
-            {isMock ? (
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-700/50 flex items-center gap-1">
-                <Sparkles size={11} /> Dữ liệu giả định
-              </span>
-            ) : (
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700/50 flex items-center gap-1">
-                <Database size={11} /> Dữ liệu CSDL
-              </span>
-            )}
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700/50 flex items-center gap-1">
+              <Database size={11} /> Dữ liệu CSDL
+            </span>
           </div>
           <p className="text-sm text-ink-500 dark:text-ink-400 mt-1">
             Tổng hợp đơn hàng đã thu tiền, doanh số theo danh mục, chu kỳ thời gian và top sản phẩm bán chạy.
@@ -286,52 +264,6 @@ export const AdminReportsTab: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {/* Mode Switcher: Giả định vs Thực tế */}
-          <div className="relative bg-cream-200/60 dark:bg-ink-800 p-1 rounded-2xl flex items-center gap-1 border border-cream-200 dark:border-ink-700 shadow-2xs" role="tablist" aria-label="Chế độ dữ liệu báo cáo">
-            <button
-              role="tab"
-              aria-selected={dataMode === 'mock'}
-              onClick={() => handleModeChange('mock')}
-              disabled={loading}
-              className={`relative px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 select-none outline-none ${
-                dataMode === 'mock'
-                  ? 'text-white'
-                  : 'text-ink-600 dark:text-ink-300 hover:text-ink-900 dark:hover:text-white'
-              }`}
-              title="Xem dữ liệu mô phỏng phong phú cho báo cáo"
-            >
-              {dataMode === 'mock' && (
-                <GlidingIndicator
-                  layoutId="admin-reports-mode-pill"
-                  className="inset-0 bg-amber-500 rounded-xl shadow-xs"
-                />
-              )}
-              <Sparkles size={13} className="relative z-10" />
-              <span className="relative z-10">Dữ liệu giả định</span>
-            </button>
-            <button
-              role="tab"
-              aria-selected={dataMode === 'real'}
-              onClick={() => handleModeChange('real')}
-              disabled={loading}
-              className={`relative px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 select-none outline-none ${
-                dataMode === 'real'
-                  ? 'text-white'
-                  : 'text-ink-600 dark:text-ink-300 hover:text-ink-900 dark:hover:text-white'
-              }`}
-              title="Lấy số liệu thực tế đã đặt trong cơ sở dữ liệu"
-            >
-              {dataMode === 'real' && (
-                <GlidingIndicator
-                  layoutId="admin-reports-mode-pill"
-                  className="inset-0 bg-ink-900 dark:bg-accent-600 rounded-xl shadow-xs"
-                />
-              )}
-              <Database size={13} className="relative z-10" />
-              <span className="relative z-10">Dữ liệu thực tế</span>
-            </button>
-          </div>
-
           {/* Sub-tab toggle buttons */}
           <div className="relative bg-cream-200/60 dark:bg-ink-800 p-1 rounded-2xl flex items-center gap-1 border border-cream-200 dark:border-ink-700 shadow-2xs" role="tablist" aria-label="Dạng xem báo cáo">
             <button
@@ -376,7 +308,7 @@ export const AdminReportsTab: React.FC = () => {
 
           {/* Refresh button */}
           <button
-            onClick={() => loadReportData(dataMode)}
+            onClick={() => loadReportData()}
             disabled={loading}
             className="p-2 bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-800 rounded-xl hover:bg-cream-50 dark:hover:bg-ink-800 text-ink-600 dark:text-ink-300 transition-all cursor-pointer disabled:opacity-50 shadow-2xs"
             title="Làm mới số liệu"
@@ -385,53 +317,6 @@ export const AdminReportsTab: React.FC = () => {
           </button>
         </div>
       </div>
-
-      {/* Mode Banner / Notice */}
-      {dataMode === 'mock' ? (
-        <div className="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/25 dark:border-amber-800/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-900 dark:text-amber-200 text-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0">
-              <Sparkles size={16} />
-            </div>
-            <div>
-              <p className="font-bold text-amber-950 dark:text-amber-100">
-                Đang hiển thị Dữ liệu Giả định (Mô phỏng 30 ngày & 12 tháng)
-              </p>
-              <p className="text-amber-800/80 dark:text-amber-300/80 mt-0.5">
-                Các số liệu về doanh số, số đơn hàng và sản phẩm bán chạy được mô phỏng trực quan chuẩn quy mô phân phối máy ảnh CameraHub.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => handleModeChange('real')}
-            className="font-bold text-amber-800 dark:text-amber-300 hover:underline shrink-0 cursor-pointer flex items-center gap-1"
-          >
-            Chuyển sang dữ liệu thực tế <ArrowUpRight size={13} />
-          </button>
-        </div>
-      ) : (
-        <div className="p-4 rounded-2xl bg-blue-500/10 dark:bg-blue-950/30 border border-blue-500/25 dark:border-blue-800/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-blue-900 dark:text-blue-200 text-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-700 dark:text-blue-400 flex items-center justify-center shrink-0">
-              <Database size={16} />
-            </div>
-            <div>
-              <p className="font-bold text-blue-950 dark:text-blue-100">
-                Đang hiển thị Dữ liệu Thực tế CSDL
-              </p>
-              <p className="text-blue-800/80 dark:text-blue-300/80 mt-0.5">
-                Số liệu được tính toán dựa trên các đơn hàng có trạng thái thanh toán hợp lệ trong hệ thống cơ sở dữ liệu hiện tại.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => handleModeChange('mock')}
-            className="font-bold text-blue-800 dark:text-blue-300 hover:underline shrink-0 cursor-pointer flex items-center gap-1"
-          >
-            Quay lại dữ liệu giả định <ArrowUpRight size={13} />
-          </button>
-        </div>
-      )}
 
       {/* KPI Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -443,7 +328,7 @@ export const AdminReportsTab: React.FC = () => {
               {totalOrders.toLocaleString('vi-VN')}
             </h4>
             <span className="text-[11px] text-ink-500 dark:text-ink-400 mt-0.5 inline-block">
-              {isMock ? '+14.2% so với tháng trước' : 'Đơn hàng trong CSDL'}
+              Đơn hàng trong CSDL
             </span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
@@ -459,7 +344,7 @@ export const AdminReportsTab: React.FC = () => {
               {totalCustomers.toLocaleString('vi-VN')}
             </h4>
             <span className="text-[11px] text-ink-500 dark:text-ink-400 mt-0.5 inline-block">
-              {isMock ? '+8 tài khoản mới trong tuần' : 'Tài khoản người dùng'}
+              Tài khoản người dùng
             </span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
@@ -475,7 +360,7 @@ export const AdminReportsTab: React.FC = () => {
               {formatCurrency(totalRevenue)}
             </h4>
             <span className="text-[11px] text-emerald-700/80 dark:text-emerald-400/80 mt-0.5 inline-block">
-              {isMock ? '+18.4% tăng trưởng YoY' : 'Đơn đã hoàn tất thanh toán'}
+              Đơn đã hoàn tất thanh toán
             </span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">

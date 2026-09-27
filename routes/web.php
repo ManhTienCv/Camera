@@ -14,10 +14,8 @@ Route::get('/payment/momo/callback', [PaymentController::class, 'handleMomoCallb
 // Google OAuth 2.0 Routes
 Route::get('/auth/google/redirect', [\App\Http\Controllers\Api\GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
 Route::get('/auth/google/callback', [\App\Http\Controllers\Api\GoogleAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
-Route::get('/auth/google/demo', [\App\Http\Controllers\Api\GoogleAuthController::class, 'demoGoogleLogin'])->name('auth.google.demo');
 Route::get('/api/v1/auth/google/redirect', [\App\Http\Controllers\Api\GoogleAuthController::class, 'redirectToGoogle']);
 Route::get('/api/v1/auth/google/callback', [\App\Http\Controllers\Api\GoogleAuthController::class, 'handleGoogleCallback']);
-Route::get('/api/v1/auth/google/demo', [\App\Http\Controllers\Api\GoogleAuthController::class, 'demoGoogleLogin']);
 
 // Lab 07: User Chat Routes
 Route::prefix('user')->name('user.')->group(function () {

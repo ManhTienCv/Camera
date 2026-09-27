@@ -28,7 +28,6 @@ Route::prefix('v1')->group(function () {
     Route::get('/auth/orders', [AuthController::class, 'myOrders']);
     Route::get('/auth/google/redirect', [\App\Http\Controllers\Api\GoogleAuthController::class, 'redirectToGoogle']);
     Route::get('/auth/google/callback', [\App\Http\Controllers\Api\GoogleAuthController::class, 'handleGoogleCallback']);
-    Route::get('/auth/google/demo', [\App\Http\Controllers\Api\GoogleAuthController::class, 'demoGoogleLogin']);
 
     // 2. Categories
     Route::get('/categories', [CategoryController::class, 'index']);

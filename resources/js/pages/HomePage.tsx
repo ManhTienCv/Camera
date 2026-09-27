@@ -91,35 +91,6 @@ const BRANDS_SHOWCASE = [
   },
 ];
 
-const DEFAULT_VOUCHERS = [
-  {
-    id: 991,
-    code: 'FREESHIP30K',
-    name: 'Miễn Phí Vận Chuyển',
-    description: 'Giảm 30.000đ phí ship cho đơn từ 300.000đ',
-    discount_type: 'fixed' as const,
-    discount_value: 30000,
-    min_order_amount: 300000,
-  },
-  {
-    id: 992,
-    code: 'WELCOME50K',
-    name: 'Khách hàng mới',
-    description: 'Giảm ngay 50.000đ cho đơn hàng từ 500.000đ',
-    discount_type: 'fixed' as const,
-    discount_value: 50000,
-    min_order_amount: 500000,
-  },
-  {
-    id: 993,
-    code: 'CAMERAHUB100K',
-    name: 'Ưu đãi Đặc quyền',
-    description: 'Giảm ngay 100.000đ cho đơn hàng từ 2.000.000đ',
-    discount_type: 'fixed' as const,
-    discount_value: 100000,
-    min_order_amount: 2000000,
-  },
-];
 
 const TESTIMONIALS = [
   {
@@ -178,10 +149,10 @@ export function HomePage({ onNavigate, categories }: Props) {
         setFeatured(feat || []);
         setNewProducts(news || []);
         setBestSellers(best || []);
-        setVouchers(vList && vList.length > 0 ? vList : DEFAULT_VOUCHERS);
+        setVouchers(vList || []);
       } catch (e) {
         console.error('Error fetching home products:', e);
-        setVouchers(DEFAULT_VOUCHERS);
+        setVouchers([]);
       } finally {
         setLoading(false);
       }
@@ -412,88 +383,90 @@ export function HomePage({ onNavigate, categories }: Props) {
         </div>
       </section>
 
-      {/* 4. KHO MÃ GIẢM GIÁ ĐỘC QUYỀN (GIỮ LẠI THEO ẢNH CHỤP CỦA BẠN) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="bg-gradient-to-r from-cream-100 via-white to-cream-100 dark:from-ink-900 dark:via-ink-900/90 dark:to-ink-900 p-6 sm:p-8 rounded-3xl border border-cream-200 dark:border-ink-800 shadow-xs space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-accent-50 dark:bg-accent-950/60 text-accent-600 dark:text-accent-400 rounded-full text-xs font-bold mb-1.5 border border-accent-200 dark:border-accent-800/60">
-                <Ticket size={13} />
-                <span>Kho Mã Giảm Giá Độc Quyền</span>
-              </div>
-              <h3 className="font-display font-bold text-xl lg:text-2xl text-ink-900 dark:text-cream-50">
-                Lấy mã ưu đãi ngay – Tiết kiệm tối đa khi chốt đơn
-              </h3>
-              <p className="text-xs text-ink-400 mt-0.5">Bấm sao chép và dán trực tiếp vào ô Giảm giá tại trang Thanh toán</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => onNavigate({ name: 'catalog' })}
-              className="self-start sm:self-auto text-xs font-semibold text-accent-500 hover:underline flex items-center gap-1 cursor-pointer"
-            >
-              Xem điều kiện áp dụng <ArrowRight size={14} />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {vouchers.slice(0, 3).map((v) => {
-              const isCopied = copiedCode === v.code;
-              return (
-                <div
-                  key={v.id}
-                  className="relative flex items-center bg-white dark:bg-ink-800/90 rounded-2xl border border-cream-200 dark:border-ink-700 overflow-hidden shadow-2xs group hover:border-accent-400 transition-colors"
-                >
-                  {/* Left coupon stub */}
-                  <div className="w-24 bg-gradient-to-br from-accent-500 to-accent-600 text-white p-3 flex flex-col items-center justify-center text-center shrink-0">
-                    <span className="text-2xs uppercase tracking-wider font-bold opacity-80">ƯU ĐÃI</span>
-                    <span className="font-display font-bold text-sm mt-0.5">
-                      {v.discount_type === 'percent'
-                        ? `${v.discount_value}%`
-                        : formatPrice(v.discount_value).replace('₫', '')}
-                    </span>
-                    <span className="text-2xs font-semibold opacity-90">GIẢM</span>
-                  </div>
-
-                  {/* Dotted separator */}
-                  <div className="w-px h-full border-r-2 border-dashed border-cream-200 dark:border-ink-700 shrink-0" />
-
-                  {/* Right coupon content */}
-                  <div className="p-3.5 flex-1 min-w-0 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-mono font-bold text-xs text-ink-900 dark:text-cream-100 tracking-wider">
-                          {v.code}
-                        </span>
-                        <span className="text-3xs px-1.5 py-0.5 rounded bg-cream-100 dark:bg-ink-700 text-ink-500 dark:text-ink-300 font-semibold">
-                          {v.min_order_amount > 0 ? `Đơn từ ${formatPrice(v.min_order_amount)}` : 'Mọi đơn hàng'}
-                        </span>
-                      </div>
-                      <p className="text-2xs text-ink-500 dark:text-ink-400 line-clamp-2 mt-1">
-                        {v.description || v.name}
-                      </p>
-                    </div>
-
-                    <div className="mt-2.5 pt-2 border-t border-cream-100 dark:border-ink-700/60 flex items-center justify-between">
-                      <span className="text-3xs text-ink-400">Số lượng có hạn</span>
-                      <button
-                        type="button"
-                        onClick={() => handleCopyVoucher(v.code)}
-                        className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${isCopied
-                            ? 'bg-emerald-500 text-white'
-                            : 'bg-accent-50 dark:bg-accent-950/60 text-accent-600 dark:text-accent-400 hover:bg-accent-500 hover:text-white'
-                          }`}
-                      >
-                        {isCopied ? <Check size={12} /> : <Copy size={12} />}
-                        {isCopied ? 'Đã sao chép' : 'Sao chép mã'}
-                      </button>
-                    </div>
-                  </div>
+      {/* 4. KHO MÃ GIẢM GIÁ ĐỘC QUYỀN */}
+      {vouchers && vouchers.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="bg-gradient-to-r from-cream-100 via-white to-cream-100 dark:from-ink-900 dark:via-ink-900/90 dark:to-ink-900 p-6 sm:p-8 rounded-3xl border border-cream-200 dark:border-ink-800 shadow-xs space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-accent-50 dark:bg-accent-950/60 text-accent-600 dark:text-accent-400 rounded-full text-xs font-bold mb-1.5 border border-accent-200 dark:border-accent-800/60">
+                  <Ticket size={13} />
+                  <span>Kho Mã Giảm Giá Độc Quyền</span>
                 </div>
-              );
-            })}
+                <h3 className="font-display font-bold text-xl lg:text-2xl text-ink-900 dark:text-cream-50">
+                  Lấy mã ưu đãi ngay – Tiết kiệm tối đa khi chốt đơn
+                </h3>
+                <p className="text-xs text-ink-400 mt-0.5">Bấm sao chép và dán trực tiếp vào ô Giảm giá tại trang Thanh toán</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigate({ name: 'catalog' })}
+                className="self-start sm:self-auto text-xs font-semibold text-accent-500 hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                Xem điều kiện áp dụng <ArrowRight size={14} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {vouchers.slice(0, 3).map((v) => {
+                const isCopied = copiedCode === v.code;
+                return (
+                  <div
+                    key={v.id}
+                    className="relative flex items-center bg-white dark:bg-ink-800/90 rounded-2xl border border-cream-200 dark:border-ink-700 overflow-hidden shadow-2xs group hover:border-accent-400 transition-colors"
+                  >
+                    {/* Left coupon stub */}
+                    <div className="w-24 bg-gradient-to-br from-accent-500 to-accent-600 text-white p-3 flex flex-col items-center justify-center text-center shrink-0">
+                      <span className="text-2xs uppercase tracking-wider font-bold opacity-80">ƯU ĐÃI</span>
+                      <span className="font-display font-bold text-sm mt-0.5">
+                        {v.discount_type === 'percent'
+                          ? `${v.discount_value}%`
+                          : formatPrice(v.discount_value).replace('₫', '')}
+                      </span>
+                      <span className="text-2xs font-semibold opacity-90">GIẢM</span>
+                    </div>
+
+                    {/* Dotted separator */}
+                    <div className="w-px h-full border-r-2 border-dashed border-cream-200 dark:border-ink-700 shrink-0" />
+
+                    {/* Right coupon content */}
+                    <div className="p-3.5 flex-1 min-w-0 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-mono font-bold text-xs text-ink-900 dark:text-cream-100 tracking-wider">
+                            {v.code}
+                          </span>
+                          <span className="text-3xs px-1.5 py-0.5 rounded bg-cream-100 dark:bg-ink-700 text-ink-500 dark:text-ink-300 font-semibold">
+                            {v.min_order_amount > 0 ? `Đơn từ ${formatPrice(v.min_order_amount)}` : 'Mọi đơn hàng'}
+                          </span>
+                        </div>
+                        <p className="text-2xs text-ink-500 dark:text-ink-400 line-clamp-2 mt-1">
+                          {v.description || v.name}
+                        </p>
+                      </div>
+
+                      <div className="mt-2.5 pt-2 border-t border-cream-100 dark:border-ink-700/60 flex items-center justify-between">
+                        <span className="text-3xs text-ink-400">Số lượng có hạn</span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyVoucher(v.code)}
+                          className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${isCopied
+                              ? 'bg-emerald-500 text-white'
+                              : 'bg-accent-50 dark:bg-accent-950/60 text-accent-600 dark:text-accent-400 hover:bg-accent-500 hover:text-white'
+                            }`}
+                        >
+                          {isCopied ? <Check size={12} /> : <Copy size={12} />}
+                          {isCopied ? 'Đã sao chép' : 'Sao chép mã'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 5. Categories (Nguyên bản) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
