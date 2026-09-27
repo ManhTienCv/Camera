@@ -16,6 +16,13 @@ php artisan storage:link --force || true
 if [ "$AUTO_MIGRATE" = "true" ]; then
     echo "==> Running database migrations..."
     php artisan migrate --force || true
+
+    # Tự động nạp dữ liệu mẫu nếu CSDL mới chưa có người dùng
+    USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null || echo "0")
+    if [ "$USER_COUNT" = "0" ] || [ -z "$USER_COUNT" ]; then
+        echo "==> Fresh database detected (0 users). Seeding default categories, products, vouchers, and admin account..."
+        php artisan db:seed --force || true
+    fi
 fi
 
 if [ "$APP_ENV" = "production" ]; then
