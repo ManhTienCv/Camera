@@ -25,6 +25,11 @@ if [ "$AUTO_MIGRATE" = "true" ]; then
     fi
 fi
 
+if [ "$RUN_SEEDERS" = "true" ]; then
+    echo "==> RUN_SEEDERS=true detected. Running database seeders..."
+    php artisan db:seed --force || true
+fi
+
 if [ "$APP_ENV" = "production" ]; then
     php artisan config:cache || true
     php artisan route:cache || true
