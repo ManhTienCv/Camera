@@ -98,14 +98,15 @@ class ReportController extends Controller
         }
 
         $data = Cache::remember('admin_reports_index_data', 30, function () {
-            $categoryRevenue = $this->categoryRevenue();
+            $categoryRevenue = $this->categoryRevenue()->toArray();
             $totalOrders = Order::count();
             $totalCustomers = DB::table('users')->where('role', '!=', 'admin')->count();
-            $revenueByDate = $this->dailyRevenue();
-            $revenueByMonth = $this->periodRevenue($revenueByDate, 'month');
-            $revenueByYear = $this->periodRevenue($revenueByDate, 'year');
+            $dailyCollection = $this->dailyRevenue();
+            $revenueByDate = $dailyCollection->toArray();
+            $revenueByMonth = $this->periodRevenue($dailyCollection, 'month')->toArray();
+            $revenueByYear = $this->periodRevenue($dailyCollection, 'year')->toArray();
             $totalRevenue = (float) $this->paidOrders()->sum('total_amount');
-            $topSellingProducts = $this->topSellingProducts();
+            $topSellingProducts = $this->topSellingProducts()->toArray();
 
             return compact(
                 'categoryRevenue', 'totalOrders', 'totalCustomers', 'totalRevenue',

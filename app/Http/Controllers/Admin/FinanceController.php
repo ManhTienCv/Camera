@@ -161,14 +161,14 @@ class FinanceController extends Controller
                     ->groupBy('gateway')->get()->keyBy('gateway');
 
                 return [
-                    'summary' => $summary,
-                    'statusTotals' => $statusTotals,
-                    'methodTotals' => $methodTotals,
+                    'summary' => (array) $summary,
+                    'statusTotals' => $statusTotals->toArray(),
+                    'methodTotals' => $methodTotals->toArray(),
                 ];
             });
-            $summary = $cached['summary'];
-            $statusTotals = $cached['statusTotals'];
-            $methodTotals = $cached['methodTotals'];
+            $summary = (object) $cached['summary'];
+            $statusTotals = collect($cached['statusTotals']);
+            $methodTotals = collect($cached['methodTotals']);
         } else {
             // Thống kê toàn bộ kết quả lọc; mỗi đơn chỉ tính một lần.
             $summary = (clone $query)->selectRaw('COUNT(*) as order_count, COALESCE(SUM(total_price), 0) as total_amount')->first();

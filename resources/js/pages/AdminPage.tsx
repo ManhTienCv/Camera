@@ -28,6 +28,7 @@ import { AdminChatTab } from '../components/admin/AdminChatTab';
 import { AdminVouchersTab } from '../components/admin/AdminVouchersTab';
 import { AdminReviewsTab } from '../components/admin/AdminReviewsTab';
 import { AdminSettingsTab } from '../components/admin/AdminSettingsTab';
+import { AdminErrorBoundary } from '../components/admin/AdminErrorBoundary';
 import {
   ProductFormModal,
   DeleteConfirmModal,
@@ -559,98 +560,120 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
         <main className="p-6 sm:p-8 max-w-7xl mx-auto w-full flex-1">
           {visitedTabs.has('dashboard') && (
             <div className={activeTab === 'dashboard' ? 'block' : 'hidden'}>
-              <AdminDashboardTab
-                products={products}
-                orders={orders}
-                setActiveTab={handleTabChange}
-                onOpenAddProduct={handleOpenAddProduct}
-                onOpenAddCategory={handleOpenAddCategory}
-                onNavigate={onNavigate}
-              />
+              <AdminErrorBoundary tabName="Bảng điều khiển">
+                <AdminDashboardTab
+                  products={products}
+                  orders={orders}
+                  setActiveTab={handleTabChange}
+                  onOpenAddProduct={handleOpenAddProduct}
+                  onOpenAddCategory={handleOpenAddCategory}
+                  onNavigate={onNavigate}
+                />
+              </AdminErrorBoundary>
             </div>
           )}
 
           {visitedTabs.has('products') && (
             <div className={activeTab === 'products' ? 'block' : 'hidden'}>
-              <AdminProductsTab
-                products={products}
-                categories={categories}
-                loading={loading}
-                onOpenAddModal={handleOpenAddProduct}
-                onOpenEditModal={handleOpenEditProduct}
-                onDeleteProduct={setDeletingProductId}
-                onViewProduct={setViewingProduct}
-                onToggleStatus={handleToggleProductStatus}
-              />
+              <AdminErrorBoundary tabName="Quản lý Sản phẩm">
+                <AdminProductsTab
+                  products={products}
+                  categories={categories}
+                  loading={loading}
+                  onOpenAddModal={handleOpenAddProduct}
+                  onOpenEditModal={handleOpenEditProduct}
+                  onDeleteProduct={setDeletingProductId}
+                  onViewProduct={setViewingProduct}
+                  onToggleStatus={handleToggleProductStatus}
+                />
+              </AdminErrorBoundary>
             </div>
           )}
 
           {visitedTabs.has('categories') && (
             <div className={activeTab === 'categories' ? 'block' : 'hidden'}>
-              <AdminCategoriesTab
-                categories={categories}
-                products={products}
-                onOpenAddCategory={handleOpenAddCategory}
-                onOpenEditCategory={handleOpenEditCategory}
-                onDeleteCategory={setDeletingCategoryId}
-              />
+              <AdminErrorBoundary tabName="Quản lý Danh mục">
+                <AdminCategoriesTab
+                  categories={categories}
+                  products={products}
+                  onOpenAddCategory={handleOpenAddCategory}
+                  onOpenEditCategory={handleOpenEditCategory}
+                  onDeleteCategory={setDeletingCategoryId}
+                />
+              </AdminErrorBoundary>
             </div>
           )}
 
           {visitedTabs.has('orders') && (
             <div className={activeTab === 'orders' ? 'block' : 'hidden'}>
-              <AdminOrdersTab
-                orders={orders}
-                onUpdateStatus={handleUpdateOrderStatus}
-                onViewOrder={setViewingOrder}
-                onRefreshOrders={loadData}
-              />
+              <AdminErrorBoundary tabName="Quản lý Đơn hàng">
+                <AdminOrdersTab
+                  orders={orders}
+                  onUpdateStatus={handleUpdateOrderStatus}
+                  onViewOrder={setViewingOrder}
+                  onRefreshOrders={loadData}
+                />
+              </AdminErrorBoundary>
             </div>
           )}
 
           {visitedTabs.has('vouchers') && (
             <div className={activeTab === 'vouchers' ? 'block' : 'hidden'}>
-              <AdminVouchersTab />
+              <AdminErrorBoundary tabName="Mã giảm giá">
+                <AdminVouchersTab />
+              </AdminErrorBoundary>
             </div>
           )}
 
           {visitedTabs.has('reports') && (
             <div className={activeTab === 'reports' ? 'block' : 'hidden'}>
-              <AdminReportsTab />
+              <AdminErrorBoundary tabName="Báo cáo & Phân tích">
+                <AdminReportsTab />
+              </AdminErrorBoundary>
             </div>
           )}
 
           {visitedTabs.has('finance') && (
             <div className={activeTab === 'finance' ? 'block' : 'hidden'}>
-              <AdminFinanceTab />
+              <AdminErrorBoundary tabName="Đối soát Tài chính">
+                <AdminFinanceTab />
+              </AdminErrorBoundary>
             </div>
           )}
 
           {visitedTabs.has('users') && (
             <div className={activeTab === 'users' ? 'block' : 'hidden'}>
-              <AdminUsersTab />
+              <AdminErrorBoundary tabName="Quản lý Người dùng">
+                <AdminUsersTab />
+              </AdminErrorBoundary>
             </div>
           )}
 
           {visitedTabs.has('chat') && (
             <div className={activeTab === 'chat' ? 'block' : 'hidden'}>
-              <AdminChatTab />
+              <AdminErrorBoundary tabName="Tư vấn Trực tuyến">
+                <AdminChatTab />
+              </AdminErrorBoundary>
             </div>
           )}
 
           {visitedTabs.has('reviews') && (
             <div className={activeTab === 'reviews' ? 'block' : 'hidden'}>
-              <AdminReviewsTab />
+              <AdminErrorBoundary tabName="Quản lý Đánh giá">
+                <AdminReviewsTab />
+              </AdminErrorBoundary>
             </div>
           )}
 
           {visitedTabs.has('settings') && (
             <div className={activeTab === 'settings' ? 'block' : 'hidden'}>
-              <AdminSettingsTab
-                onSaveSuccess={() =>
-                  toast.success('Cài đặt hệ thống cửa hàng đã được lưu thành công!')
-                }
-              />
+              <AdminErrorBoundary tabName="Cấu hình Hệ thống">
+                <AdminSettingsTab
+                  onSaveSuccess={() =>
+                    toast.success('Cài đặt hệ thống cửa hàng đã được lưu thành công!')
+                  }
+                />
+              </AdminErrorBoundary>
             </div>
           )}
         </main>

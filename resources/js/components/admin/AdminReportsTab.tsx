@@ -223,12 +223,18 @@ export const AdminReportsTab: React.FC = () => {
     totalOrders = 0,
     totalCustomers = 0,
     totalRevenue = 0,
-    categoryRevenue = [],
-    revenueByDate = [],
-    revenueByMonth = [],
-    revenueByYear = [],
-    topSellingProducts = [],
+    categoryRevenue: rawCategoryRevenue,
+    revenueByDate: rawRevenueByDate,
+    revenueByMonth: rawRevenueByMonth,
+    revenueByYear: rawRevenueByYear,
+    topSellingProducts: rawTopSellingProducts,
   } = summaryData || {};
+
+  const categoryRevenue = Array.isArray(rawCategoryRevenue) ? rawCategoryRevenue : Object.values(rawCategoryRevenue || {});
+  const revenueByDate = Array.isArray(rawRevenueByDate) ? rawRevenueByDate : Object.values(rawRevenueByDate || {});
+  const revenueByMonth = Array.isArray(rawRevenueByMonth) ? rawRevenueByMonth : Object.values(rawRevenueByMonth || {});
+  const revenueByYear = Array.isArray(rawRevenueByYear) ? rawRevenueByYear : Object.values(rawRevenueByYear || {});
+  const topSellingProducts = Array.isArray(rawTopSellingProducts) ? rawTopSellingProducts : Object.values(rawTopSellingProducts || {});
 
   const averageOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
