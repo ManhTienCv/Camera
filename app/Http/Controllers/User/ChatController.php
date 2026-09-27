@@ -41,29 +41,95 @@ class ChatController extends Controller
         }
 
         // 1. Lấy nội dung từ request
-        $messageText = $request->input('message') ?: $request->input('content');
+        $messageText = trim((string) ($request->input('message') ?: $request->input('content') ?: ''));
 
-        // 2. Kiểm tra nội dung trống
-        if (empty(trim($messageText))) {
-            return response()->json(['error' => 'Nội dung tin nhắn không được để trống'], 400);
+        // 2. Kiểm tra nội dung trống hoặc vượt quá độ dài
+        if (empty($messageText)) {
+            return response()->json([
+                'message' => 'Nội dung tin nhắn không được để trống.',
+                'error' => 'Nội dung tin nhắn không được để trống',
+            ], 400);
         }
 
-        // 3. Xác định Admin nhận tin
+        if (mb_strlen($messageText) > 500) {
+            return response()->json([
+                'message' => 'Tin nhắn quá dài (tối đa 500 ký tự). Vui lòng rút ngắn nội dung.',
+                'error' => 'Tin nhắn quá dài',
+            ], 422);
+        }
+
+        // 3. Lớp chống Spam 1: Cooldown Timer tối thiểu 2 giây giữa 2 tin nhắn liên tiếp
+        $lastSentKey = 'user_chat_last_time_' . $user->id;
+        $lastSentTime = Cache::get($lastSentKey);
+        if ($lastSentTime && (microtime(true) - (float) $lastSentTime) < 2.0) {
+            return response()->json([
+                'message' => 'Bạn gửi tin nhắn quá nhanh. Vui lòng đợi 2 giây trước khi gửi tiếp.',
+                'error' => 'Too fast',
+            ], 429);
+        }
+
+        // 4. Lớp chống Spam 2: Rate Limiting theo phút (Tối đa 10 tin nhắn / 1 phút)
+        $rateKey = 'chat_send_burst:' . $user->id;
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($rateKey, 10)) {
+            $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($rateKey);
+            return response()->json([
+                'message' => "Bạn đã gửi quá nhiều tin nhắn. Vui lòng tạm nghỉ {$seconds} giây trước khi gửi tiếp.",
+                'error' => 'Too many requests',
+            ], 429);
+        }
+        \Illuminate\Support\Facades\RateLimiter::hit($rateKey, 60);
+
+        // 5. Lớp chống Spam 3: Chống gửi nội dung trùng lặp liên tiếp trong 30 giây
+        $lastMsg = Message::where('sender_id', $user->id)->latest('id')->first();
+        if ($lastMsg && $lastMsg->created_at && $lastMsg->created_at->diffInSeconds(now()) < 30) {
+            if (mb_strtolower(trim($lastMsg->content)) === mb_strtolower($messageText)) {
+                return response()->json([
+                    'message' => 'Bạn vừa gửi nội dung này rồi. Vui lòng không gửi lặp lại và chờ chuyên viên phản hồi nhé!',
+                    'error' => 'Duplicate message',
+                ], 422);
+            }
+        }
+
+        // 6. Xác định Admin nhận tin
         $admin = User::where('role', 'admin')->first();
         $receiverId = $admin ? $admin->id : 1;
 
         try {
-            // 4. Lưu tin nhắn vào Database
+            // Cập nhật timestamp gửi gần nhất
+            Cache::put($lastSentKey, microtime(true), 60);
+
+            // 7. Lưu tin nhắn của User vào Database
             $message = Message::create([
                 'sender_id' => $user->id,
                 'receiver_id' => $receiverId,
-                'content' => trim($messageText),
+                'content' => $messageText,
                 'is_read' => false,
             ]);
 
+            // 8. Tự động phản hồi tin nhắn chào (Auto-responder) nếu cuộc trò chuyện mới hoặc chưa có admin rep trong 6 giờ
+            $hasRecentAdminReply = Message::where('sender_id', $receiverId)
+                ->where('receiver_id', $user->id)
+                ->where('created_at', '>=', now()->subHours(6))
+                ->exists();
+
+            if (!$hasRecentAdminReply) {
+                $customerName = $user->name ?: 'quý khách';
+                $greeting = "Xin chào {$customerName}! CameraHub đã tiếp nhận yêu cầu của bạn. Chuyên viên tư vấn thường phản hồi trong vòng 3 - 5 phút. Nếu cần hỗ trợ khẩn cấp về đơn hàng, bạn có thể gửi kèm Mã đơn hàng hoặc Số điện thoại tại đây nhé!";
+
+                Message::create([
+                    'sender_id' => $receiverId,
+                    'receiver_id' => $user->id,
+                    'content' => $greeting,
+                    'is_read' => false,
+                ]);
+            }
+
             return response()->json($message->load(['sender', 'receiver']));
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Không thể gửi tin nhắn: ' . $e->getMessage()], 500);
+            return response()->json([
+                'message' => 'Không thể gửi tin nhắn: ' . $e->getMessage(),
+                'error' => 'Không thể gửi tin nhắn: ' . $e->getMessage(),
+            ], 500);
         }
     }
 

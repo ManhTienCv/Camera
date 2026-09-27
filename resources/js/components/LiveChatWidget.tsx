@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, X, Send, Headphones, Sparkles, User as UserIcon, Loader2, ArrowRight } from 'lucide-react';
+import { MessageSquare, X, Send, Headphones, Sparkles, User as UserIcon, Loader2, ArrowRight, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { api } from '../lib/api';
 import type { ChatMessage, Page } from '../types';
 
@@ -10,15 +11,29 @@ interface LiveChatWidgetProps {
 
 export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) => {
   const { user, openAuthModal } = useAuth();
+  const { warning, error: toastError } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatPopupRef = useRef<HTMLDivElement>(null);
   const lastMsgIdRef = useRef<number>(0);
+  const recentSendTimesRef = useRef<number[]>([]);
+  const lastSentContentRef = useRef<{ text: string; time: number }>({ text: '', time: 0 });
+
+  // Đếm ngược cooldown chống gửi dồn dập
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   // Thông báo trạng thái đóng/mở chat cho các floating widget khác phối hợp vị trí
   useEffect(() => {
@@ -131,6 +146,37 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
     const content = inputValue.trim();
     if (!content || sending || !user) return;
 
+    // 1. Kiểm tra Cooldown Timer
+    if (cooldown > 0) {
+      warning(`Vui lòng đợi ${cooldown} giây trước khi gửi tiếp nhé!`, 'Gửi quá nhanh');
+      return;
+    }
+
+    const now = Date.now();
+
+    // 2. Chống gửi dồn dập (Burst limit: Tối đa 5 tin trong 30 giây -> khóa 15s)
+    recentSendTimesRef.current = recentSendTimesRef.current.filter((t) => now - t < 30000);
+    if (recentSendTimesRef.current.length >= 5) {
+      setCooldown(15);
+      warning('Bạn đang gửi tin nhắn quá nhanh. Vui lòng tạm nghỉ 15 giây để chuyên viên kịp xử lý nhé!', 'Tạm khóa gửi tin');
+      return;
+    }
+
+    // 3. Chống gửi trùng lặp nội dung liên tiếp trong 30 giây
+    if (
+      lastSentContentRef.current.text.toLowerCase() === content.toLowerCase() &&
+      now - lastSentContentRef.current.time < 30000
+    ) {
+      warning('Bạn vừa gửi nội dung này rồi. Vui lòng không gửi lặp lại và chờ chuyên viên phản hồi nhé!', 'Nội dung trùng lặp');
+      return;
+    }
+
+    // 4. Giới hạn độ dài nội dung (tối đa 500 ký tự)
+    if (content.length > 500) {
+      warning('Tin nhắn quá dài (tối đa 500 ký tự). Vui lòng rút ngắn nội dung.', 'Tin nhắn quá dài');
+      return;
+    }
+
     setSending(true);
     try {
       const newMsg = await api.sendUserChatMessage(content);
@@ -139,9 +185,21 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
       if (newMsg.id > lastMsgIdRef.current) {
         lastMsgIdRef.current = newMsg.id;
       }
+
+      // Cập nhật lịch sử gửi tin chống spam & khởi động cooldown 3 giây
+      recentSendTimesRef.current.push(now);
+      lastSentContentRef.current = { text: content, time: now };
+      setCooldown(3);
+
       setTimeout(() => scrollToBottom(true), 50);
     } catch (err: any) {
       console.error('Lỗi gửi tin nhắn:', err);
+      const errMsg = err?.message || 'Không thể gửi tin nhắn. Vui lòng thử lại sau.';
+      if (err?.status === 429 || err?.status === 422) {
+        warning(errMsg, 'Lưu ý gửi tin');
+      } else {
+        toastError(errMsg, 'Lỗi gửi tin');
+      }
     } finally {
       setSending(false);
       setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 50);
@@ -198,6 +256,16 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
             >
               <X size={16} />
             </button>
+          </div>
+
+          {/* Thanh thông báo cam kết phản hồi */}
+          <div className="px-3.5 py-2.5 bg-gradient-to-r from-amber-50 to-orange-50/70 border-b border-amber-200/80 flex items-center gap-2.5 text-ink-700 shrink-0 shadow-2xs">
+            <div className="w-5 h-5 rounded-full bg-amber-500/15 flex items-center justify-center shrink-0">
+              <Clock size={12} className="text-amber-600 animate-pulse" />
+            </div>
+            <p className="text-[11px] leading-tight text-amber-900/90 font-medium">
+              Chuyên viên thường phản hồi sau <span className="font-bold text-amber-950 underline decoration-amber-400 decoration-1">3 - 5 phút</span>. Vui lòng đợi hoặc để lại SĐT/Mã đơn nhé!
+            </p>
           </div>
 
           {/* Body / Messages */}
@@ -283,21 +351,36 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
           {/* Footer / Input */}
           {user && (
             <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-cream-200 flex items-center gap-2 shrink-0">
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Nhập tin nhắn tư vấn..."
-                disabled={sending}
-                className="flex-1 px-4 py-2.5 bg-cream-50 border border-cream-200 rounded-2xl text-xs text-ink-900 focus:outline-none focus:border-accent-500 focus:bg-white transition-all"
-              />
+              <div className="relative flex-1">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder={cooldown > 0 ? `Vui lòng đợi ${cooldown}s...` : 'Nhập tin nhắn tư vấn...'}
+                  maxLength={500}
+                  disabled={sending}
+                  className="w-full pl-4 pr-16 py-2.5 bg-cream-50 border border-cream-200 rounded-2xl text-xs text-ink-900 focus:outline-none focus:border-accent-500 focus:bg-white transition-all disabled:opacity-70"
+                />
+                {inputValue.length > 400 && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-amber-600 select-none pointer-events-none">
+                    {inputValue.length}/500
+                  </span>
+                )}
+              </div>
               <button
                 type="submit"
-                disabled={!inputValue.trim() || sending}
+                disabled={!inputValue.trim() || sending || cooldown > 0}
                 className="w-9 h-9 rounded-2xl bg-accent-500 hover:bg-accent-600 disabled:opacity-40 disabled:cursor-not-allowed text-white flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-2xs active:scale-95"
+                title={cooldown > 0 ? `Vui lòng đợi ${cooldown} giây` : 'Gửi tin nhắn'}
               >
-                {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+                {sending ? (
+                  <Loader2 size={15} className="animate-spin" />
+                ) : cooldown > 0 ? (
+                  <span className="text-[11px] font-bold">{cooldown}s</span>
+                ) : (
+                  <Send size={15} />
+                )}
               </button>
             </form>
           )}
