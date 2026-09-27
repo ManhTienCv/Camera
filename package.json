@@ -6,6 +6,7 @@
         "dev": "concurrently -c \"bgBlue.bold,bgMagenta.bold\" --names \"LARAVEL,VITE\" \"php artisan serve\" \"vite\"",
         "vite": "vite",
         "build": "vite build",
+        "build:vercel": "vite build --config vite.config.vercel.js",
         "serve": "php artisan serve"
     },
     "devDependencies": {

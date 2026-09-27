@@ -1,0 +1,12 @@
+.git
+.github
+node_modules
+dist
+.env
+.env.*
+tests
+docs
+*.md
+docker-compose*.yml
+.phpunit.cache
+storage/logs/*.log

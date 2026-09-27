@@ -20,17 +20,21 @@
     <style>@keyframes camerahub-spin{to{transform:rotate(360deg)}}</style>
     <script>
         (function() {
+            const frontendUrl = {!! json_encode(config('app.frontend_url') ?: env('FRONTEND_URL')) !!};
+            const targetOrigin = frontendUrl || '*';
+            const redirectBase = frontendUrl ? frontendUrl.replace(/\/+$/, '') : '';
+
             @if(!empty($error))
                 const errorPayload = {
                     type: 'GOOGLE_AUTH_ERROR',
                     message: {!! json_encode($error) !!}
                 };
                 if (window.opener && !window.opener.closed) {
-                    window.opener.postMessage(errorPayload, window.location.origin);
+                    window.opener.postMessage(errorPayload, targetOrigin);
                     setTimeout(() => window.close(), 1200);
                 } else {
                     setTimeout(() => {
-                        window.location.href = '/?auth_error=' + encodeURIComponent({!! json_encode($error) !!});
+                        window.location.href = redirectBase + '/?auth_error=' + encodeURIComponent({!! json_encode($error) !!});
                     }, 1500);
                 }
             @else
@@ -41,10 +45,10 @@
                     isNewUser: {{ $isNewUser ? 'true' : 'false' }}
                 };
                 if (window.opener && !window.opener.closed) {
-                    window.opener.postMessage(authPayload, window.location.origin);
+                    window.opener.postMessage(authPayload, targetOrigin);
                     setTimeout(() => window.close(), 300);
                 } else {
-                    window.location.href = '/?google_token=' + encodeURIComponent({!! json_encode($token) !!}) +
+                    window.location.href = redirectBase + '/?google_token=' + encodeURIComponent({!! json_encode($token) !!}) +
                         '&google_name=' + encodeURIComponent({!! json_encode($userData['fullName'] ?? '') !!}) +
                         '&is_new=' + ({{ $isNewUser ? '1' : '0' }});
                 }
