@@ -86,9 +86,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     { id: 'settings', label: 'Cài đặt', icon: Settings },
   ];
 
-  const formatBadge = (num?: number) => {
+  const formatBadge = (item: AdminNavItem) => {
+    const num = item.badge;
     if (!num || num <= 0) return '';
-    return num > 9 ? '9+' : String(num);
+    if (item.id === 'chat') {
+      return num > 9 ? '9+' : String(num);
+    }
+    return num > 99 ? '99+' : String(num);
   };
 
   const renderNavItem = (item: AdminNavItem) => {
@@ -117,12 +121,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           )}
           <div className="relative shrink-0 flex items-center justify-center">
             <Icon size={18} className="relative z-10" />
-            {item.badge !== undefined && item.badge > 0 && (
+            {isCollapsed && item.badge !== undefined && item.badge > 0 && (
               <span
                 className="absolute -top-1.5 -right-2 min-w-[17px] h-[17px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-extrabold flex items-center justify-center ring-2 ring-white dark:ring-ink-900 shadow-xs z-20 animate-pulse select-none"
                 title={`${item.badge} thông báo mới`}
               >
-                {formatBadge(item.badge)}
+                {formatBadge(item)}
               </span>
             )}
           </div>
@@ -137,7 +141,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                       : 'bg-rose-500 text-white shadow-xs'
                   }`}
                 >
-                  {formatBadge(item.badge)}
+                  {formatBadge(item)}
                 </span>
               )}
             </div>
