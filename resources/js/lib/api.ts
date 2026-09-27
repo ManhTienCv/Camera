@@ -19,6 +19,19 @@ function getAuthToken(url?: string): string | null {
   return localStorage.getItem('camera_auth_token');
 }
 
+// Helper to safely serialize query parameters without passing undefined, null, or empty string
+function buildQueryString(params?: Record<string, any>): string {
+  if (!params) return '';
+  const cleanParams: Record<string, string> = {};
+  for (const [key, val] of Object.entries(params)) {
+    if (val !== undefined && val !== null && val !== '' && val !== 'undefined' && val !== 'null') {
+      cleanParams[key] = String(val);
+    }
+  }
+  const qs = new URLSearchParams(cleanParams).toString();
+  return qs ? `?${qs}` : '';
+}
+
 // In-memory cache for GET requests to eliminate page switch flashing
 const apiCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 60000; // 60 seconds
@@ -28,7 +41,8 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
   const isGet = method === 'GET';
 
   const isRealtime = url.includes('/chat');
-  if (isGet && !isRealtime && apiCache.has(url)) {
+  const shouldBypassCache = isRealtime || url.includes('refresh=');
+  if (isGet && !shouldBypassCache && apiCache.has(url)) {
     const cached = apiCache.get(url)!;
     if (Date.now() - cached.timestamp < CACHE_TTL) {
       return cached.data as T;
@@ -477,8 +491,8 @@ export const api = {
       method: 'DELETE',
     }),
 
-  getAdminOrders: async (params?: { tab?: string; search?: string; payment_method?: string }) => {
-    const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
+  getAdminOrders: async (params?: { tab?: string; search?: string; payment_method?: string; refresh?: boolean }) => {
+    const query = buildQueryString(params);
     const res = await request<any>(`/admin/orders${query}`);
     if (res && Array.isArray(res.orders)) {
       return res.orders as Order[];
@@ -486,8 +500,8 @@ export const api = {
     return (Array.isArray(res) ? res : []) as Order[];
   },
 
-  getAdminOrdersFull: (params?: { tab?: string; search?: string; payment_method?: string }) => {
-    const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
+  getAdminOrdersFull: (params?: { tab?: string; search?: string; payment_method?: string; refresh?: boolean }) => {
+    const query = buildQueryString(params);
     return request<{ orders: Order[]; tabCounts: Record<string, number>; activeTab: string }>(`/admin/orders${query}`);
   },
 
@@ -553,8 +567,8 @@ export const api = {
   // ==========================================
   // Lab 08: Admin User Management APIs
   // ==========================================
-  getAdminUsers: (params?: { search?: string; role?: string }) => {
-    const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
+  getAdminUsers: (params?: { search?: string; role?: string; refresh?: boolean }) => {
+    const query = buildQueryString(params);
     return request<AdminUserItem[]>(`/admin/users${query}`);
   },
 
@@ -581,8 +595,8 @@ export const api = {
   // ==========================================
   // Admin Voucher Management (media_1790099989435.png)
   // ==========================================
-  getAdminVouchers: (params?: { q?: string; status?: string }) => {
-    const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
+  getAdminVouchers: (params?: { q?: string; status?: string; refresh?: boolean }) => {
+    const query = buildQueryString(params);
     return request<{
       vouchers: AdminVoucherItem[];
       stats: {
@@ -618,8 +632,8 @@ export const api = {
   // ==========================================
   // Admin Review Management (media_1790132554619.png)
   // ==========================================
-  getAdminReviews: (params?: { q?: string; status?: string; rating?: string }) => {
-    const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
+  getAdminReviews: (params?: { q?: string; status?: string; rating?: string; refresh?: boolean }) => {
+    const query = buildQueryString(params);
     return request<{
       reviews: AdminReviewItem[];
       stats: {
@@ -652,12 +666,12 @@ export const api = {
   // Lab 09: Admin Finance & Transactions Management
   // ==========================================
   getAdminFinanceSummary: (params?: FinanceFilterParams) => {
-    const query = params ? '?' + new URLSearchParams(Object.entries(params).filter(([_, v]) => v !== undefined && v !== '') as any).toString() : '';
+    const query = buildQueryString(params);
     return request<FinanceSummaryData>(`/admin/finance/summary${query}`);
   },
 
   getAdminFinanceTransactions: (params?: FinanceFilterParams) => {
-    const query = params ? '?' + new URLSearchParams(Object.entries(params).filter(([_, v]) => v !== undefined && v !== '') as any).toString() : '';
+    const query = buildQueryString(params);
     return request<FinanceTransactionsData>(`/admin/finance/transactions${query}`);
   },
 
@@ -678,8 +692,8 @@ export const api = {
   // ==========================================
   // Sổ cái Quản lý Kho (Immutable Inventory Ledger)
   // ==========================================
-  getInventoryMovements: (params?: { page?: number; per_page?: number; type?: string; search?: string }) => {
-    const query = params ? '?' + new URLSearchParams(Object.entries(params).filter(([_, v]) => v !== undefined && v !== '') as any).toString() : '';
+  getInventoryMovements: (params?: { page?: number; per_page?: number; type?: string; search?: string; refresh?: boolean }) => {
+    const query = buildQueryString(params);
     return request<{
       data: Array<{
         id: number;

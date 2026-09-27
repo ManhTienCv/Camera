@@ -83,11 +83,13 @@ class VoucherController extends Controller
         // 1. Tìm kiếm theo mã hoặc tên chương trình
         if ($request->filled('q')) {
             $searchTerm = trim($request->q);
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('code', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('name', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('description', 'LIKE', "%{$searchTerm}%");
-            });
+            if ($searchTerm !== 'undefined' && $searchTerm !== 'null' && $searchTerm !== '') {
+                $query->where(function ($q) use ($searchTerm) {
+                    $q->where('code', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('name', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('description', 'LIKE', "%{$searchTerm}%");
+                });
+            }
         }
 
         // 2. Lọc trạng thái (Tất cả, Đang hiệu lực, Tạm ngưng)

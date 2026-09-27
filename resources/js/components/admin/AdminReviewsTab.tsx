@@ -51,7 +51,8 @@ export const AdminReviewsTab: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
   const totalPages = Math.max(1, Math.ceil(reviews.length / itemsPerPage));
-  const paginatedReviews = reviews.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+  const paginatedReviews = reviews.slice((safeCurrentPage - 1) * itemsPerPage, safeCurrentPage * itemsPerPage);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -63,16 +64,21 @@ export const AdminReviewsTab: React.FC = () => {
   }, [searchTerm, statusFilter, ratingFilter]);
 
   // Fetch Reviews
-  const fetchReviews = useCallback(async () => {
+  const fetchReviews = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     try {
+      if (forceRefresh) {
+        api.clearCache();
+      }
       const res = await api.getAdminReviews({
         q: searchTerm.trim() || undefined,
         status: statusFilter,
         rating: ratingFilter,
+        refresh: forceRefresh || undefined,
       });
-      setReviews(res.reviews || []);
-      if (res.stats) {
+      const list = Array.isArray(res?.reviews) ? res.reviews : Object.values(res?.reviews || {});
+      setReviews(list);
+      if (res?.stats) {
         setStats(res.stats);
       }
     } catch (err: any) {
@@ -175,7 +181,7 @@ export const AdminReviewsTab: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => fetchReviews()}
+            onClick={() => fetchReviews(true)}
             disabled={loading}
             className="inline-flex items-center gap-2 px-4 py-2.5 border border-cream-300 text-ink-700 bg-white hover:bg-cream-100 hover:text-ink-900 rounded-2xl text-sm font-semibold transition-all shadow-2xs cursor-pointer active:scale-95 disabled:opacity-50"
           >

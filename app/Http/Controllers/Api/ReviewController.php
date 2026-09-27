@@ -255,14 +255,16 @@ class ReviewController extends Controller
         // 1. Tìm kiếm theo tên người gửi, nội dung bình luận, hoặc tên sản phẩm
         if ($request->filled('q')) {
             $searchTerm = trim($request->q);
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('customer_name', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('comment', 'LIKE', "%{$searchTerm}%")
-                  ->orWhereHas('product', function ($pq) use ($searchTerm) {
-                      $pq->where('name', 'LIKE', "%{$searchTerm}%")
-                        ->orWhere('sku', 'LIKE', "%{$searchTerm}%");
-                  });
-            });
+            if ($searchTerm !== 'undefined' && $searchTerm !== 'null' && $searchTerm !== '') {
+                $query->where(function ($q) use ($searchTerm) {
+                    $q->where('customer_name', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('comment', 'LIKE', "%{$searchTerm}%")
+                      ->orWhereHas('product', function ($pq) use ($searchTerm) {
+                          $pq->where('name', 'LIKE', "%{$searchTerm}%")
+                            ->orWhere('sku', 'LIKE', "%{$searchTerm}%");
+                      });
+                });
+            }
         }
 
         // 2. Lọc trạng thái kiểm duyệt (Tất cả, Đang hiển thị, Đã ẩn)

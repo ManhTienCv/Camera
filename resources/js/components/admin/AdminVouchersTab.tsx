@@ -46,7 +46,8 @@ export const AdminVouchersTab: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState(6);
 
   const totalPages = Math.max(1, Math.ceil(vouchers.length / itemsPerPage));
-  const paginatedVouchers = vouchers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+  const paginatedVouchers = vouchers.slice((safeCurrentPage - 1) * itemsPerPage, safeCurrentPage * itemsPerPage);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -73,15 +74,20 @@ export const AdminVouchersTab: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
 
   // Fetch Vouchers
-  const fetchVouchers = useCallback(async () => {
+  const fetchVouchers = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     try {
+      if (forceRefresh) {
+        api.clearCache();
+      }
       const res = await api.getAdminVouchers({
         q: searchTerm.trim() || undefined,
         status: statusFilter,
+        refresh: forceRefresh || undefined,
       });
-      setVouchers(res.vouchers || []);
-      if (res.stats) {
+      const list = Array.isArray(res?.vouchers) ? res.vouchers : Object.values(res?.vouchers || {});
+      setVouchers(list);
+      if (res?.stats) {
         setStats(res.stats);
       }
     } catch (err: any) {
@@ -248,7 +254,7 @@ export const AdminVouchersTab: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => fetchVouchers()}
+            onClick={() => fetchVouchers(true)}
             disabled={loading}
             className="inline-flex items-center gap-2 px-4 py-2.5 border border-cream-300 text-ink-700 bg-white hover:bg-cream-100 hover:text-ink-900 rounded-2xl text-sm font-semibold transition-all shadow-2xs cursor-pointer active:scale-95 disabled:opacity-50"
           >
