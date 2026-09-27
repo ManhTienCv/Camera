@@ -74,8 +74,25 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
     }
   });
 
+  const [visitedTabs, setVisitedTabs] = useState<Set<AdminTab>>(() => new Set([activeTab]));
+
+  useEffect(() => {
+    setVisitedTabs((prev) => {
+      if (prev.has(activeTab)) return prev;
+      const next = new Set(prev);
+      next.add(activeTab);
+      return next;
+    });
+  }, [activeTab]);
+
   const handleTabChange = (tab: AdminTab) => {
     setActiveTab(tab);
+    setVisitedTabs((prev) => {
+      if (prev.has(tab)) return prev;
+      const next = new Set(prev);
+      next.add(tab);
+      return next;
+    });
     const targetUrl = tab === 'dashboard' ? '/admin' : `/admin?tab=${tab}`;
     window.history.replaceState(null, '', targetUrl);
     contentAreaRef.current?.scrollTo({ top: 0, behavior: 'instant' });
@@ -539,68 +556,102 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
           products={products}
         />
 
-        <main className="p-6 sm:p-8 max-w-7xl mx-auto w-full space-y-8 flex-1">
-          {activeTab === 'dashboard' && (
-            <AdminDashboardTab
-              products={products}
-              orders={orders}
-              setActiveTab={handleTabChange}
-              onOpenAddProduct={handleOpenAddProduct}
-              onOpenAddCategory={handleOpenAddCategory}
-              onNavigate={onNavigate}
-            />
+        <main className="p-6 sm:p-8 max-w-7xl mx-auto w-full flex-1">
+          {visitedTabs.has('dashboard') && (
+            <div className={activeTab === 'dashboard' ? 'block' : 'hidden'}>
+              <AdminDashboardTab
+                products={products}
+                orders={orders}
+                setActiveTab={handleTabChange}
+                onOpenAddProduct={handleOpenAddProduct}
+                onOpenAddCategory={handleOpenAddCategory}
+                onNavigate={onNavigate}
+              />
+            </div>
           )}
 
-          {activeTab === 'products' && (
-            <AdminProductsTab
-              products={products}
-              categories={categories}
-              loading={loading}
-              onOpenAddModal={handleOpenAddProduct}
-              onOpenEditModal={handleOpenEditProduct}
-              onDeleteProduct={setDeletingProductId}
-              onViewProduct={setViewingProduct}
-              onToggleStatus={handleToggleProductStatus}
-            />
+          {visitedTabs.has('products') && (
+            <div className={activeTab === 'products' ? 'block' : 'hidden'}>
+              <AdminProductsTab
+                products={products}
+                categories={categories}
+                loading={loading}
+                onOpenAddModal={handleOpenAddProduct}
+                onOpenEditModal={handleOpenEditProduct}
+                onDeleteProduct={setDeletingProductId}
+                onViewProduct={setViewingProduct}
+                onToggleStatus={handleToggleProductStatus}
+              />
+            </div>
           )}
 
-          {activeTab === 'categories' && (
-            <AdminCategoriesTab
-              categories={categories}
-              products={products}
-              onOpenAddCategory={handleOpenAddCategory}
-              onOpenEditCategory={handleOpenEditCategory}
-              onDeleteCategory={setDeletingCategoryId}
-            />
+          {visitedTabs.has('categories') && (
+            <div className={activeTab === 'categories' ? 'block' : 'hidden'}>
+              <AdminCategoriesTab
+                categories={categories}
+                products={products}
+                onOpenAddCategory={handleOpenAddCategory}
+                onOpenEditCategory={handleOpenEditCategory}
+                onDeleteCategory={setDeletingCategoryId}
+              />
+            </div>
           )}
 
-          {activeTab === 'orders' && (
-            <AdminOrdersTab
-              orders={orders}
-              onUpdateStatus={handleUpdateOrderStatus}
-              onViewOrder={setViewingOrder}
-              onRefreshOrders={loadData}
-            />
+          {visitedTabs.has('orders') && (
+            <div className={activeTab === 'orders' ? 'block' : 'hidden'}>
+              <AdminOrdersTab
+                orders={orders}
+                onUpdateStatus={handleUpdateOrderStatus}
+                onViewOrder={setViewingOrder}
+                onRefreshOrders={loadData}
+              />
+            </div>
           )}
 
-          {activeTab === 'vouchers' && <AdminVouchersTab />}
+          {visitedTabs.has('vouchers') && (
+            <div className={activeTab === 'vouchers' ? 'block' : 'hidden'}>
+              <AdminVouchersTab />
+            </div>
+          )}
 
-          {activeTab === 'reports' && <AdminReportsTab />}
+          {visitedTabs.has('reports') && (
+            <div className={activeTab === 'reports' ? 'block' : 'hidden'}>
+              <AdminReportsTab />
+            </div>
+          )}
 
-          {activeTab === 'finance' && <AdminFinanceTab />}
+          {visitedTabs.has('finance') && (
+            <div className={activeTab === 'finance' ? 'block' : 'hidden'}>
+              <AdminFinanceTab />
+            </div>
+          )}
 
-          {activeTab === 'users' && <AdminUsersTab />}
+          {visitedTabs.has('users') && (
+            <div className={activeTab === 'users' ? 'block' : 'hidden'}>
+              <AdminUsersTab />
+            </div>
+          )}
 
-          {activeTab === 'chat' && <AdminChatTab />}
+          {visitedTabs.has('chat') && (
+            <div className={activeTab === 'chat' ? 'block' : 'hidden'}>
+              <AdminChatTab />
+            </div>
+          )}
 
-          {activeTab === 'reviews' && <AdminReviewsTab />}
+          {visitedTabs.has('reviews') && (
+            <div className={activeTab === 'reviews' ? 'block' : 'hidden'}>
+              <AdminReviewsTab />
+            </div>
+          )}
 
-          {activeTab === 'settings' && (
-            <AdminSettingsTab
-              onSaveSuccess={() =>
-                toast.success('Cài đặt hệ thống cửa hàng đã được lưu thành công!')
-              }
-            />
+          {visitedTabs.has('settings') && (
+            <div className={activeTab === 'settings' ? 'block' : 'hidden'}>
+              <AdminSettingsTab
+                onSaveSuccess={() =>
+                  toast.success('Cài đặt hệ thống cửa hàng đã được lưu thành công!')
+                }
+              />
+            </div>
           )}
         </main>
       </div>

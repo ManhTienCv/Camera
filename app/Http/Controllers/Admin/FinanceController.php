@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\PaymentTransaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -145,17 +146,42 @@ class FinanceController extends Controller
     {
         [$query, $filters] = $this->filteredOrders($request);
 
-        // Thống kê toàn bộ kết quả lọc; mỗi đơn chỉ tính một lần.
-        $summary = (clone $query)->selectRaw('COUNT(*) as order_count, COALESCE(SUM(total_price), 0) as total_amount')->first();
+        $hasFilters = !empty(array_filter($filters, fn ($v) => $v !== null && $v !== ''));
+        if (!$hasFilters && !$request->boolean('refresh')) {
+            $cached = Cache::remember('admin_finance_summary_default', 30, function () use ($query) {
+                $summary = (clone $query)->selectRaw('COUNT(*) as order_count, COALESCE(SUM(total_price), 0) as total_amount')->first();
 
-        $statusTotals = (clone $query)->select('payment_status')
-            ->selectRaw('COUNT(*) as order_count, SUM(total_price) as total_amount')
-            ->groupBy('payment_status')->get()->keyBy('payment_status');
+                $statusTotals = (clone $query)->select('payment_status')
+                    ->selectRaw('COUNT(*) as order_count, SUM(total_price) as total_amount')
+                    ->groupBy('payment_status')->get()->keyBy('payment_status');
 
-        $methodTotals = (clone $query)->select('gateway')
-            ->selectRaw('COUNT(*) as order_count, SUM(total_price) as total_amount')
-            ->selectRaw("SUM(CASE WHEN payment_status IN ('paid', 'completed') THEN total_price ELSE 0 END) as paid_amount")
-            ->groupBy('gateway')->get()->keyBy('gateway');
+                $methodTotals = (clone $query)->select('gateway')
+                    ->selectRaw('COUNT(*) as order_count, SUM(total_price) as total_amount')
+                    ->selectRaw("SUM(CASE WHEN payment_status IN ('paid', 'completed') THEN total_price ELSE 0 END) as paid_amount")
+                    ->groupBy('gateway')->get()->keyBy('gateway');
+
+                return [
+                    'summary' => $summary,
+                    'statusTotals' => $statusTotals,
+                    'methodTotals' => $methodTotals,
+                ];
+            });
+            $summary = $cached['summary'];
+            $statusTotals = $cached['statusTotals'];
+            $methodTotals = $cached['methodTotals'];
+        } else {
+            // Thống kê toàn bộ kết quả lọc; mỗi đơn chỉ tính một lần.
+            $summary = (clone $query)->selectRaw('COUNT(*) as order_count, COALESCE(SUM(total_price), 0) as total_amount')->first();
+
+            $statusTotals = (clone $query)->select('payment_status')
+                ->selectRaw('COUNT(*) as order_count, SUM(total_price) as total_amount')
+                ->groupBy('payment_status')->get()->keyBy('payment_status');
+
+            $methodTotals = (clone $query)->select('gateway')
+                ->selectRaw('COUNT(*) as order_count, SUM(total_price) as total_amount')
+                ->selectRaw("SUM(CASE WHEN payment_status IN ('paid', 'completed') THEN total_price ELSE 0 END) as paid_amount")
+                ->groupBy('gateway')->get()->keyBy('gateway');
+        }
 
         if ($request->wantsJson() || $request->is('api/*')) {
             return response()->json([
@@ -308,6 +334,10 @@ class FinanceController extends Controller
                 ]);
             }
         });
+
+        Cache::forget('admin_finance_summary_default');
+        Cache::forget('admin_reports_index_data');
+        Cache::forget('admin_reports_charts_data');
 
         if ($request->wantsJson() || $request->is('api/*')) {
             return response()->json([

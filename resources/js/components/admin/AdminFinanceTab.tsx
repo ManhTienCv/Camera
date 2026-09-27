@@ -376,6 +376,7 @@ export const AdminFinanceTab: React.FC = () => {
 
           <button
             onClick={() => {
+              api.clearCache();
               if (subTab === 'summary') fetchSummary();
               else fetchTransactions();
             }}

@@ -27,7 +27,7 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
   const method = (options.method || 'GET').toUpperCase();
   const isGet = method === 'GET';
 
-  const isRealtime = url.includes('/chat') || url.includes('/admin/reports') || url.includes('/admin/users') || url.includes('/admin/finance');
+  const isRealtime = url.includes('/chat');
   if (isGet && !isRealtime && apiCache.has(url)) {
     const cached = apiCache.get(url)!;
     if (Date.now() - cached.timestamp < CACHE_TTL) {
@@ -540,12 +540,14 @@ export const api = {
   // ==========================================
   // Lab 08: Admin Reports & Charts APIs
   // ==========================================
-  getAdminReportSummary: () => {
-    return request<ReportSummaryData>('/admin/reports');
+  getAdminReportSummary: (params?: { refresh?: boolean }) => {
+    const query = params?.refresh ? '?refresh=1' : '';
+    return request<ReportSummaryData>(`/admin/reports${query}`);
   },
 
-  getAdminReportCharts: () => {
-    return request<ReportChartsData>('/admin/reports/charts');
+  getAdminReportCharts: (params?: { refresh?: boolean }) => {
+    const query = params?.refresh ? '?refresh=1' : '';
+    return request<ReportChartsData>(`/admin/reports/charts${query}`);
   },
 
   // ==========================================
@@ -769,6 +771,10 @@ export const api = {
   adminLogout: () => {
     localStorage.removeItem('camera_admin_token');
     localStorage.removeItem('camera_admin_user');
+  },
+
+  clearCache: () => {
+    apiCache.clear();
   },
 };
 

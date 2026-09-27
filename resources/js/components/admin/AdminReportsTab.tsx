@@ -187,12 +187,15 @@ export const AdminReportsTab: React.FC = () => {
   const categoryPageSize = 5;
   const topProductsPageSize = 5;
 
-  const loadReportData = async () => {
+  const loadReportData = async (forceRefresh = false) => {
     setLoading(true);
     try {
+      if (forceRefresh) {
+        api.clearCache();
+      }
       const [summary, charts] = await Promise.all([
-        api.getAdminReportSummary().catch(() => null),
-        api.getAdminReportCharts().catch(() => null),
+        api.getAdminReportSummary(forceRefresh ? { refresh: true } : undefined).catch(() => null),
+        api.getAdminReportCharts(forceRefresh ? { refresh: true } : undefined).catch(() => null),
       ]);
       setSummaryData(summary);
       setChartsData(charts);
@@ -308,7 +311,7 @@ export const AdminReportsTab: React.FC = () => {
 
           {/* Refresh button */}
           <button
-            onClick={() => loadReportData()}
+            onClick={() => loadReportData(true)}
             disabled={loading}
             className="p-2 bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-800 rounded-xl hover:bg-cream-50 dark:hover:bg-ink-800 text-ink-600 dark:text-ink-300 transition-all cursor-pointer disabled:opacity-50 shadow-2xs"
             title="Làm mới số liệu"

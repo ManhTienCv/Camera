@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\Product;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use App\Services\GHNService;
 
@@ -236,6 +237,10 @@ class OrderController extends Controller
 
         $order->save();
 
+        Cache::forget('admin_reports_index_data');
+        Cache::forget('admin_reports_charts_data');
+        Cache::forget('admin_finance_summary_default');
+
         return response()->json([
             'message' => 'Cập nhật trạng thái đơn hàng thành công!',
             'order' => $order->fresh('items'),
@@ -279,6 +284,10 @@ class OrderController extends Controller
             'message' => "Admin xác nhận hoàn tiền thành công. Mã giao dịch ngân hàng: {$refCode}",
             'paid_at' => Carbon::now(),
         ]);
+
+        Cache::forget('admin_reports_index_data');
+        Cache::forget('admin_reports_charts_data');
+        Cache::forget('admin_finance_summary_default');
 
         return response()->json([
             'message' => "Đã xác nhận hoàn tiền " . number_format($order->total_amount, 0, ',', '.') . "đ cho khách thành công! Đơn hàng đã chuyển sang Đã hủy & Đã hoàn tiền.",
