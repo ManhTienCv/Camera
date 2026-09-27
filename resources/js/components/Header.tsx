@@ -10,7 +10,6 @@ import {
   Package,
   LogOut,
   ArrowRight,
-  Sparkles,
   ArrowLeftRight,
   ShieldCheck,
 } from 'lucide-react';
@@ -342,17 +341,6 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
                         <ArrowLeftRight size={16} className="text-blue-500" />
                         <span>So sánh máy ảnh</span>
                       </button>
-
-                      <button
-                        onClick={() => {
-                          setUserDropdownOpen(false);
-                          window.dispatchEvent(new Event('camerahub_open_selector'));
-                        }}
-                        className="w-full px-3.5 py-2 rounded-xl hover:bg-accent-50 dark:hover:bg-accent-950/60 flex items-center gap-3 text-xs font-bold text-accent-700 dark:text-accent-300 transition-colors text-left cursor-pointer"
-                      >
-                        <Sparkles size={16} className="text-accent-500 animate-pulse" />
-                        <span>Tư vấn chọn máy</span>
-                      </button>
                     </div>
 
                     {/* Nhóm 3: Đăng xuất */}
@@ -445,15 +433,6 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
                 }`}
             >
               <ShieldCheck size={18} /> Tra cứu bảo hành
-            </button>
-            <button
-              onClick={() => {
-                setMobileOpen(false);
-                window.dispatchEvent(new Event('camerahub_open_selector'));
-              }}
-              className="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-bold bg-accent-50 dark:bg-accent-950/60 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-800 transition-all text-left"
-            >
-              <Sparkles size={18} className="text-accent-500" /> Tư vấn chọn máy AI
             </button>
             {(Array.isArray(categories) ? categories : []).map((cat) => (
               <button
