@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import {
   ChevronRight,
   Check,
@@ -36,6 +35,12 @@ import {
 import { vietqrService, VIETQR_CONFIG } from '../services/vietqr.service';
 import { getStoreSettings } from '../lib/settings';
 import { useToast } from '../context/ToastContext';
+import {
+  PaymentMethodSelector,
+  CheckoutVoucherModal,
+  CheckoutLeaveModal,
+  CheckoutExpiredModal,
+} from '../components/checkout';
 
 interface Props {
   onNavigate: (page: Page) => void;
@@ -642,61 +647,10 @@ export function CheckoutPage({ onNavigate }: Props) {
           </div>
 
           {/* 4. Payment Method */}
-          <div className="card p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-display font-semibold text-lg text-ink-800 flex items-center gap-2">
-                <QrCode size={18} className="text-accent-500" />
-                <span>Phương thức thanh toán</span>
-              </h2>
-              <span className="text-xs font-semibold text-accent-700 dark:text-accent-300 bg-accent-50 dark:bg-accent-950/60 border border-accent-200 dark:border-accent-800 px-2.5 py-0.5 rounded-full">
-                Miễn phí giao dịch
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {(() => {
-                const storeSettings = getStoreSettings();
-                const availablePaymentMethods = [
-                  storeSettings.isVietQrEnabled && {
-                    id: 'vietqr',
-                    label: `Chuyển khoản VietQR (${storeSettings.bankName} 24/7 - Khuyên dùng)`,
-                  },
-                  storeSettings.isCodEnabled && { id: 'cod', label: 'Thanh toán khi nhận hàng (COD)' },
-                  { id: 'vnpay', label: 'Cổng VNPAY (ATM / Visa / QR Code)' },
-                  storeSettings.isMomoEnabled && { id: 'momo', label: 'Ví điện tử MoMo' },
-                ].filter(Boolean) as Array<{ id: string; label: string }>;
-
-                return availablePaymentMethods.map((method) => {
-                const isSelected = form.payment === method.id;
-                return (
-                  <div
-                    key={method.id}
-                    className={`rounded-2xl border-2 transition-all overflow-hidden ${isSelected
-                      ? 'border-accent-500 bg-accent-50/40 dark:bg-accent-500/10 shadow-xs'
-                      : 'border-cream-200 dark:border-ink-700 hover:border-cream-300 dark:hover:border-ink-600 bg-white dark:bg-ink-800'
-                      }`}
-                  >
-                    <label className="flex items-start gap-3 p-4 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="payment"
-                        value={method.id}
-                        checked={isSelected}
-                        onChange={(e) => setForm({ ...form, payment: e.target.value })}
-                        className="w-4 h-4 text-accent-500 focus:ring-accent-400 mt-1 cursor-pointer"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-bold text-sm text-ink-900 dark:text-cream-50">{method.label}</p>
-                        </div>
-                      </div>
-                    </label>
-                  </div>
-                );
-              });
-            })()}
-          </div>
-          </div>
+          <PaymentMethodSelector
+            selectedMethod={form.payment}
+            onSelectMethod={(methodId) => setForm({ ...form, payment: methodId })}
+          />
         </div>
 
         {/* Right Column: Order Summary */}
@@ -866,213 +820,35 @@ export function CheckoutPage({ onNavigate }: Props) {
         onConfirm={handleMapConfirm}
       />
 
-      {/* Leave Confirmation Modal (Matches Image 1) */}
-      {isLeaveModalOpen &&
-        createPortal(
-          <div
-            className="fixed inset-0 w-screen h-screen min-h-[100dvh] z-[99999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in"
-            onClick={() => setIsLeaveModalOpen(false)}
-          >
-            <div
-              className="w-full max-w-sm bg-white rounded-3xl p-6 text-center space-y-4 shadow-2xl border border-cream-200 animate-scale-up relative"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                onClick={() => setIsLeaveModalOpen(false)}
-                className="absolute top-4 right-4 text-ink-400 hover:text-ink-700 cursor-pointer"
-              >
-                <X size={18} />
-              </button>
+      {/* Leave Confirmation Modal */}
+      <CheckoutLeaveModal
+        isOpen={isLeaveModalOpen}
+        onClose={() => setIsLeaveModalOpen(false)}
+        onConfirmLeave={() => {
+          setIsLeaveModalOpen(false);
+          sessionStorage.removeItem('camerahub_checkout_deadline');
+          onNavigate({ name: 'cart' });
+        }}
+      />
 
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto shadow-2xs">
-                <AlertTriangle size={24} className="text-amber-500" />
-              </div>
-
-              <div>
-                <h3 className="font-display font-bold text-lg text-ink-900">
-                  Quay Lại Giỏ Hàng?
-                </h3>
-                <p className="text-xs text-ink-500 mt-1 leading-relaxed">
-                  Thời gian giữ đơn 15 phút sẽ bị hủy bỏ nếu bạn rời khỏi trang thanh toán.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsLeaveModalOpen(false)}
-                  className="flex-1 py-2.5 px-4 rounded-xl border border-cream-300 hover:bg-cream-100 text-ink-700 text-xs font-bold transition-all cursor-pointer"
-                >
-                  Ở Lại Tiếp Tục
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsLeaveModalOpen(false);
-                    sessionStorage.removeItem('camerahub_checkout_deadline');
-                    onNavigate({ name: 'cart' });
-                  }}
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95"
-                >
-                  Rời Khỏi
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
-
-      {/* Voucher Selection Modal (Matches Image 2 & 3) */}
-      {isVoucherModalOpen &&
-        createPortal(
-          <div
-            className="fixed inset-0 w-screen h-screen min-h-[100dvh] z-[99999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in"
-            onClick={() => setIsVoucherModalOpen(false)}
-          >
-            <div
-              className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-cream-200 animate-scale-up space-y-4 max-h-[88vh] flex flex-col relative"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-display font-bold text-lg text-ink-900 flex items-center gap-2">
-                    <Tag size={20} className="text-accent-500" />
-                    <span>Kho Mã Giảm Giá & Ưu Đãi</span>
-                  </h3>
-                  <p className="text-xs text-ink-500 mt-0.5">
-                    Chọn mã ưu đãi phù hợp nhất với giá trị đơn hàng của bạn
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsVoucherModalOpen(false)}
-                  className="p-1 rounded-full text-ink-400 hover:text-ink-700 hover:bg-cream-100 transition-colors cursor-pointer"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              {/* Scrollable list of vouchers */}
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1 py-1">
-                {availableVouchers.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-ink-400">
-                    Hiện chưa có mã giảm giá nào đang mở.
-                  </div>
-                ) : (
-                  availableVouchers.map((v) => {
-                    const isApplied = appliedVoucher?.code === v.code;
-                    const isEligible = subtotal >= v.min_order_amount;
-
-                    return (
-                      <div
-                        key={v.id}
-                        className={`p-4 rounded-2xl border transition-all ${isApplied
-                          ? 'border-emerald-500 bg-emerald-50/40 ring-2 ring-emerald-500/10'
-                          : isEligible
-                            ? 'border-cream-200 hover:border-accent-300 hover:bg-cream-50/50'
-                            : 'border-cream-200 bg-cream-50/40 opacity-75'
-                          }`}
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="space-y-1 flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="px-2.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-300 rounded-lg text-xs font-mono font-bold tracking-wide uppercase">
-                                {v.code}
-                              </span>
-                              <h4 className="font-bold text-xs text-ink-900 truncate">
-                                {v.name}
-                              </h4>
-                            </div>
-                            <p className="text-[11px] text-ink-600 line-clamp-2">
-                              {v.description}
-                            </p>
-                            <p className="text-[10px] text-ink-400 font-medium">
-                              Đơn tối thiểu: {formatCurrency(v.min_order_amount)}
-                            </p>
-                          </div>
-
-                          <div className="shrink-0">
-                            {isApplied ? (
-                              <span className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-xs inline-block">
-                                Đang dùng
-                              </span>
-                            ) : !isEligible ? (
-                              <button
-                                type="button"
-                                disabled
-                                className="px-3.5 py-2 bg-cream-200 text-ink-400 rounded-xl text-xs font-bold cursor-not-allowed"
-                              >
-                                Chưa đủ ĐK
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  await handleApplyVoucher(v.code);
-                                  setIsVoucherModalOpen(false);
-                                }}
-                                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer active:scale-95"
-                              >
-                                Áp dụng
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              <div className="pt-2 border-t border-cream-100">
-                <button
-                  type="button"
-                  onClick={() => setIsVoucherModalOpen(false)}
-                  className="w-full py-3 bg-cream-100 hover:bg-cream-200 text-ink-800 rounded-2xl font-bold text-xs transition-colors cursor-pointer"
-                >
-                  Đóng
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+      {/* Voucher Selection Modal */}
+      <CheckoutVoucherModal
+        isOpen={isVoucherModalOpen}
+        onClose={() => setIsVoucherModalOpen(false)}
+        availableVouchers={availableVouchers}
+        appliedVoucher={appliedVoucher}
+        subtotal={subtotal}
+        onApplyVoucher={handleApplyVoucher}
+      />
 
       {/* 15-Minute Session Expired Modal */}
-      {isExpired &&
-        createPortal(
-          <div className="fixed inset-0 w-screen h-screen min-h-[100dvh] z-[99999] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
-            <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 text-center space-y-5 shadow-2xl border border-cream-200 animate-scale-up">
-              <div className="w-16 h-16 rounded-3xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto border border-amber-200 shadow-xs">
-                <AlertTriangle size={32} className="text-amber-500" />
-              </div>
-
-              <div>
-                <h3 className="font-display font-bold text-xl text-ink-900">
-                  Phiên thanh toán đã hết hạn!
-                </h3>
-                <p className="text-xs text-ink-500 mt-1 leading-relaxed">
-                  Thời gian giữ đơn hàng (15 phút) đã kết thúc nhằm đảm bảo số lượng tồn kho chính xác cho khách hàng khác. Vui lòng quay lại giỏ hàng để cập nhật và thanh toán lại.
-                </p>
-              </div>
-
-              <div className="pt-2">
-                <button
-                  onClick={() => {
-                    sessionStorage.removeItem('camerahub_checkout_deadline');
-                    onNavigate({ name: 'cart' });
-                  }}
-                  className="w-full btn-accent py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md"
-                >
-                  <ArrowLeft size={16} />
-                  <span>Quay lại giỏ hàng</span>
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+      <CheckoutExpiredModal
+        isExpired={isExpired}
+        onReturnToCart={() => {
+          sessionStorage.removeItem('camerahub_checkout_deadline');
+          onNavigate({ name: 'cart' });
+        }}
+      />
     </div>
   );
 }
