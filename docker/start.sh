@@ -4,8 +4,11 @@ set -e
 # Render exposes PORT variable (defaults to 10000 if not set)
 export PORT=${PORT:-10000}
 
-# Replace ${PORT} placeholder in Nginx config
-envsubst '${PORT}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf
+# Remove any conflicting default alpine configs
+rm -rf /etc/nginx/http.d/* /etc/nginx/conf.d/* 2>/dev/null || true
+
+# Generate main nginx.conf from template with injected PORT
+envsubst '${PORT}' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf
 
 echo "==> Configuring Laravel storage and caches..."
 php artisan storage:link --force || true

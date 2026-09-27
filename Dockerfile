@@ -34,7 +34,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-di
 
 # Setup Nginx configuration template and startup script
 RUN mkdir -p /etc/nginx/templates /etc/nginx/conf.d
-COPY docker/nginx.conf /etc/nginx/templates/default.conf.template
+COPY docker/nginx.conf /etc/nginx/templates/nginx.conf.template
 COPY docker/start.sh /usr/local/bin/start.sh
 
 # Fix permissions and executable flags
