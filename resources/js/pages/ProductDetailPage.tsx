@@ -44,29 +44,28 @@ export function ProductDetailPage({ slug, onNavigate, categories }: Props) {
         setProduct(prod);
 
         if (prod) {
-          try {
-            const revRes = await api.getProductReviews(prod.id);
-            if (revRes && revRes.stats) {
-              setReviewCount(revRes.stats.count);
-            } else {
-              setReviewCount(prod.review_count || 0);
-            }
-          } catch {
+          const [revRes, relRes] = await Promise.all([
+            api.getProductReviews(prod.id).catch(() => null),
+            api.getRelatedProducts(prod.id, 4).catch(() => null),
+          ]);
+
+          if (revRes && revRes.stats) {
+            setReviewCount(revRes.stats.count);
+          } else {
             setReviewCount(prod.review_count || 0);
           }
 
-          try {
-            const rel = await api.getRelatedProducts(prod.id, 4);
-            setRelated(rel || []);
-          } catch {
-            if (prod.category_id) {
-              const categoryObj = categories.find((c) => String(c.id) === String(prod.category_id));
-              const catProducts = await api.getProducts({ category: categoryObj?.slug });
-              const rel = catProducts
-                .filter((p) => String(p.id) !== String(prod.id))
-                .slice(0, 4);
-              setRelated(rel);
-            }
+          if (relRes && relRes.length > 0) {
+            setRelated(relRes);
+          } else if (prod.category_id) {
+            const categoryObj = categories.find((c) => String(c.id) === String(prod.category_id));
+            const catProducts = await api.getProducts({ category: categoryObj?.slug }).catch(() => []);
+            const rel = catProducts
+              .filter((p) => String(p.id) !== String(prod.id))
+              .slice(0, 4);
+            setRelated(rel);
+          } else {
+            setRelated([]);
           }
         }
       } catch (e) {

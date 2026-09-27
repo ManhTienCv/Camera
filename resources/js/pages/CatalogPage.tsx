@@ -42,31 +42,24 @@ export function CatalogPage({ onNavigate, categories, categorySlug, brand }: Pro
     }
   }, [brand]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true);
-        const data = await api.getProducts();
-        setProducts(data || []);
-      } catch (err) {
-        console.error('Failed to load products:', err);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
   const [allBrands, setAllBrands] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
       try {
-        const bList = await api.getBrands();
+        setLoading(true);
+        const [prods, bList] = await Promise.all([
+          api.getProducts(),
+          api.getBrands().catch(() => []),
+        ]);
+        setProducts(prods || []);
         if (bList && bList.length > 0) {
           setAllBrands(bList.map((b) => b.name));
         }
-      } catch (e) {
-        console.error('Failed to load brands:', e);
+      } catch (err) {
+        console.error('Failed to load catalog data:', err);
+      } finally {
+        setLoading(false);
       }
     })();
   }, []);
