@@ -5,6 +5,18 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "https://camera-pihq.onrender.com/api/$1"
+    },
+    {
+      "source": "/auth/google/(.*)",
+      "destination": "https://camera-pihq.onrender.com/auth/google/$1"
+    },
+    {
+      "source": "/storage/(.*)",
+      "destination": "https://camera-pihq.onrender.com/storage/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
