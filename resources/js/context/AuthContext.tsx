@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { User } from '../types';
-import { api } from '../lib/api';
+import { api, API_BASE } from '../lib/api';
 
 interface AuthContextType {
   user: User | null;
@@ -121,7 +121,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // 2. Listen for messages from centered OAuth popup window (500x650)
     const handleAuthMessage = (e: MessageEvent) => {
-      if (e.origin !== window.location.origin) return;
+      let isAllowedOrigin = e.origin === window.location.origin;
+      try {
+        if (API_BASE.startsWith('http')) {
+          const backendOrigin = new URL(API_BASE).origin;
+          if (e.origin === backendOrigin) isAllowedOrigin = true;
+        }
+      } catch (_) {}
+
+      if (!isAllowedOrigin) return;
       if (!e.data || typeof e.data !== 'object') return;
 
       if (e.data.type === 'GOOGLE_AUTH_SUCCESS') {
@@ -248,7 +256,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginWithGoogle = () => {
-    openOAuthPopup('/api/v1/auth/google/redirect');
+    openOAuthPopup(`${API_BASE}/auth/google/redirect`);
   };
 
   const logout = () => {
