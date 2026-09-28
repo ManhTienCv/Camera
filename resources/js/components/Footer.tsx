@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Phone, Mail, MapPin, ArrowRight } from 'lucide-react';
+import { Camera, Phone, Mail, MapPin, ArrowRight, ShieldCheck } from 'lucide-react';
 import type { Page, Category } from '../types';
 import { getStoreSettings, type StoreSettings } from '../lib/settings';
 
@@ -127,6 +127,15 @@ export function Footer({ onNavigate, categories }: Props) {
 
         <div className="border-t border-ink-800 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-ink-400">
           <p>© 2026 {settings.storeName || 'CameraHub'}. Bản quyền thuộc về CameraHub Store.</p>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => onNavigate({ name: 'admin' })}
+              className="text-xs text-ink-500 hover:text-accent-400 transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              <ShieldCheck size={13} />
+              <span>Cổng Quản Trị Viên (Admin)</span>
+            </button>
+          </div>
         </div>
       </div>
     </footer>
