@@ -54,6 +54,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 // Main React SPA Entrypoint
 Route::get('/{any?}', function () {
+    if (!file_exists(public_path('build/manifest.json'))) {
+        $frontendUrl = env('FRONTEND_URL', 'https://camera-manhtien.vercel.app');
+        $query = request()->getQueryString() ? '?' . request()->getQueryString() : '';
+        $path = request()->path() === '/' ? '' : '/' . request()->path();
+        return redirect(rtrim($frontendUrl, '/') . $path . $query);
+    }
     return view('app');
 })->where('any', '.*');
 

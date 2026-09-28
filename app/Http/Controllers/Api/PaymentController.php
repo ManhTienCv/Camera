@@ -254,13 +254,21 @@ class PaymentController extends Controller
             }
         }
 
+        $frontendUrl = env('FRONTEND_URL');
+        if (!$frontendUrl) {
+            $frontendUrl = str_contains(request()->getHost(), 'onrender.com')
+                ? 'https://camera-manhtien.vercel.app'
+                : '';
+        }
+        $frontendUrl = rtrim($frontendUrl, '/');
+
         if (!$order) {
-            return redirect('/orders');
+            return redirect($frontendUrl ? "{$frontendUrl}/orders" : '/orders');
         }
 
         // Idempotency: nếu đã hoàn tất thì về trang thành công luôn
         if (in_array($order->payment_status, ['paid', 'completed'])) {
-            return redirect('/order-success?id=' . $order->id . '&momo=1');
+            return redirect($frontendUrl ? "{$frontendUrl}/order-success?id={$order->id}&momo=1" : "/order-success?id={$order->id}&momo=1");
         }
 
         if ($this->momoService->isValidResponse($data) && $this->momoService->isSuccessful($data)) {
@@ -272,7 +280,7 @@ class PaymentController extends Controller
                 Log::channel('daily')->emergency("🚨 CẢNH BÁO GIAN LẬN MoMo Callback: Đơn {$order->order_code} số tiền {$order->total_amount} != callback {$ipnAmount}");
                 $order->payment_status = 'tampered';
                 $order->save();
-                return redirect('/orders?momo_tampered=1&order_id=' . $order->id);
+                return redirect($frontendUrl ? "{$frontendUrl}/orders?momo_tampered=1&order_id={$order->id}" : "/orders?momo_tampered=1&order_id={$order->id}");
             }
 
             $transaction = PaymentTransaction::where('order_id', $order->id)->latest()->first();
@@ -292,7 +300,7 @@ class PaymentController extends Controller
                 }
             }
 
-            return redirect('/order-success?id=' . $order->id . '&momo=1');
+            return redirect($frontendUrl ? "{$frontendUrl}/order-success?id={$order->id}&momo=1" : "/order-success?id={$order->id}&momo=1");
         }
 
         // Trường hợp giao dịch thất bại hoặc người dùng bấm Hủy
@@ -304,6 +312,6 @@ class PaymentController extends Controller
         $order->payment_status = 'failed';
         $order->save();
 
-        return redirect('/orders?momo_failed=1&order_id=' . $order->id);
+        return redirect($frontendUrl ? "{$frontendUrl}/orders?momo_failed=1&order_id={$order->id}" : "/orders?momo_failed=1&order_id={$order->id}");
     }
 }
