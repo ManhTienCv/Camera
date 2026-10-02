@@ -12,6 +12,10 @@ import {
   CheckCircle2,
   X,
   CreditCard,
+  ArrowRight,
+  Check,
+  Ban,
+  PackageCheck,
 } from 'lucide-react';
 import type { Order } from '../../types';
 import { formatCurrency } from '../../lib/utils';
@@ -26,9 +30,8 @@ interface AdminOrdersTabProps {
   onRefreshOrders?: () => void;
 }
 
-// Lab 08 Tab Definitions + Refund Workflow
+// Lab 08 Tab Definitions + Refund Workflow (Bắt đầu từ Chờ xử lý)
 const TABS = [
-  { key: 'all', label: 'Tất cả', statuses: [] },
   { key: 'pending', label: 'Chờ xử lý', statuses: ['pending', 'not_shipped', 'processing'] },
   { key: 'ready', label: 'Chờ lấy hàng', statuses: ['ready_to_pick'] },
   { key: 'picking', label: 'Đang lấy hàng', statuses: ['picking'] },
@@ -48,7 +51,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
   onRefreshOrders,
 }) => {
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<TabKey>('all');
+  const [activeTab, setActiveTab] = useState<TabKey>('pending');
   const [searchQuery, setSearchQuery] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('');
   const [adminPageNum, setAdminPageNum] = useState(1);
@@ -64,11 +67,10 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
     return orders || [];
   }, [orders]);
 
-  // Compute counts for all 8 status tabs (Lab 08)
+  // Compute counts for all status tabs
   const tabCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: activeOrders.length };
+    const counts: Record<string, number> = {};
     TABS.forEach((tab) => {
-      if (tab.key === 'all') return;
       counts[tab.key] = activeOrders.filter((o) => tab.statuses.includes(o.status as any)).length;
     });
     return counts;
@@ -78,11 +80,9 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
   const filteredOrders = useMemo(() => {
     return activeOrders.filter((o) => {
       // 1. Tab filter
-      if (activeTab !== 'all') {
-        const tabDef = TABS.find((t) => t.key === activeTab);
-        if (tabDef && !tabDef.statuses.includes(o.status as any)) {
-          return false;
-        }
+      const tabDef = TABS.find((t) => t.key === activeTab);
+      if (tabDef && !tabDef.statuses.includes(o.status as any)) {
+        return false;
       }
 
       // 2. Search query
@@ -412,60 +412,179 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                         {formatCurrency(o.total_amount)}
                       </td>
                       <td className="py-4 px-5 align-middle whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <select
-                            value={o.status || 'pending'}
-                            onChange={(e) => handleStatusSelect(o, e.target.value)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-bold border focus:outline-none cursor-pointer transition-all whitespace-nowrap ${
-                              o.status === 'completed' || o.status === 'delivered'
-                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                                : isDelivering
-                                ? 'bg-blue-50 text-blue-800 border-blue-300'
-                                : o.status === 'refund_pending'
-                                ? 'bg-amber-100 text-amber-900 border-amber-300'
-                                : o.status === 'cancelled'
-                                ? 'bg-rose-50 text-rose-800 border-rose-300'
-                                : 'bg-amber-50 text-amber-800 border-amber-300'
-                            }`}
-                          >
-                            <option value="pending">Chờ xử lý</option>
-                            <option value="ready_to_pick">Chờ lấy hàng</option>
-                            <option value="picking">Đang lấy hàng</option>
-                            <option value="shipping">Đang giao hàng</option>
-                            <option value="completed">Giao thành công / Hoàn tất</option>
-                            <option value="refund_pending">Chờ hoàn tiền</option>
-                            {/* LAB 08 RULE: Nếu đang giao -> KHÔNG cho Hủy */}
-                            <option value="cancelled" disabled={isDelivering}>
-                              {isDelivering ? 'Đã hủy (Đang giao: Khóa hủy)' : 'Hủy đơn hàng'}
-                            </option>
-                          </select>
-                          {isDelivering && (
-                            <span title="Lab 08: Đơn hàng đang giao KHÔNG cho Hủy">
-                              <Lock size={13} className="text-amber-500 shrink-0" />
+                        {(() => {
+                          const status = o.status || 'pending';
+                          if (status === 'completed' || status === 'delivered') {
+                            return (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <CheckCircle2 size={13} className="text-emerald-600" />
+                                <span>Thành công</span>
+                              </span>
+                            );
+                          }
+                          if (isDelivering) {
+                            return (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                                <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
+                                <span>Đang giao hàng</span>
+                              </span>
+                            );
+                          }
+                          if (status === 'ready_to_pick') {
+                            return (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-cyan-50 text-cyan-800 border border-cyan-200">
+                                <span className="w-2 h-2 rounded-full bg-cyan-500"></span>
+                                <span>Chờ lấy hàng</span>
+                              </span>
+                            );
+                          }
+                          if (status === 'picking') {
+                            return (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                <span>Đang lấy hàng</span>
+                              </span>
+                            );
+                          }
+                          if (status === 'refund_pending') {
+                            return (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-900 border border-amber-300">
+                                <RefreshCw size={12} className="text-amber-700 animate-spin" />
+                                <span>Chờ hoàn tiền</span>
+                              </span>
+                            );
+                          }
+                          if (['return', 'returning', 'returned'].includes(status)) {
+                            return (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-50 text-orange-800 border border-orange-200">
+                                <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+                                <span>Hoàn hàng</span>
+                              </span>
+                            );
+                          }
+                          if (status === 'cancelled') {
+                            return (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                                <span>Đã hủy</span>
+                              </span>
+                            );
+                          }
+                          // Default pending
+                          return (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                              <span>Chờ xử lý</span>
                             </span>
-                          )}
-                        </div>
+                          );
+                        })()}
                       </td>
                       <td className="py-4 px-5 align-middle text-center whitespace-nowrap">
-                        <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                          {/* 1. Trạng thái: Chờ xử lý -> Nút Duyệt đơn & Hủy đơn */}
+                          {['pending', 'not_shipped', 'processing'].includes(o.status) && (
+                            <>
+                              <button
+                                onClick={() => onUpdateStatus(o.id, 'ready_to_pick')}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all inline-flex items-center gap-1 shadow-2xs hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
+                                title="Xác nhận đơn và chuẩn bị đóng gói"
+                              >
+                                <span>Duyệt đơn</span>
+                                <ArrowRight size={13} />
+                              </button>
+                              <button
+                                onClick={() => handleStatusSelect(o, 'cancelled')}
+                                className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold px-2 py-1.5 rounded-xl transition-all inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                                title="Hủy đơn hàng"
+                              >
+                                <Ban size={12} />
+                                <span>Hủy</span>
+                              </button>
+                            </>
+                          )}
+
+                          {/* 2. Trạng thái: Chờ lấy hàng -> Nút Bàn giao vận chuyển & Hủy đơn */}
+                          {o.status === 'ready_to_pick' && (
+                            <>
+                              <button
+                                onClick={() => onUpdateStatus(o.id, 'shipping')}
+                                className="bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all inline-flex items-center gap-1 shadow-2xs hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
+                                title="Bàn giao bưu tá và bắt đầu giao hàng"
+                              >
+                                <Truck size={13} />
+                                <span>Giao hàng</span>
+                                <ArrowRight size={13} />
+                              </button>
+                              <button
+                                onClick={() => handleStatusSelect(o, 'cancelled')}
+                                className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold px-2 py-1.5 rounded-xl transition-all inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                                title="Hủy đơn hàng khi chưa lấy"
+                              >
+                                <Ban size={12} />
+                                <span>Hủy</span>
+                              </button>
+                            </>
+                          )}
+
+                          {/* 3. Trạng thái: Đang lấy hàng -> Nút Hoàn tất lấy hàng */}
+                          {o.status === 'picking' && (
+                            <button
+                              onClick={() => onUpdateStatus(o.id, 'shipping')}
+                              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all inline-flex items-center gap-1 shadow-2xs hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
+                              title="Bưu tá đã lấy - Chuyển sang đang giao"
+                            >
+                              <Truck size={13} />
+                              <span>Đã lấy hàng</span>
+                              <ArrowRight size={13} />
+                            </button>
+                          )}
+
+                          {/* 4. Trạng thái: Đang giao hàng -> Nút Giao thành công (Lab 08: Khóa Hủy) */}
+                          {isDelivering && (
+                            <button
+                              onClick={() => onUpdateStatus(o.id, 'completed')}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all inline-flex items-center gap-1 shadow-2xs hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
+                              title="Khách hàng đã nhận kiện hàng an toàn"
+                            >
+                              <Check size={13} />
+                              <span>Giao thành công</span>
+                            </button>
+                          )}
+
+                          {/* 5. Trạng thái: Chờ hoàn tiền -> Nút Hoàn tiền */}
                           {(o.status === 'refund_pending' || o.payment_status === 'refund_pending') && (
                             <button
                               onClick={() => {
                                 setConfirmingRefundOrder(o);
                                 setRefundRefCode('');
                               }}
-                              className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 whitespace-nowrap"
+                              className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all inline-flex items-center gap-1 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 whitespace-nowrap"
                               title="Xem tài khoản ngân hàng và xác nhận đã hoàn tiền"
                             >
-                              <RefreshCw size={13} />
+                              <RefreshCw size={12} />
                               <span>Hoàn tiền</span>
                             </button>
                           )}
+
+                          {/* 6. Trạng thái: Hoàn hàng -> Xác nhận nhập lại kho */}
+                          {['return', 'returning', 'returned'].includes(o.status) && (
+                            <button
+                              onClick={() => onUpdateStatus(o.id, 'cancelled')}
+                              className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all inline-flex items-center gap-1 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 whitespace-nowrap"
+                              title="Xác nhận đã nhận lại kiện hàng từ shipper"
+                            >
+                              <PackageCheck size={13} />
+                              <span>Nhận hàng hoàn</span>
+                            </button>
+                          )}
+
+                          {/* Nút Chi tiết xem đơn */}
                           <button
                             onClick={() => onViewOrder(o)}
-                            className="bg-ink-900 hover:bg-black text-white text-xs font-bold px-3.5 py-1.5 rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 whitespace-nowrap shrink-0"
+                            className="bg-ink-900 hover:bg-black text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 whitespace-nowrap shrink-0"
+                            title="Xem chi tiết đơn hàng"
                           >
-                            <Eye size={14} className="shrink-0" />
+                            <Eye size={13} className="shrink-0" />
                             <span className="whitespace-nowrap">Chi tiết</span>
                           </button>
                         </div>

@@ -13,9 +13,9 @@ use Illuminate\Support\Str;
 class ChatController extends Controller
 {
     /**
-     * Helper resolve current user (session or bearer token)
+     * Helper resolve current user (session, bearer token, hoặc guest user tự động từ Session ID)
      */
-    protected function resolveUser(Request $request): ?User
+    protected function resolveUserOrGuest(Request $request): ?User
     {
         if (Auth::check()) {
             return Auth::user();
@@ -24,20 +24,46 @@ class ChatController extends Controller
         $authHeader = $request->header('Authorization');
         if ($authHeader && Str::startsWith($authHeader, 'Bearer ')) {
             $token = Str::substr($authHeader, 7);
-            return User::resolveByToken($token);
+            $user = User::resolveByToken($token);
+            if ($user) return $user;
+        }
+
+        // Hỗ trợ khách vãng lai (Guest) chưa đăng nhập dựa vào Session ID
+        $guestId = $request->header('X-Guest-Id')
+            ?: $request->header('X-Session-ID')
+            ?: $request->input('guest_id')
+            ?: $request->query('guest_id');
+
+        if ($guestId) {
+            $cleanGuestId = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) $guestId);
+            $cleanGuestId = Str::limit($cleanGuestId, 32, '');
+            if (!empty($cleanGuestId)) {
+                $guestEmail = "guest_{$cleanGuestId}@guest.camerahub.vn";
+                $suffix = substr(md5($cleanGuestId), 0, 4);
+                $guestName = 'Khách vãng lai #' . strtoupper($suffix);
+
+                return User::firstOrCreate(
+                    ['email' => $guestEmail],
+                    [
+                        'name' => $guestName,
+                        'password' => bcrypt(Str::random(32)),
+                        'role' => 'customer',
+                    ]
+                );
+            }
         }
 
         return null;
     }
 
     /**
-     * Gửi tin nhắn từ User tới Admin
+     * Gửi tin nhắn từ User hoặc Khách vãng lai tới Admin
      */
     public function send(Request $request)
     {
-        $user = $this->resolveUser($request);
+        $user = $this->resolveUserOrGuest($request);
         if (!$user) {
-            return response()->json(['error' => 'Bạn cần đăng nhập để gửi tin nhắn hỗ trợ.'], 401);
+            return response()->json(['error' => 'Không thể khởi tạo phiên trò chuyện.'], 400);
         }
 
         // 1. Lấy nội dung từ request
@@ -138,7 +164,7 @@ class ChatController extends Controller
      */
     public function getMessages(Request $request)
     {
-        $user = $this->resolveUser($request);
+        $user = $this->resolveUserOrGuest($request);
         if (!$user) {
             return response()->json([]);
         }

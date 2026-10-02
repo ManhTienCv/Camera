@@ -81,7 +81,6 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
   };
 
   const loadMessages = async (silent = false) => {
-    if (!user) return;
     if (!silent) setLoading(true);
     try {
       if (!silent || lastMsgIdRef.current === 0) {
@@ -113,27 +112,25 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
   // When user opens popup, fetch messages and focus input
   useEffect(() => {
     if (isOpen) {
-      if (user) {
-        lastMsgIdRef.current = 0;
-        loadMessages();
-        setTimeout(() => {
-          scrollToBottom(false);
-          inputRef.current?.focus({ preventScroll: true });
-        }, 150);
-      }
+      lastMsgIdRef.current = 0;
+      loadMessages();
+      setTimeout(() => {
+        scrollToBottom(false);
+        inputRef.current?.focus({ preventScroll: true });
+      }, 150);
     }
   }, [isOpen, user]);
 
   // Polling every 3 seconds while popup is open (Lab 07 requirement)
   useEffect(() => {
-    if (!isOpen || !user) return;
+    if (!isOpen) return;
 
     const interval = setInterval(() => {
       loadMessages(true);
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [isOpen, user]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen && isNearBottom()) {
@@ -144,7 +141,7 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const content = inputValue.trim();
-    if (!content || sending || !user) return;
+    if (!content || sending) return;
 
     // 1. Kiểm tra Cooldown Timer
     if (cooldown > 0) {
@@ -270,27 +267,7 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
 
           {/* Body / Messages */}
           <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-cream-50/60">
-            {!user ? (
-              // Case: Guest not logged in
-              <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-cream-200/80 text-ink-600 flex items-center justify-center">
-                  <UserIcon size={26} />
-                </div>
-                <div>
-                  <h5 className="font-bold text-ink-900 text-sm">Đăng nhập để trò chuyện</h5>
-                  <p className="text-xs text-ink-500 mt-1.5 leading-relaxed">
-                    Vui lòng đăng nhập tài khoản CameraHub để được tư vấn sản phẩm và giải đáp đơn hàng trực tiếp với Admin.
-                  </p>
-                </div>
-                <button
-                  onClick={() => openAuthModal()}
-                  className="btn-accent px-5 py-2.5 rounded-2xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-md"
-                >
-                  <span>Đăng Nhập Ngay</span>
-                  <ArrowRight size={14} />
-                </button>
-              </div>
-            ) : loading && messages.length === 0 ? (
+            {loading && messages.length === 0 ? (
               // Loading state
               <div className="h-full flex flex-col items-center justify-center text-center p-6 text-ink-400">
                 <Loader2 size={24} className="animate-spin text-accent-500 mb-2" />
@@ -303,7 +280,9 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
                   <MessageSquare size={22} />
                 </div>
                 <div>
-                  <p className="font-bold text-xs text-ink-800">Xin chào, {user.fullName}!</p>
+                  <p className="font-bold text-xs text-ink-800">
+                    Xin chào {user ? user.fullName : 'quý khách'}!
+                  </p>
                   <p className="text-[11px] text-ink-500 mt-1">
                     Bạn cần tư vấn dòng máy ảnh, ống kính hay theo dõi tình trạng đơn hàng? Hãy gửi tin nhắn bên dưới nhé!
                   </p>
@@ -312,7 +291,9 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
             ) : (
               // Messages list
               messages.map((msg) => {
-                const isMe = String(msg.sender_id) === String(user.id);
+                const isMe = user
+                  ? String(msg.sender_id) === String(user.id)
+                  : msg.sender?.role !== 'admin' && String(msg.sender?.id || '') !== '1';
                 return (
                   <div
                     key={msg.id}
@@ -349,8 +330,19 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
           </div>
 
           {/* Footer / Input */}
-          {user && (
-            <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-cream-200 flex items-center gap-2 shrink-0">
+          {!user && (
+            <div className="px-3.5 py-1.5 bg-cream-100/90 border-t border-cream-200 text-[11px] text-ink-600 flex items-center justify-between shrink-0">
+              <span className="truncate">💡 Đang chat với tư cách Khách vãng lai</span>
+              <button
+                type="button"
+                onClick={() => openAuthModal()}
+                className="text-accent-600 hover:text-accent-700 font-bold underline cursor-pointer shrink-0 ml-2"
+              >
+                Đăng nhập
+              </button>
+            </div>
+          )}
+          <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-cream-200 flex items-center gap-2 shrink-0">
               <div className="relative flex-1">
                 <input
                   ref={inputRef}
@@ -383,7 +375,6 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({ onNavigate }) =>
                 )}
               </button>
             </form>
-          )}
         </div>
       )}
     </div>

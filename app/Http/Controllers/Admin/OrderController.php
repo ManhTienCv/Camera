@@ -14,7 +14,6 @@ use App\Services\GHNService;
 class OrderController extends Controller
 {
     private const TABS = [
-        'all' => ['label' => 'Tất cả', 'color' => 'blue', 'statuses' => []],
         'pending' => ['label' => 'Chờ xử lý', 'color' => 'slate', 'statuses' => ['pending', 'not_shipped', 'processing']],
         'ready' => ['label' => 'Chờ lấy hàng', 'color' => 'cyan', 'statuses' => ['ready_to_pick']],
         'picking' => ['label' => 'Đang lấy hàng', 'color' => 'cyan', 'statuses' => ['picking']],
@@ -44,9 +43,9 @@ class OrderController extends Controller
             });
         }
 
-        // Lọc theo Tab trạng thái Lab 08
-        $activeTab = $request->input('tab', 'all');
-        if ($activeTab !== 'all' && isset(self::TABS[$activeTab])) {
+        // Lọc theo Tab trạng thái Lab 08 (Mặc định: pending)
+        $activeTab = $request->input('tab', 'pending');
+        if (isset(self::TABS[$activeTab])) {
             $statuses = self::TABS[$activeTab]['statuses'];
             $query->whereIn('order_status', $statuses);
         }
@@ -105,11 +104,7 @@ class OrderController extends Controller
         $tabCounts = [];
         $allOrders = Order::all();
         foreach (self::TABS as $key => $tabInfo) {
-            if ($key === 'all') {
-                $tabCounts[$key] = $allOrders->count();
-            } else {
-                $tabCounts[$key] = $allOrders->whereIn('order_status', $tabInfo['statuses'])->count();
-            }
+            $tabCounts[$key] = $allOrders->whereIn('order_status', $tabInfo['statuses'])->count();
         }
 
         $response = [
