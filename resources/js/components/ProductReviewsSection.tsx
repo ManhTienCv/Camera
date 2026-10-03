@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Sparkles,
   ShieldCheck,
+  Lock,
 } from 'lucide-react';
 import type { Product, Review } from '../types';
 import { api } from '../lib/api';
@@ -31,7 +32,7 @@ const RATING_LABELS: Record<number, string> = {
 };
 
 export function ProductReviewsSection({ product }: Props) {
-  const { user } = useAuth();
+  const { user, openAuthModal } = useAuth();
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -128,7 +129,8 @@ export function ProductReviewsSection({ product }: Props) {
     }
 
     if (!user) {
-      toast.warning('Vui lòng đăng nhập để gửi đánh giá sản phẩm.');
+      toast.warning('Vui lòng đăng nhập tài khoản để gửi đánh giá sản phẩm.');
+      openAuthModal('login');
       return;
     }
 
@@ -237,17 +239,31 @@ export function ProductReviewsSection({ product }: Props) {
 
           {/* Right: Write Review Button */}
           <div className="lg:col-span-3 flex justify-center lg:justify-end">
-            <button
-              onClick={() => setIsWriting(!isWriting)}
-              className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-xs shadow-sm transition-all cursor-pointer active:scale-95 ${
-                isWriting
-                  ? 'bg-ink-800 dark:bg-ink-700 hover:bg-ink-900 dark:hover:bg-ink-600 text-white border border-transparent dark:border-ink-600'
-                  : 'bg-accent-500 hover:bg-accent-600 text-white shadow-accent-500/20'
-              }`}
-            >
-              <MessageSquare size={16} />
-              <span>{isWriting ? 'Đóng Form Đánh Giá' : 'Viết Đánh Giá Của Bạn'}</span>
-            </button>
+            {!user ? (
+              <button
+                onClick={() => {
+                  toast.warning('Vui lòng đăng nhập tài khoản để viết đánh giá sản phẩm.');
+                  openAuthModal('login');
+                }}
+                className="flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-xs shadow-sm transition-all cursor-pointer active:scale-95 bg-cream-100 hover:bg-cream-200 dark:bg-ink-800 dark:hover:bg-ink-700 text-ink-700 dark:text-cream-200 border border-cream-300 dark:border-ink-700"
+                title="Khóa đánh giá: Chỉ tài khoản đã đăng nhập và mua hàng mới được đánh giá"
+              >
+                <Lock size={16} className="text-amber-600 dark:text-amber-400" />
+                <span>Đăng nhập để đánh giá</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsWriting(!isWriting)}
+                className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-xs shadow-sm transition-all cursor-pointer active:scale-95 ${
+                  isWriting
+                    ? 'bg-ink-800 dark:bg-ink-700 hover:bg-ink-900 dark:hover:bg-ink-600 text-white border border-transparent dark:border-ink-600'
+                    : 'bg-accent-500 hover:bg-accent-600 text-white shadow-accent-500/20'
+                }`}
+              >
+                <MessageSquare size={16} />
+                <span>{isWriting ? 'Đóng Form Đánh Giá' : 'Viết Đánh Giá Của Bạn'}</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -303,24 +319,23 @@ export function ProductReviewsSection({ product }: Props) {
               </div>
             </div>
 
-            {/* Name and Variant Grid */}
+            {/* Account Info and Variant Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-ink-700 mb-1.5">
-                  Họ và tên của bạn <span className="text-rose-500">*</span>
+                <label className="block text-xs font-bold text-ink-700 dark:text-cream-300 mb-1.5 flex items-center gap-1.5">
+                  <ShieldCheck size={14} className="text-emerald-500" />
+                  <span>Tài khoản đánh giá:</span>
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  placeholder="Ví dụ: Nguyễn Văn An"
-                  className="input-field"
-                />
+                <div className="px-4 py-2.5 bg-cream-100/70 dark:bg-ink-800 border border-cream-200 dark:border-ink-700 rounded-2xl text-xs font-bold text-ink-900 dark:text-cream-100 flex items-center justify-between">
+                  <span>{user?.fullName || user?.email || 'Tài khoản CameraHub'}</span>
+                  <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                    Đã xác thực
+                  </span>
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-ink-700 mb-1.5">
+                <label className="block text-xs font-bold text-ink-700 dark:text-cream-300 mb-1.5">
                   Phân loại đã mua:
                 </label>
                 <input
@@ -533,6 +548,11 @@ export function ProductReviewsSection({ product }: Props) {
                     {/* Helpful Button */}
                     <button
                       onClick={async () => {
+                        if (!user) {
+                          toast.warning('Vui lòng đăng nhập tài khoản để bình chọn đánh giá hữu ích.');
+                          openAuthModal('login');
+                          return;
+                        }
                         if (isVoted) {
                           toast.info('Bạn đã bình chọn hữu ích cho đánh giá này rồi.');
                           return;

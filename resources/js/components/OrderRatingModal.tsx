@@ -50,7 +50,7 @@ const RATING_FEEDBACK: Record<number, string> = {
 };
 
 export function OrderRatingModal({ isOpen = true, onClose, order, orderCode, items, onSubmitted, onSuccess }: Props) {
-  const { user } = useAuth();
+  const { user, openAuthModal } = useAuth();
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -117,6 +117,11 @@ export function OrderRatingModal({ isOpen = true, onClose, order, orderCode, ite
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      toast.warning('Vui lòng đăng nhập tài khoản để đánh giá đơn hàng.');
+      openAuthModal('login');
+      return;
+    }
     if (!comment.trim()) {
       toast.warning('Vui lòng nhập nhận xét chi tiết của bạn.');
       return;
