@@ -32,16 +32,25 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const showToast = useCallback(
     (type: ToastType, message: string, title?: string, duration = 3000) => {
-      const id = Math.random().toString(36).substring(2, 9);
-      const newToast: Toast = { id, type, title, message, duration };
+      setToasts((prev) => {
+        // Chống spam: Không tạo toast mới nếu thông điệp giống hệt đang hiển thị
+        if (prev.some((t) => t.message === message)) {
+          return prev;
+        }
 
-      setToasts((prev) => [...prev, newToast]);
+        const id = Math.random().toString(36).substring(2, 9);
+        const newToast: Toast = { id, type, title, message, duration };
 
-      if (duration > 0) {
-        setTimeout(() => {
-          removeToast(id);
-        }, duration);
-      }
+        if (duration > 0) {
+          setTimeout(() => {
+            removeToast(id);
+          }, duration);
+        }
+
+        // Tối đa 3 toast cùng lúc để không làm vỡ giao diện
+        const updated = [...prev, newToast];
+        return updated.length > 3 ? updated.slice(-3) : updated;
+      });
     },
     [removeToast]
   );

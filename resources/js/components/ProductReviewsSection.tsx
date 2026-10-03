@@ -13,6 +13,8 @@ import {
   Sparkles,
   ShieldCheck,
   Lock,
+  Loader2,
+  Clock,
 } from 'lucide-react';
 import type { Product, Review } from '../types';
 import { api } from '../lib/api';
@@ -63,6 +65,56 @@ export function ProductReviewsSection({ product }: Props) {
   const [comment, setComment] = useState('');
   const [attachedImages, setAttachedImages] = useState<string[]>([]);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
+  // Thuật toán Throttling & Cooldown Timer (Chống spam click khi chưa login)
+  const [cooldown, setCooldown] = useState(0);
+  const unauthClicksRef = useRef<number[]>([]);
+
+  // Tự động đếm ngược Cooldown mỗi giây
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
+  // Đảm bảo không bao giờ mở form đánh giá khi chưa đăng nhập
+  useEffect(() => {
+    if (!user && isWriting) {
+      setIsWriting(false);
+    }
+  }, [user, isWriting]);
+
+  // Thuật toán Sliding Window Rate Limiting: Phạt tạm dừng nếu bấm liên tục khi chưa login
+  const checkRateLimitOrCooldown = (): boolean => {
+    if (cooldown > 0) {
+      toast.warning(`Hệ thống đang tạm dừng! Vui lòng thử lại sau ${cooldown} giây.`);
+      return false;
+    }
+
+    const now = Date.now();
+    // Giữ lại các lần bấm trong cửa sổ 5 giây gần nhất
+    unauthClicksRef.current = unauthClicksRef.current.filter((t) => now - t < 5000);
+    unauthClicksRef.current.push(now);
+
+    // Nếu bấm liên tiếp 3 lần trở lên trong 5s: Phạt tạm dừng 6 giây
+    if (unauthClicksRef.current.length >= 3) {
+      setCooldown(6);
+      unauthClicksRef.current = [];
+      toast.warning('Bạn thao tác quá nhiều lần! Hệ thống tạm dừng 6 giây, vui lòng thử lại sau.');
+      openAuthModal('login');
+      return false;
+    }
+
+    return true;
+  };
 
   const loadData = async () => {
     try {
@@ -129,6 +181,7 @@ export function ProductReviewsSection({ product }: Props) {
     }
 
     if (!user) {
+      if (!checkRateLimitOrCooldown()) return;
       toast.warning('Vui lòng đăng nhập tài khoản để gửi đánh giá sản phẩm.');
       openAuthModal('login');
       return;
@@ -237,39 +290,44 @@ export function ProductReviewsSection({ product }: Props) {
             })}
           </div>
 
-          {/* Right: Write Review Button */}
+          {/* Right: Write Review Button (Ảnh 2) */}
           <div className="lg:col-span-3 flex justify-center lg:justify-end">
-            {!user ? (
-              <button
-                onClick={() => {
+            <button
+              onClick={() => {
+                if (!user) {
+                  // Thuật toán kiểm soát tần suất & phạt tạm dừng
+                  if (!checkRateLimitOrCooldown()) return;
                   toast.warning('Vui lòng đăng nhập tài khoản để viết đánh giá sản phẩm.');
                   openAuthModal('login');
-                }}
-                className="flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-xs shadow-sm transition-all cursor-pointer active:scale-95 bg-cream-100 hover:bg-cream-200 dark:bg-ink-800 dark:hover:bg-ink-700 text-ink-700 dark:text-cream-200 border border-cream-300 dark:border-ink-700"
-                title="Khóa đánh giá: Chỉ tài khoản đã đăng nhập và mua hàng mới được đánh giá"
-              >
-                <Lock size={16} className="text-amber-600 dark:text-amber-400" />
-                <span>Đăng nhập để đánh giá</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => setIsWriting(!isWriting)}
-                className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-xs shadow-sm transition-all cursor-pointer active:scale-95 ${
-                  isWriting
-                    ? 'bg-ink-800 dark:bg-ink-700 hover:bg-ink-900 dark:hover:bg-ink-600 text-white border border-transparent dark:border-ink-600'
-                    : 'bg-accent-500 hover:bg-accent-600 text-white shadow-accent-500/20'
-                }`}
-              >
-                <MessageSquare size={16} />
-                <span>{isWriting ? 'Đóng Form Đánh Giá' : 'Viết Đánh Giá Của Bạn'}</span>
-              </button>
-            )}
+                  return;
+                }
+                setIsWriting(!isWriting);
+              }}
+              disabled={cooldown > 0}
+              className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-xs shadow-sm transition-all cursor-pointer active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed ${
+                isWriting && user
+                  ? 'bg-ink-800 dark:bg-ink-700 hover:bg-ink-900 dark:hover:bg-ink-600 text-white border border-transparent dark:border-ink-600'
+                  : 'bg-accent-500 hover:bg-accent-600 text-white shadow-accent-500/20'
+              }`}
+            >
+              {cooldown > 0 ? (
+                <>
+                  <Clock size={16} className="animate-spin text-white" />
+                  <span>Tạm dừng ({cooldown}s)</span>
+                </>
+              ) : (
+                <>
+                  <MessageSquare size={16} />
+                  <span>{isWriting && user ? 'Đóng Form Đánh Giá' : 'Viết Đánh Giá Của Bạn'}</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
 
-      {/* 2. Inline Review Form (Matches Image 3 & 4) */}
-      {isWriting && (
+      {/* 2. Inline Review Form: CHỈ HIỂN THỊ KHI ĐÃ ĐĂNG NHẬP */}
+      {isWriting && user && (
         <div className="bg-white dark:bg-ink-900 border-2 border-accent-500/30 rounded-3xl p-6 sm:p-8 shadow-lg animate-scale-up space-y-5">
           <div className="border-b border-cream-100 dark:border-ink-800 pb-4">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-accent-50 dark:bg-accent-950/60 text-accent-700 dark:text-accent-300 rounded-full text-xs font-bold mb-1.5 border border-accent-200 dark:border-accent-800">

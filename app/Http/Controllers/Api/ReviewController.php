@@ -107,6 +107,18 @@ class ReviewController extends Controller
      */
     public function store(Request $request, $productId)
     {
+        // 0. Thuật toán kiểm soát tần suất gửi đánh giá (Rate Limiting / Anti-Spam)
+        $clientIp = $request->ip() ?: 'unknown';
+        $rateKey = 'review_rate_limit_' . md5($clientIp);
+        $attempts = (int) Cache::get($rateKey, 0) + 1;
+        Cache::put($rateKey, $attempts, now()->addSeconds(8));
+
+        if ($attempts > 3) {
+            return response()->json([
+                'message' => 'Bạn thao tác quá nhanh! Hệ thống tạm dừng vài giây, vui lòng thử lại sau.',
+            ], 429);
+        }
+
         $user = $this->resolveUser($request);
         if (!$user) {
             return response()->json([
