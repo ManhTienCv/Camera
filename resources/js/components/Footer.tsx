@@ -99,9 +99,7 @@ export function Footer({ onNavigate, categories }: Props) {
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate({ name: 'home' })} className="hover:text-accent-400 transition-colors">
-                  Chính sách 1 đổi 1 trong 30 ngày
-                </button>
+
               </li>
             </ul>
           </div>
