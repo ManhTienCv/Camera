@@ -608,23 +608,16 @@ export function CheckoutPage({ onNavigate }: Props) {
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-bold text-sm text-ink-900 dark:text-cream-50">{carrier.name}</p>
                           <span className="px-2.5 py-0.5 bg-orange-100 dark:bg-orange-950/80 text-orange-700 dark:text-orange-300 text-[10px] font-bold rounded-full border border-orange-200 dark:border-orange-800">
-                            {carrier.badgeText || 'Đối tác chính thức'}
-                          </span>
-                          <span className="text-2xs px-2 py-0.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 rounded-full font-semibold border border-emerald-200 dark:border-emerald-800">
-                            ✓ Đồng bộ vận đơn tự động
+                            {carrier.estimatedTime}
                           </span>
                         </div>
-                        <p className="text-xs text-ink-500 dark:text-ink-400 mt-1 max-w-xl">{carrier.tagline}</p>
-                        <div className="flex items-center gap-3 text-[11px] text-ink-500 dark:text-ink-400 font-medium mt-2 flex-wrap">
-                          <span className="flex items-center gap-1 text-accent-600 dark:text-accent-400 font-semibold">
-                            <Clock size={12} />
-                            Thời gian giao: {carrier.estimatedTime}
-                          </span>
+                        <p className="text-xs text-ink-500 dark:text-ink-400 mt-1 flex items-center gap-2 flex-wrap">
+                          <span>Giao nhanh toàn quốc</span>
                           <span>•</span>
                           <span>Đóng hộp chống sốc chuyên dụng máy ảnh</span>
                           <span>•</span>
                           <span>Bảo hiểm 100% bưu kiện</span>
-                        </div>
+                        </p>
                       </div>
                     </div>
 

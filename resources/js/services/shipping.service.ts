@@ -17,11 +17,11 @@ export const AVAILABLE_CARRIERS: ShippingCarrier[] = [
     id: 'ghn',
     name: 'Giao Hàng Nhanh (GHN Express)',
     code: 'GHN',
-    tagline: 'Đối tác vận chuyển chính thức — Giao toàn quốc 1-3 ngày, đóng gói chống sốc và bảo hiểm 100% giá trị thiết bị',
+    tagline: 'Giao nhanh toàn quốc • Đóng hộp chống sốc chuyên dụng máy ảnh • Bảo hiểm 100% bưu kiện',
     baseFee: 30000,
     estimatedTime: '1 - 3 ngày',
     logoColor: 'from-orange-500 to-amber-600',
-    badgeText: 'Đối tác chính thức',
+    badgeText: '1 - 3 ngày',
   },
 ];
 
