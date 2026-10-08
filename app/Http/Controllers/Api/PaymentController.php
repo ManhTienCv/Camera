@@ -208,7 +208,7 @@ class PaymentController extends Controller
             $order->save();
 
             // Tự động khởi tạo vận đơn GHN và gửi Email bất đồng bộ sau khi phản hồi thành công (Lab 06 Mục 3)
-            defer(function () use ($order) {
+            $dispatchBackgroundJobs = function () use ($order) {
                 if (empty($order->tracking_code)) {
                     try {
                         GHNService::createShippingOrder($order);
@@ -222,7 +222,13 @@ class PaymentController extends Controller
                 } catch (\Throwable $e) {
                     Log::error('Send order confirmation email on MoMo IPN error: ' . $e->getMessage());
                 }
-            });
+            };
+
+            if (function_exists('defer')) {
+                defer($dispatchBackgroundJobs);
+            } else {
+                $dispatchBackgroundJobs();
+            }
 
             Log::info("MoMo Order #{$order->id} ({$order->order_code}) paid successfully with verified amount {$ipnAmount} VND!");
         } else {
@@ -296,7 +302,7 @@ class PaymentController extends Controller
             $order->save();
 
             // Xử lý GHN và gửi Email xác nhận ngầm để chuyển hướng người dùng ngay lập tức (< 30ms)
-            defer(function () use ($order) {
+            $dispatchCallbackJobs = function () use ($order) {
                 if (empty($order->tracking_code)) {
                     try {
                         GHNService::createShippingOrder($order);
@@ -310,7 +316,13 @@ class PaymentController extends Controller
                 } catch (\Throwable $e) {
                     Log::error('Send order confirmation email on MoMo callback error: ' . $e->getMessage());
                 }
-            });
+            };
+
+            if (function_exists('defer')) {
+                defer($dispatchCallbackJobs);
+            } else {
+                $dispatchCallbackJobs();
+            }
 
             return redirect($frontendUrl ? "{$frontendUrl}/order-success?id={$order->id}&momo=1" : "/order-success?id={$order->id}&momo=1");
         }
