@@ -24,16 +24,9 @@ class MomoService
         $rawAmount = (int) round($order->total_amount);
         $isSandbox = str_contains($endpoint, 'test-payment.momo.vn');
 
-        // MoMo Sandbox (test-payment.momo.vn):
-        // Thẻ ATM test ngân hàng Napas/SaigonBank (9704000000000018) trên Sandbox có hạn mức tài khoản mô phỏng thấp.
-        // Khi thanh toán số tiền lớn (ví dụ > 1.000.000 VND hay 7.440.000 VND), MoMo trả về lỗi 1002:
-        // "Transaction rejected by the issuers of the payment accounts."
-        // Vì vậy trong môi trường Sandbox, ta tự động chuẩn hóa số tiền gửi sang MoMo thành 50.000 VND
-        // để đảm bảo mọi đơn hàng (dù giá trị cao bao nhiêu) đều test thanh toán thành công 100%,
-        // trong khi toàn bộ dữ liệu đơn hàng, giỏ hàng, hóa đơn trong hệ thống vẫn lưu giá trị thực.
-        if ($isSandbox) {
-            $amount = '50000';
-        } elseif ($rawAmount > 50000000) {
+        // Gửi số tiền gốc thực tế của đơn hàng (giá trị sản phẩm) sang cổng thanh toán MoMo
+        // MoMo quy định giới hạn giao dịch từ 1.000 đến 50.000.000 VND
+        if ($rawAmount > 50000000) {
             $amount = '50000000';
         } elseif ($rawAmount < 1000) {
             $amount = '1000';
