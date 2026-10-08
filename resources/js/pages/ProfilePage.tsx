@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   ChevronRight,
   Package,
+  Camera,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -146,11 +147,25 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ initialTab = 'profile'
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6 animate-fade-in text-ink-800 dark:text-cream-100">
       {/* 1. TOP COVER & PROFILE HERO CARD */}
       <div className="bg-white dark:bg-ink-900 rounded-3xl border border-cream-200 dark:border-ink-800 shadow-sm overflow-hidden transition-colors">
-        {/* Cover Banner */}
-        <div className="h-40 sm:h-52 w-full bg-gradient-to-r from-ink-950 via-[#1f2421] to-ink-900 relative overflow-hidden flex items-end justify-end p-6">
-          <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#e85d1b_1px,transparent_1px)] [background-size:20px_20px]" />
-          <div className="absolute -top-16 -right-16 w-64 h-64 bg-accent-500/10 rounded-full blur-3xl pointer-events-none" />
-          
+        {/* Cover Banner - Studio Amber & Warm Accent Gradient */}
+        <div className="h-44 sm:h-56 w-full bg-gradient-to-r from-[#2c1307] via-[#7c2d12] to-[#c2410c] dark:from-[#1c0d05] dark:via-[#451a0b] dark:to-[#832e0c] relative overflow-hidden flex items-end justify-end p-6 select-none">
+          {/* Subtle vignette and texture */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-white/10 pointer-events-none" />
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#fed7aa_1.5px,transparent_1.5px)] [background-size:22px_22px] pointer-events-none" />
+
+          {/* Warm Amber & Orange Studio Light Flares */}
+          <div className="absolute -top-16 -right-16 w-80 h-80 bg-amber-400/35 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-10 left-1/4 w-72 h-72 bg-accent-500/30 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute top-1/4 left-10 w-44 h-44 bg-amber-600/20 rounded-full blur-xl pointer-events-none" />
+
+          {/* Luxury Lens / Camera Studio Watermark */}
+          <div className="absolute right-6 -bottom-6 text-white/10 dark:text-white/8 pointer-events-none">
+            <Camera size={140} strokeWidth={1} />
+          </div>
+
+          {/* Aperture Focus Rings Overlay */}
+          <div className="absolute -right-12 -top-12 w-64 h-64 rounded-full border border-white/10 pointer-events-none" />
+          <div className="absolute -right-20 -top-20 w-80 h-80 rounded-full border border-white/5 pointer-events-none" />
         </div>
 
         {/* Profile Info Bar */}
