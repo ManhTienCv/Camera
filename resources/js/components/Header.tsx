@@ -12,9 +12,11 @@ import {
   ArrowRight,
   ArrowLeftRight,
   ShieldCheck,
+  Heart,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useWishlist } from '../context/WishlistContext';
 import { useToast } from '../context/ToastContext';
 import { api } from '../lib/api';
 import { formatCurrency } from '../lib/utils';
@@ -29,6 +31,7 @@ interface Props {
 
 export function Header({ onNavigate, currentPage, categories }: Props) {
   const { itemCount } = useCart();
+  const { wishlistIds } = useWishlist();
   const { user, openAuthModal, logout } = useAuth();
   const toast = useToast();
 
@@ -312,6 +315,24 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
                       >
                         <UserIcon size={16} className="text-ink-400 dark:text-ink-500" />
                         <span>Hồ sơ cá nhân</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          onNavigate({ name: 'profile', tab: 'wishlist' });
+                        }}
+                        className="w-full px-3.5 py-2.5 rounded-xl hover:bg-cream-50 dark:hover:bg-ink-800/80 flex items-center justify-between text-xs font-bold text-ink-700 dark:text-ink-200 hover:text-rose-600 dark:hover:text-rose-400 transition-colors text-left cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Heart size={16} className={`text-rose-500 ${wishlistIds.length > 0 ? 'fill-rose-500' : ''}`} />
+                          <span>Sản phẩm yêu thích</span>
+                        </div>
+                        {wishlistIds.length > 0 && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400">
+                            {wishlistIds.length}
+                          </span>
+                        )}
                       </button>
                     </div>
 

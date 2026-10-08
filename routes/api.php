@@ -75,10 +75,12 @@ Route::prefix('v1')->group(function () {
     Route::post('/orders/{id}/cancel', [OrderController::class, 'cancelOrder']);
     Route::post('/orders/{id}/confirm-payment', [OrderController::class, 'confirmPayment']);
 
-    // 7. MoMo Payment Gateway
+    // 7. Payment Gateways (MoMo & VietQR Bank Webhook)
     Route::post('/payment/momo/create', [\App\Http\Controllers\Api\PaymentController::class, 'createMomoPayment']);
     Route::post('/payment/momo/ipn', [\App\Http\Controllers\Api\PaymentController::class, 'handleMomoIpn']);
     Route::post('/orders/{id}/pay/momo', [\App\Http\Controllers\Api\PaymentController::class, 'payAgain']);
+    Route::post('/payment/vietqr/webhook', [\App\Http\Controllers\Api\PaymentController::class, 'handleVietqrWebhook']);
+    Route::get('/orders/{id}/payment-status', [\App\Http\Controllers\Api\PaymentController::class, 'checkPaymentStatus']);
 
     // 8. Giao Hàng Nhanh (GHN) Express
     Route::get('/shipping/ghn/provinces', [\App\Http\Controllers\Api\ShippingController::class, 'getProvinces']);

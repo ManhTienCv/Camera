@@ -12,8 +12,10 @@ import {
   ChevronRight,
   Package,
   Camera,
+  Heart,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useWishlist } from '../context/WishlistContext';
 import { useToast } from '../context/ToastContext';
 import { api } from '../lib/api';
 import type { Page, Address, Order } from '../types';
@@ -21,19 +23,21 @@ import { AddressModal } from '../components/AddressModal';
 import { ProfileInfoTab } from '../components/profile/ProfileInfoTab';
 import { ProfileAddressesTab } from '../components/profile/ProfileAddressesTab';
 import { ProfileOrdersTab } from '../components/profile/ProfileOrdersTab';
+import { ProfileWishlistTab } from '../components/profile/ProfileWishlistTab';
 import { ChangePasswordModal } from '../components/profile/ChangePasswordModal';
 import { ChangeEmailModal } from '../components/profile/ChangeEmailModal';
 
 interface ProfilePageProps {
-  initialTab?: 'profile' | 'addresses' | 'orders';
+  initialTab?: 'profile' | 'addresses' | 'orders' | 'wishlist';
   onNavigate: (page: Page) => void;
 }
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ initialTab = 'profile', onNavigate }) => {
   const { user, openAuthModal, logout } = useAuth();
+  const { wishlistIds } = useWishlist();
   const toast = useToast();
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'addresses' | 'orders'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'profile' | 'addresses' | 'orders' | 'wishlist'>(initialTab);
 
   // Address State
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -272,20 +276,28 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ initialTab = 'profile'
           </div>
         </div>
 
-        {/* Card 3: Bảo Mật Tài Khoản */}
-        <div className="bg-white dark:bg-ink-900 rounded-3xl border border-cream-200 dark:border-ink-800 p-5 flex items-center gap-4 shadow-2xs">
-          <div className="w-13 h-13 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800 flex items-center justify-center shadow-2xs shrink-0">
-            <ShieldCheck size={24} />
+        {/* Card 3: Sản Phẩm Yêu Thích */}
+        <div
+          onClick={() => setActiveTab('wishlist')}
+          className="bg-white dark:bg-ink-900 rounded-3xl border border-cream-200 dark:border-ink-800 p-5 flex items-center gap-4 hover:border-rose-400 hover:shadow-md transition-all cursor-pointer group shadow-2xs"
+        >
+          <div className="w-13 h-13 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-800 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform shrink-0">
+            <Heart size={24} className={wishlistIds.length > 0 ? 'fill-rose-500 text-rose-500' : ''} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-bold text-ink-400 dark:text-ink-500 uppercase tracking-wider">Bảo Mật Tài Khoản</p>
-            <h4 className="text-lg font-display font-bold text-emerald-600 dark:text-emerald-400">An Toàn 100%</h4>
-            <p className="text-xs text-ink-500 dark:text-ink-400 truncate mt-0.5">Xác thực OTP & Sanctum Bearer</p>
+            <p className="text-[11px] font-bold text-ink-400 dark:text-ink-500 uppercase tracking-wider">Sản Phẩm Yêu Thích</p>
+            <h4 className="text-lg font-display font-bold text-ink-900 dark:text-cream-50 group-hover:text-rose-600 transition-colors">
+              {wishlistIds.length} Đã Lưu
+            </h4>
+            <p className="text-xs text-rose-600 dark:text-rose-400 font-bold flex items-center gap-0.5 mt-0.5">
+              <span>Xem danh sách yêu thích</span>
+              <ChevronRight size={13} />
+            </p>
           </div>
         </div>
       </div>
 
-      {/* 3. THREE NAVIGATION TABS */}
+      {/* 3. FOUR NAVIGATION TABS */}
       <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 p-1.5 bg-cream-100/70 dark:bg-ink-900/90 border border-cream-200 dark:border-ink-800 rounded-3xl shadow-2xs transition-colors">
         <button
           type="button"
@@ -297,7 +309,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ initialTab = 'profile'
           }`}
         >
           <UserIcon size={16} />
-          <span>Thông Tin Cá Nhân & Bảo Mật</span>
+          <span>Thông Tin Cá Nhân</span>
         </button>
 
         <button
@@ -310,7 +322,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ initialTab = 'profile'
           }`}
         >
           <MapPin size={16} />
-          <span>Sổ Địa Chỉ Giao Hàng</span>
+          <span>Sổ Địa Chỉ</span>
           <span
             className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
               activeTab === 'addresses'
@@ -332,7 +344,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ initialTab = 'profile'
           }`}
         >
           <Package size={16} />
-          <span>Lịch Sử Đơn Hàng</span>
+          <span>Lịch Sử Đơn</span>
           <span
             className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
               activeTab === 'orders'
@@ -341,6 +353,28 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ initialTab = 'profile'
             }`}
           >
             {orders.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('wishlist')}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            activeTab === 'wishlist'
+              ? 'bg-accent-600 text-white shadow-md'
+              : 'text-ink-700 dark:text-cream-200 hover:text-ink-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-ink-800'
+          }`}
+        >
+          <Heart size={16} className={wishlistIds.length > 0 ? 'fill-current' : ''} />
+          <span>Yêu Thích</span>
+          <span
+            className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+              activeTab === 'wishlist'
+                ? 'bg-white/20 text-white'
+                : 'bg-cream-200 dark:bg-ink-800 text-ink-700 dark:text-cream-300'
+            }`}
+          >
+            {wishlistIds.length}
           </span>
         </button>
       </div>
@@ -370,6 +404,12 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ initialTab = 'profile'
         <ProfileOrdersTab
           orders={orders}
           loadingOrders={loadingOrders}
+          onNavigate={onNavigate}
+        />
+      )}
+
+      {activeTab === 'wishlist' && (
+        <ProfileWishlistTab
           onNavigate={onNavigate}
         />
       )}

@@ -342,7 +342,7 @@ export type Page =
   | { name: 'order-success'; orderId: string }
   | { name: 'search'; query: string }
   | { name: 'orders' }
-  | { name: 'profile'; tab?: 'profile' | 'addresses' | 'orders' }
+  | { name: 'profile'; tab?: 'profile' | 'addresses' | 'orders' | 'wishlist' }
   | { name: 'compare'; ids?: string[] }
   | { name: 'warranty' }
   | { name: 'admin'; tab?: 'dashboard' | 'products' | 'categories' | 'orders' | 'vouchers' | 'reviews' | 'settings' | 'reports' | 'finance' | 'users' | 'chat' };

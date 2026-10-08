@@ -5,6 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CameraHub - Nền Tảng Thương Mại Điện Tử Máy Ảnh & Thiết Bị Nhiếp Ảnh</title>
     <meta name="description" content="Chuyên máy ảnh Mirrorless, DSLR, Flycam DJI, Ống kính Sony Canon Nikon Fujifilm chính hãng giá tốt nhất.">
+    
+    <!-- SEO Canonical & Social Open Graph Tags -->
+    <link rel="canonical" href="{{ url()->current() }}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:site_name" content="CameraHub">
+    <meta property="og:title" content="CameraHub - Nền Tảng Thương Mại Điện Tử Máy Ảnh & Thiết Bị Nhiếp Ảnh">
+    <meta property="og:description" content="Chuyên máy ảnh Mirrorless, DSLR, Flycam DJI, Ống kính Sony Canon Nikon Fujifilm chính hãng giá tốt nhất.">
+    <meta property="og:image" content="{{ asset('favicon.svg') }}">
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ url()->current() }}">
+    <meta name="twitter:title" content="CameraHub - Nền Tảng Thương Mại Điện Tử Máy Ảnh & Thiết Bị Nhiếp Ảnh">
+    <meta name="twitter:description" content="Chuyên máy ảnh Mirrorless, DSLR, Flycam DJI, Ống kính Sony Canon Nikon Fujifilm chính hãng giá tốt nhất.">
+    <meta name="twitter:image" content="{{ asset('favicon.svg') }}">
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png?v=2">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=2">

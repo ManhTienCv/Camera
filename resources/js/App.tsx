@@ -26,22 +26,25 @@ import { OrderSuccessPage } from './pages/OrderSuccessPage';
 import { SearchPage } from './pages/SearchPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { OrdersPage } from './pages/OrdersPage';
-import { ComparePage } from './pages/ComparePage';
-import { WarrantyLookupPage } from './pages/WarrantyLookupPage';
 
-
-// Chỉ tải lười (lazy) đối với trang Quản trị (Admin) vì dung lượng lớn và chỉ dành cho Admin
+// Tải lười (lazy-loading) các trang tiện ích phụ và Quản trị để tối ưu kích thước bundle chính
 const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })));
+const ComparePage = lazy(() => import('./pages/ComparePage').then((m) => ({ default: m.ComparePage })));
+const WarrantyLookupPage = lazy(() => import('./pages/WarrantyLookupPage').then((m) => ({ default: m.WarrantyLookupPage })));
 
-// Loading Spinner tinh gọn chỉ dành cho lúc nạp trang Admin
-const PageFallback: React.FC = () => (
+interface PageFallbackProps {
+  message?: string;
+}
+
+// Loading Spinner chuẩn Clean Code dùng chung cho các màn hình lazy-load
+const PageFallback: React.FC<PageFallbackProps> = ({ message = 'Đang tải dữ liệu...' }) => (
   <div className="flex-1 min-h-[55vh] flex flex-col items-center justify-center p-8 space-y-3">
     <div className="relative w-9 h-9">
       <div className="absolute inset-0 rounded-full border-2 border-cream-200 dark:border-ink-800" />
       <div className="absolute inset-0 rounded-full border-2 border-accent-500 border-t-transparent animate-spin" />
     </div>
     <span className="text-xs font-semibold text-ink-400 dark:text-cream-400 animate-pulse tracking-wide">
-      Đang tải trang quản trị...
+      {message}
     </span>
   </div>
 );
@@ -324,10 +327,14 @@ export default function App() {
                             <ProfilePage initialTab={page.tab || 'profile'} onNavigate={navigate} />
                           )}
                           {page.name === 'compare' && (
-                            <ComparePage onNavigate={navigate} initialProductIds={page.ids} />
+                            <Suspense fallback={<PageFallback message="Đang tải dữ liệu so sánh máy ảnh..." />}>
+                              <ComparePage onNavigate={navigate} initialProductIds={page.ids} />
+                            </Suspense>
                           )}
                           {page.name === 'warranty' && (
-                            <WarrantyLookupPage onNavigate={navigate} />
+                            <Suspense fallback={<PageFallback message="Đang tải hệ thống tra cứu bảo hành..." />}>
+                              <WarrantyLookupPage onNavigate={navigate} />
+                            </Suspense>
                           )}
                         </motion.div>
                       </AnimatePresence>

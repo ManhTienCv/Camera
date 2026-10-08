@@ -338,4 +338,160 @@ class PaymentController extends Controller
 
         return redirect($frontendUrl ? "{$frontendUrl}/orders?momo_failed=1&order_id={$order->id}" : "/orders?momo_failed=1&order_id={$order->id}");
     }
+
+    /**
+     * 5. Webhook tiếp nhận thanh toán tự động VietQR (Tương thích Casso / SePay / VietQR Bank IPN)
+     */
+    public function handleVietqrWebhook(Request $request)
+    {
+        Log::info('VietQR Webhook Received:', $request->all());
+
+        // Hỗ trợ cả mảng các giao dịch (chuẩn Casso) và bản ghi đơn lẻ (chuẩn SePay / custom IPN)
+        $rawTransactions = $request->input('data') ?: [$request->all()];
+        $processedCount = 0;
+        $results = [];
+
+        foreach ($rawTransactions as $tx) {
+            if (!is_array($tx)) {
+                continue;
+            }
+
+            // 1. Phân tích nội dung chuyển khoản và số tiền giao dịch
+            $content = $tx['content'] ?? $tx['description'] ?? $tx['memo'] ?? '';
+            $amount = (float) ($tx['transferAmount'] ?? $tx['amount'] ?? 0);
+            $refCode = (string) ($tx['referenceCode'] ?? $tx['tid'] ?? $tx['id'] ?? ('VQR_' . time()));
+
+            if (empty($content) || $amount <= 0) {
+                continue;
+            }
+
+            // 2. Tìm mã đơn hàng từ nội dung: CAMERAHUB-{MÃ} hoặc ORD-{MÃ} hoặc ID số
+            $matchedOrderCode = null;
+            if (preg_match('/CAMERAHUB[-\s_]?([A-Za-z0-9_-]+)/i', $content, $matches)) {
+                $matchedOrderCode = trim($matches[1]);
+            } elseif (preg_match('/ORD[-\s_]?([A-Za-z0-9_-]+)/i', $content, $matches)) {
+                $matchedOrderCode = trim($matches[1]);
+            }
+
+            // Tìm đơn hàng theo id hoặc order_code
+            $order = null;
+            if ($matchedOrderCode) {
+                $order = Order::where('order_code', $matchedOrderCode)
+                    ->orWhere('id', $matchedOrderCode)
+                    ->first();
+            }
+
+            if (!$order) {
+                Log::warning("VietQR Webhook: Không tìm thấy đơn hàng cho nội dung chuyển khoản: {$content}");
+                continue;
+            }
+
+            // 3. Idempotency Check: Nếu đơn hàng đã hoàn tất thanh toán trước đó
+            if (in_array($order->payment_status, ['paid', 'completed'])) {
+                Log::info("VietQR Webhook Idempotent: Đơn #{$order->id} ({$order->order_code}) đã được ghi nhận thanh toán trước đó.");
+                $results[] = [
+                    'order_id' => $order->id,
+                    'status' => 'already_paid',
+                ];
+                continue;
+            }
+
+            // 4. Kiểm tra số tiền nhận được so với tổng tiền đơn hàng
+            $expectedAmount = (float) $order->total_amount;
+            if ($amount < $expectedAmount) {
+                Log::warning("VietQR Webhook: Số tiền nhận ({$amount}) thấp hơn tổng giá trị đơn ({$expectedAmount}) cho đơn #{$order->id}");
+                $order->payment_status = 'partial_payment';
+                $order->notes = ($order->notes ? $order->notes . ' | ' : '') . "VietQR nhận thiếu: {$amount}/{$expectedAmount} VND (Ref: {$refCode})";
+                $order->save();
+
+                PaymentTransaction::create([
+                    'order_id' => $order->id,
+                    'gateway' => 'vietqr',
+                    'transaction_id' => $refCode,
+                    'amount' => $amount,
+                    'status' => 'pending',
+                    'result_code' => 1,
+                    'message' => "Chuyển khoản thiếu: {$amount} / {$expectedAmount} VND",
+                    'response_payload' => $tx,
+                ]);
+
+                continue;
+            }
+
+            // 5. Cập nhật thanh toán thành công
+            DB::beginTransaction();
+            try {
+                $order->payment_method = 'vietqr';
+                $order->payment_status = 'paid';
+                if ($order->order_status === 'pending') {
+                    $order->order_status = 'shipping';
+                }
+                $order->save();
+
+                PaymentTransaction::create([
+                    'order_id' => $order->id,
+                    'gateway' => 'vietqr',
+                    'transaction_id' => $refCode,
+                    'amount' => $amount,
+                    'status' => 'completed',
+                    'result_code' => 0,
+                    'message' => 'Thanh toán thành công qua chuyển khoản ngân hàng VietQR',
+                    'paid_at' => now(),
+                    'response_payload' => $tx,
+                ]);
+
+                DB::commit();
+                $processedCount++;
+                $results[] = [
+                    'order_id' => $order->id,
+                    'order_code' => $order->order_code,
+                    'status' => 'success',
+                ];
+
+                // 6. Tự động khởi tạo vận đơn GHN & Gửi Email thông báo
+                $freshOrder = $order->fresh(['items.product']);
+                try {
+                    if (empty($freshOrder->tracking_code)) {
+                        GHNService::createShippingOrder($freshOrder);
+                    }
+                } catch (\Throwable $e) {
+                    Log::error('Auto GHN create after VietQR webhook error: ' . $e->getMessage());
+                }
+
+                try {
+                    EmailService::sendPaymentSuccessNotification($freshOrder);
+                } catch (\Throwable $e) {
+                    Log::error('Send payment success email on VietQR webhook error: ' . $e->getMessage());
+                }
+            } catch (\Throwable $e) {
+                DB::rollBack();
+                Log::error('VietQR Webhook database error: ' . $e->getMessage());
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'processed' => $processedCount,
+            'details' => $results,
+        ]);
+    }
+
+    /**
+     * 6. Kiểm tra trạng thái thanh toán đơn hàng realtime (dùng cho polling ở Frontend)
+     */
+    public function checkPaymentStatus($id)
+    {
+        $order = Order::where('id', $id)
+            ->orWhere('order_code', $id)
+            ->firstOrFail();
+
+        return response()->json([
+            'id' => (string) $order->id,
+            'order_code' => $order->order_code,
+            'payment_status' => $order->payment_status,
+            'payment_method' => $order->payment_method,
+            'is_paid' => in_array($order->payment_status, ['paid', 'completed']),
+            'total_amount' => (float) $order->total_amount,
+        ]);
+    }
 }
