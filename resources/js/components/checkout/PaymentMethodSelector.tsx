@@ -58,7 +58,25 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-bold text-sm text-ink-900 dark:text-cream-50">{method.label}</p>
+                    {method.id === 'momo' && (
+                      <span className="text-[10px] font-semibold bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300 px-2 py-0.5 rounded-full">
+                        Sandbox
+                      </span>
+                    )}
                   </div>
+                  {method.id === 'momo' && isSelected && (
+                    <div className="mt-2.5 text-xs text-ink-600 dark:text-ink-400 bg-pink-50/50 dark:bg-pink-950/30 p-2.5 rounded-xl border border-pink-200/70 dark:border-pink-900/40 space-y-1">
+                      <p className="font-semibold text-pink-700 dark:text-pink-300">
+                        💡 Hướng dẫn test MoMo Sandbox:
+                      </p>
+                      <p className="text-[11px] leading-relaxed">
+                        Tại cổng MoMo, vui lòng chọn tab <strong className="text-pink-700 dark:text-pink-300">Thẻ quốc tế (Visa)</strong> &bull; Số thẻ: <code className="bg-white dark:bg-ink-900 px-1 py-0.5 rounded font-mono font-bold text-pink-600">4111 1111 1111 1111</code> &bull; Hạn: <code className="bg-white dark:bg-ink-900 px-1 py-0.5 rounded font-mono text-pink-600">12/28</code> &bull; CVV: <code className="bg-white dark:bg-ink-900 px-1 py-0.5 rounded font-mono text-pink-600">123</code>.
+                      </p>
+                      <p className="text-[10px] text-amber-700 dark:text-amber-400">
+                        * Tab Thẻ ATM nội địa (Napas) hiện bị máy chủ MoMo Sandbox từ chối (Error 1002 do MoMo đóng cổng liên ngân hàng test).
+                      </p>
+                    </div>
+                  )}
                 </div>
               </label>
             </div>

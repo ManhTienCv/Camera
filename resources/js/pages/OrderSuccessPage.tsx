@@ -265,24 +265,32 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
                 Bấm nút <strong className="text-pink-600 font-bold">"Mở Cổng Thanh Toán MoMo Sandbox"</strong> ở trên, trang MoMo chính thức sẽ mở ra. Bạn chọn 1 trong 2 cách sau để thanh toán:
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
-                <div className="bg-white border border-pink-200 p-3 rounded-xl space-y-1 shadow-2xs">
-                  <p className="font-bold text-pink-950 mb-1.5 flex items-center gap-1">
-                    <span>💳 Cách 1: Thẻ ATM Nội Địa / Napas (Đơn giản nhất)</span>
+                <div className="bg-white border border-pink-200 p-3.5 rounded-xl space-y-1.5 shadow-2xs">
+                  <p className="font-bold text-pink-950 mb-1 flex items-center justify-between">
+                    <span>💳 Cách 1: Thẻ Quốc Tế Visa (Khuyên dùng)</span>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded-full">Thành công 100%</span>
                   </p>
-                  <p>• Ngân hàng: <strong className="font-mono font-bold text-pink-700">NCB</strong></p>
-                  <p>• Số thẻ: <strong className="font-mono font-bold text-pink-700">9704198526191432198</strong></p>
+                  <p className="text-[10px] text-pink-800">
+                    * Trên cổng MoMo, bấm chọn tab <strong>"Thẻ quốc tế"</strong> và điền:
+                  </p>
+                  <p>• Số thẻ: <strong className="font-mono font-bold text-pink-700">4111 1111 1111 1111</strong></p>
                   <p>• Tên chủ thẻ: <strong className="font-mono font-bold text-pink-700">NGUYEN VAN A</strong></p>
-                  <p>• Ngày phát hành: <strong className="font-mono font-bold text-pink-700">07/15</strong></p>
-                  <p>• Mã OTP xác thực: <strong className="font-mono font-bold text-pink-700">000000</strong></p>
+                  <p>• Ngày hết hạn: <strong className="font-mono font-bold text-pink-700">12/28</strong> (hoặc bất kỳ tháng tương lai)</p>
+                  <p>• Mã CVV/CVC: <strong className="font-mono font-bold text-pink-700">123</strong></p>
+                  <p>• OTP (nếu hỏi): <strong className="font-mono font-bold text-pink-700">000000</strong></p>
                 </div>
-                <div className="bg-white border border-pink-200 p-3 rounded-xl space-y-1 shadow-2xs">
-                  <p className="font-bold text-pink-950 mb-1.5 flex items-center gap-1">
+                <div className="bg-white border border-pink-200 p-3.5 rounded-xl space-y-1.5 shadow-2xs">
+                  <p className="font-bold text-pink-950 mb-1 flex items-center justify-between">
                     <span>📱 Cách 2: App MoMo Test / Quét mã QR</span>
+                    <span className="text-[10px] bg-pink-100 text-pink-800 font-semibold px-2 py-0.5 rounded-full">Ví MoMo</span>
                   </p>
                   <p>• Mở ứng dụng MoMo Developer / MoMo Test</p>
                   <p>• Quét mã QR hiển thị trên màn hình cổng MoMo</p>
                   <p>• SĐT test: <strong className="font-mono font-bold text-pink-700">0968202605</strong></p>
                   <p>• Mật khẩu / OTP: <strong className="font-mono font-bold text-pink-700">000000</strong></p>
+                  <p className="text-[10px] text-amber-700 pt-1 border-t border-cream-100">
+                    ⚠️ <em>Lưu ý: Không dùng tab Thẻ ATM nội địa vì hệ thống Sandbox MoMo hiện đã đóng cổng Napas nên luôn bị báo chối (Error 1002).</em>
+                  </p>
                 </div>
               </div>
             </div>
