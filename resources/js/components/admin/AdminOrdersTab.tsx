@@ -210,7 +210,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
         {onRefreshOrders && (
           <button
             onClick={onRefreshOrders}
-            className="btn-secondary px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 self-start cursor-pointer"
+            className="btn-secondary px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer shadow-2xs"
           >
             <RefreshCw size={14} />
             <span>Làm mới danh sách</span>
@@ -219,7 +219,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
       </div>
 
       {/* Lab 08: 8 Status Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none" role="tablist" aria-label="Bộ lọc trạng thái đơn hàng">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none w-full" role="tablist" aria-label="Bộ lọc trạng thái đơn hàng">
         {TABS.map((tab) => {
           const count = tabCounts[tab.key] || 0;
           const isActive = activeTab === tab.key;
@@ -232,10 +232,10 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                 setActiveTab(tab.key);
                 setAdminPageNum(1);
               }}
-              className={`relative px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-colors flex items-center gap-2 cursor-pointer select-none outline-none ${
+              className={`relative flex-1 min-w-[110px] justify-center px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-colors flex items-center gap-1.5 cursor-pointer select-none outline-none ${
                 isActive
                   ? 'text-white'
-                  : 'bg-white dark:bg-ink-900 text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800 border border-cream-200 dark:border-ink-800'
+                  : 'bg-white dark:bg-ink-900 text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-800 border border-cream-200 dark:border-ink-800 shadow-2xs'
               }`}
             >
               {isActive && (
@@ -260,7 +260,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-3xl border border-cream-200 shadow-2xs flex flex-col sm:flex-row items-center gap-3">
+      <div className="bg-white p-3.5 sm:p-4 rounded-3xl border border-cream-200 shadow-2xs flex flex-col sm:flex-row items-center gap-3">
         <div className="relative flex-1 w-full">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
           <input
@@ -282,7 +282,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
               setPaymentFilter(e.target.value);
               setAdminPageNum(1);
             }}
-            className="px-3 py-2.5 bg-cream-50/70 border border-cream-200 rounded-2xl text-xs text-ink-800 font-semibold focus:outline-none focus:border-accent-500 cursor-pointer"
+            className="w-full sm:w-48 px-3 py-2.5 bg-cream-50/70 border border-cream-200 rounded-2xl text-xs text-ink-800 font-semibold focus:outline-none focus:border-accent-500 cursor-pointer"
           >
             <option value="">Tất cả thanh toán</option>
             <option value="momo">Ví MoMo</option>
@@ -298,13 +298,13 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
           <table id="admin-orders-table" className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-cream-100/70 border-b border-cream-200 text-xs font-bold text-ink-600 uppercase tracking-wider">
-                <th className="py-4 px-5 whitespace-nowrap min-w-[140px]">MÃ ĐƠN</th>
-                <th className="py-4 px-5 whitespace-nowrap min-w-[170px]">KHÁCH HÀNG</th>
-                <th className="py-4 px-5 whitespace-nowrap min-w-[150px]">THANH TOÁN</th>
-                <th className="py-4 px-5 whitespace-nowrap min-w-[150px]">VẬN CHUYỂN GHN</th>
-                <th className="py-4 px-5 whitespace-nowrap min-w-[130px]">TỔNG TIỀN</th>
-                <th className="py-4 px-5 whitespace-nowrap min-w-[170px]">TRẠNG THÁI</th>
-                <th className="py-4 px-5 text-center whitespace-nowrap min-w-[120px]">THAO TÁC</th>
+                <th className="py-3.5 px-4 whitespace-nowrap min-w-[130px] w-[13%]">MÃ ĐƠN</th>
+                <th className="py-3.5 px-4 whitespace-nowrap min-w-[150px] w-[15%]">KHÁCH HÀNG</th>
+                <th className="py-3.5 px-4 whitespace-nowrap min-w-[140px] w-[14%]">THANH TOÁN</th>
+                <th className="py-3.5 px-4 text-center whitespace-nowrap min-w-[130px] w-[13%]">VẬN CHUYỂN GHN</th>
+                <th className="py-3.5 px-4 text-right whitespace-nowrap min-w-[120px] w-[12%]">TỔNG TIỀN</th>
+                <th className="py-3.5 px-4 text-center whitespace-nowrap min-w-[130px] w-[13%]">TRẠNG THÁI</th>
+                <th className="py-3.5 px-4 text-center whitespace-nowrap min-w-[250px] w-[20%]">THAO TÁC</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-cream-100 text-sm">
@@ -320,7 +320,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
 
                   return (
                     <tr key={o.id} className="hover:bg-cream-50/70 transition-colors">
-                      <td className="py-4 px-5 align-middle whitespace-nowrap">
+                      <td className="py-3.5 px-4 align-middle whitespace-nowrap">
                         <span className="font-bold font-mono text-accent-600 text-xs tracking-wide block">
                           {o.order_code || o.id.substring(0, 8)}
                         </span>
@@ -328,11 +328,11 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                           {new Date(o.created_at || Date.now()).toLocaleDateString('vi-VN')}
                         </p>
                       </td>
-                      <td className="py-4 px-5 align-middle whitespace-nowrap">
+                      <td className="py-3.5 px-4 align-middle whitespace-nowrap">
                         <p className="font-bold text-ink-900 text-xs">{o.customer_name}</p>
                         <p className="text-[11px] text-ink-500 font-mono mt-0.5">{o.customer_phone}</p>
                       </td>
-                      <td className="py-4 px-5 align-middle whitespace-nowrap">
+                      <td className="py-3.5 px-4 align-middle whitespace-nowrap">
                         <div className="space-y-1">
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap ${
@@ -372,9 +372,9 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                           </div>
                         </div>
                       </td>
-                      <td className="py-4 px-5 align-middle whitespace-nowrap">
+                      <td className="py-3.5 px-4 align-middle text-center whitespace-nowrap">
                         {o.tracking_code ? (
-                          <div className="space-y-1">
+                          <div className="inline-flex flex-col items-center gap-0.5">
                             <div className="flex items-center gap-1.5">
                               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-orange-50 text-orange-700 border border-orange-200 rounded-full text-[11px] font-bold font-mono whitespace-nowrap">
                                 <Truck size={12} />
@@ -395,7 +395,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                           <button
                             onClick={() => handlePushGhn(o.id)}
                             disabled={pushingGhnId === o.id}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-bold transition-all shadow-2xs hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer whitespace-nowrap"
+                            className="h-8 inline-flex items-center gap-1.5 px-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-bold transition-all shadow-2xs hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer whitespace-nowrap"
                           >
                             {pushingGhnId === o.id ? (
                               <Loader2 size={13} className="animate-spin" />
@@ -408,10 +408,10 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                           <span className="text-xs text-ink-400 whitespace-nowrap">Tự vận chuyển</span>
                         )}
                       </td>
-                      <td className="py-4 px-5 align-middle font-bold text-ink-900 tabular-nums whitespace-nowrap text-xs">
+                      <td className="py-3.5 px-4 align-middle text-right font-bold text-ink-900 tabular-nums whitespace-nowrap text-xs">
                         {formatCurrency(o.total_amount)}
                       </td>
-                      <td className="py-4 px-5 align-middle whitespace-nowrap">
+                      <td className="py-3.5 px-4 align-middle text-center whitespace-nowrap">
                         {(() => {
                           const status = o.status || 'pending';
                           if (status === 'completed' || status === 'delivered') {
@@ -479,14 +479,14 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                           );
                         })()}
                       </td>
-                      <td className="py-4 px-5 align-middle text-center whitespace-nowrap">
-                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                      <td className="py-3.5 px-4 align-middle text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1.5 flex-nowrap">
                           {/* 1. Trạng thái: Chờ xử lý -> Nút Duyệt đơn & Hủy đơn */}
                           {['pending', 'not_shipped', 'processing'].includes(o.status) && (
                             <>
                               <button
                                 onClick={() => onUpdateStatus(o.id, 'ready_to_pick')}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all inline-flex items-center gap-1 shadow-2xs hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
+                                className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 rounded-xl transition-all inline-flex items-center gap-1 shadow-2xs hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
                                 title="Xác nhận đơn và chuẩn bị đóng gói"
                               >
                                 <span>Duyệt đơn</span>
@@ -494,7 +494,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                               </button>
                               <button
                                 onClick={() => handleStatusSelect(o, 'cancelled')}
-                                className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold px-2 py-1.5 rounded-xl transition-all inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                                className="h-8 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold px-2.5 rounded-xl transition-all inline-flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
                                 title="Hủy đơn hàng"
                               >
                                 <Ban size={12} />
@@ -508,7 +508,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                             <>
                               <button
                                 onClick={() => onUpdateStatus(o.id, 'shipping')}
-                                className="bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all inline-flex items-center gap-1 shadow-2xs hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
+                                className="h-8 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold px-3 rounded-xl transition-all inline-flex items-center gap-1 shadow-2xs hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
                                 title="Bàn giao bưu tá và bắt đầu giao hàng"
                               >
                                 <Truck size={13} />
@@ -517,7 +517,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                               </button>
                               <button
                                 onClick={() => handleStatusSelect(o, 'cancelled')}
-                                className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold px-2 py-1.5 rounded-xl transition-all inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                                className="h-8 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold px-2.5 rounded-xl transition-all inline-flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
                                 title="Hủy đơn hàng khi chưa lấy"
                               >
                                 <Ban size={12} />
@@ -530,7 +530,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                           {o.status === 'picking' && (
                             <button
                               onClick={() => onUpdateStatus(o.id, 'shipping')}
-                              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all inline-flex items-center gap-1 shadow-2xs hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
+                              className="h-8 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 rounded-xl transition-all inline-flex items-center gap-1 shadow-2xs hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
                               title="Bưu tá đã lấy - Chuyển sang đang giao"
                             >
                               <Truck size={13} />
@@ -543,7 +543,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                           {isDelivering && (
                             <button
                               onClick={() => onUpdateStatus(o.id, 'completed')}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all inline-flex items-center gap-1 shadow-2xs hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
+                              className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 rounded-xl transition-all inline-flex items-center gap-1 shadow-2xs hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
                               title="Khách hàng đã nhận kiện hàng an toàn"
                             >
                               <Check size={13} />
@@ -558,7 +558,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                                 setConfirmingRefundOrder(o);
                                 setRefundRefCode('');
                               }}
-                              className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all inline-flex items-center gap-1 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 whitespace-nowrap"
+                              className="h-8 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 rounded-xl transition-all inline-flex items-center gap-1 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 whitespace-nowrap shrink-0"
                               title="Xem tài khoản ngân hàng và xác nhận đã hoàn tiền"
                             >
                               <RefreshCw size={12} />
@@ -570,7 +570,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                           {['return', 'returning', 'returned'].includes(o.status) && (
                             <button
                               onClick={() => onUpdateStatus(o.id, 'cancelled')}
-                              className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all inline-flex items-center gap-1 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 whitespace-nowrap"
+                              className="h-8 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 rounded-xl transition-all inline-flex items-center gap-1 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 whitespace-nowrap shrink-0"
                               title="Xác nhận đã nhận lại kiện hàng từ shipper"
                             >
                               <PackageCheck size={13} />
@@ -581,7 +581,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                           {/* Nút Chi tiết xem đơn */}
                           <button
                             onClick={() => onViewOrder(o)}
-                            className="bg-ink-900 hover:bg-black text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 whitespace-nowrap shrink-0"
+                            className="h-8 bg-ink-900 hover:bg-black text-white text-xs font-bold px-3 rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 whitespace-nowrap shrink-0"
                             title="Xem chi tiết đơn hàng"
                           >
                             <Eye size={13} className="shrink-0" />
