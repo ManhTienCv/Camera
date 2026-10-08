@@ -37,7 +37,7 @@ export function SearchPage({ query, onNavigate }: Props) {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
       <div className="flex items-center gap-3 mb-2">
         <Search size={24} className="text-accent-500" />
         <h1 className="font-display font-bold text-2xl lg:text-3xl text-ink-900 dark:text-cream-50">

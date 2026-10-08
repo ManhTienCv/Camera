@@ -132,7 +132,7 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-20 text-center animate-pulse">
+      <div className="w-full max-w-2xl mx-auto px-4 py-20 text-center animate-pulse">
         <div className="w-16 h-16 bg-cream-200 rounded-full mx-auto mb-4" />
         <div className="h-6 bg-cream-200 rounded w-1/2 mx-auto mb-2" />
         <div className="h-4 bg-cream-200 rounded w-1/3 mx-auto" />
@@ -154,7 +154,7 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
     : '';
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fade-in space-y-8">
+    <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fade-in space-y-8">
       {/* 1. Header Banner */}
       <div className="text-center">
         <div className="w-20 h-20 bg-accent-50 text-accent-500 border border-accent-200/80 rounded-full flex items-center justify-center mx-auto mb-4 animate-scale-in shadow-xs">

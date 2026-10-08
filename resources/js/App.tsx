@@ -298,7 +298,7 @@ export default function App() {
                           initial="initial"
                           animate="animate"
                           exit="exit"
-                          className="w-full flex-1 flex flex-col will-change-transform"
+                          className="w-full flex-1 flex flex-col items-stretch will-change-transform"
                         >
                           {page.name === 'home' && <HomePage onNavigate={navigate} categories={categories} />}
                           {page.name === 'catalog' && (

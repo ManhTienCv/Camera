@@ -104,7 +104,7 @@ export function ProductDetailPage({ slug, onNavigate, categories }: Props) {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-pulse">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-pulse">
         <div className="grid lg:grid-cols-2 gap-12">
           <div className="aspect-square bg-cream-200 rounded-3xl" />
           <div className="space-y-4">
@@ -120,7 +120,7 @@ export function ProductDetailPage({ slug, onNavigate, categories }: Props) {
 
   if (!product) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-16 text-center">
+      <div className="w-full max-w-7xl mx-auto px-4 py-16 text-center">
         <p className="text-ink-500 mb-4">Không tìm thấy sản phẩm camera này</p>
         <button onClick={() => onNavigate({ name: 'catalog' })} className="btn-primary">
           Quay lại danh sách sản phẩm
@@ -138,7 +138,7 @@ export function ProductDetailPage({ slug, onNavigate, categories }: Props) {
   const category = categories.find((c) => c.id === product.category_id);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-ink-400 mb-6 flex-wrap">
         <button onClick={() => onNavigate({ name: 'home' })} className="hover:text-ink-700">Trang chủ</button>

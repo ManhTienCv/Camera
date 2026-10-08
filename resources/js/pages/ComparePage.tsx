@@ -269,7 +269,7 @@ export function ComparePage({ onNavigate, initialProductIds }: Props) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in text-ink-900 dark:text-cream-100">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in text-ink-900 dark:text-cream-100">
       {/* Breadcrumb & Navigation */}
       <div className="flex items-center gap-2 text-sm text-ink-400 mb-6 flex-wrap">
         <button

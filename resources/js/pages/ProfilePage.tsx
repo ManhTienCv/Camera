@@ -125,7 +125,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ initialTab = 'profile'
 
   if (!user) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-20 text-center animate-fade-in">
+      <div className="w-full max-w-xl mx-auto px-4 py-20 text-center animate-fade-in">
         <div className="w-16 h-16 rounded-3xl bg-accent-50 text-accent-600 flex items-center justify-center mx-auto mb-4 border border-accent-100 shadow-2xs">
           <UserIcon size={32} />
         </div>
@@ -148,7 +148,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ initialTab = 'profile'
   const defaultAddress = addresses.find((a) => a.isDefault) || addresses[0];
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6 animate-fade-in text-ink-800 dark:text-cream-100">
+    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6 animate-fade-in text-ink-800 dark:text-cream-100">
       {/* 1. TOP COVER & PROFILE HERO CARD */}
       <div className="bg-white dark:bg-ink-900 rounded-3xl border border-cream-200 dark:border-ink-800 shadow-sm overflow-hidden transition-colors">
         {/* Cover Banner - Studio Amber & Warm Accent Gradient */}

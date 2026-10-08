@@ -14,7 +14,7 @@ export function CartPage({ onNavigate }: Props) {
 
   if (!user) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-20 text-center animate-fade-in">
+      <div className="w-full max-w-7xl mx-auto px-4 py-20 text-center animate-fade-in">
         <div className="w-20 h-20 bg-cream-100 dark:bg-ink-800 rounded-3xl flex items-center justify-center mx-auto mb-6 text-accent-600 border border-cream-200 dark:border-ink-700 shadow-xs">
           <Lock size={36} />
         </div>
@@ -42,7 +42,7 @@ export function CartPage({ onNavigate }: Props) {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-20 text-center animate-fade-in">
+      <div className="w-full max-w-7xl mx-auto px-4 py-20 text-center animate-fade-in">
         <div className="w-20 h-20 bg-cream-100 dark:bg-ink-800 rounded-full flex items-center justify-center mx-auto mb-6">
           <ShoppingBag size={36} className="text-ink-400 dark:text-cream-400" />
         </div>
@@ -59,7 +59,7 @@ export function CartPage({ onNavigate }: Props) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
       <h1 className="font-display font-bold text-3xl text-ink-900 dark:text-cream-100 mb-8">Giỏ hàng của bạn</h1>
 
       <div className="grid lg:grid-cols-3 gap-8">

@@ -272,7 +272,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
 
   if (!user) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-20 text-center animate-fade-in">
+      <div className="w-full max-w-xl mx-auto px-4 py-20 text-center animate-fade-in">
         <div className="w-16 h-16 rounded-3xl bg-accent-50 text-accent-600 flex items-center justify-center mx-auto mb-4 border border-accent-100 shadow-2xs">
           <Package size={32} />
         </div>
@@ -291,7 +291,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 animate-fade-in space-y-8">
+    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-10 animate-fade-in space-y-8">
       {/* 1. Page Header */}
       <div className="flex items-center gap-3.5">
         <div className="w-11 h-11 rounded-2xl bg-accent-50 text-accent-600 flex items-center justify-center border border-accent-200/80 shadow-2xs">
@@ -324,7 +324,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                 setOrderStatusTab(tab.id as any);
                 setCurrentPage(1);
               }}
-              className={`px-4 sm:px-5 py-2.5 rounded-full text-xs font-bold transition-all duration-150 cursor-pointer border select-none ${
+              className={`px-4 sm:px-5 py-2.5 rounded-full text-xs font-bold transition-colors duration-150 cursor-pointer border select-none ${
                 isActive
                   ? 'bg-ink-900 dark:bg-accent-500 border-ink-900 dark:border-accent-500 text-white shadow-xs'
                   : 'bg-white dark:bg-ink-900 border-cream-200 dark:border-ink-800 text-ink-700 dark:text-cream-200 hover:border-cream-300 dark:hover:border-ink-700 hover:bg-cream-50/80 dark:hover:bg-ink-800 shadow-2xs'
@@ -337,7 +337,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
       </div>
 
       {/* 3. Orders List Area with Fixed Min-Height to eliminate vertical height bounce */}
-      <div className="min-h-[460px] space-y-4">
+      <div className="w-full min-h-[460px] space-y-4">
         {/* Status Counter Bar - always rendered to keep vertical layout stable */}
         <div className="flex items-center justify-between text-xs text-ink-500 dark:text-ink-400 font-medium min-h-[22px]">
           {filteredOrders.length > 0 ? (
@@ -352,7 +352,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
         </div>
 
         {filteredOrders.length === 0 ? (
-          <div className="bg-white dark:bg-ink-900 p-12 sm:p-16 rounded-3xl border border-cream-200 dark:border-ink-800 text-center space-y-3.5 shadow-2xs transition-colors">
+          <div className="w-full bg-white dark:bg-ink-900 p-12 sm:p-16 rounded-3xl border border-cream-200 dark:border-ink-800 text-center space-y-3.5 shadow-2xs transition-colors">
             <div className="w-16 h-16 rounded-3xl bg-cream-100/80 dark:bg-ink-800 text-cream-400 dark:text-ink-500 flex items-center justify-center mx-auto border border-cream-200/60 dark:border-ink-700 shadow-2xs">
               <Package size={32} className="stroke-[1.5]" />
             </div>
@@ -363,11 +363,11 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
           </div>
         ) : (
           <>
-            <div className="space-y-6">
+            <div className="w-full space-y-6">
             {paginatedOrders.map((ord) => (
               <div
                 key={ord.id}
-                className="bg-white dark:bg-ink-900 rounded-3xl border border-cream-200/90 dark:border-ink-800 shadow-xs p-6 sm:p-8 space-y-6 hover:shadow-md transition-shadow"
+                className="w-full bg-white dark:bg-ink-900 rounded-3xl border border-cream-200/90 dark:border-ink-800 shadow-xs p-6 sm:p-8 space-y-6 hover:shadow-md transition-shadow"
               >
                 {/* Order Card Header */}
                 <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-cream-100 dark:border-ink-800">

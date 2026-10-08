@@ -301,7 +301,7 @@ export function CheckoutPage({ onNavigate }: Props) {
 
   if (!user) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-20 text-center animate-fade-in">
+      <div className="w-full max-w-2xl mx-auto px-4 py-20 text-center animate-fade-in">
         <div className="w-20 h-20 bg-cream-100 dark:bg-ink-800 rounded-3xl flex items-center justify-center mx-auto mb-6 text-accent-600 border border-cream-200 dark:border-ink-700 shadow-xs">
           <ShieldCheck size={36} />
         </div>
@@ -336,7 +336,7 @@ export function CheckoutPage({ onNavigate }: Props) {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center animate-fade-in">
+      <div className="w-full max-w-2xl mx-auto px-4 py-16 text-center animate-fade-in">
         <h1 className="font-display font-bold text-2xl text-ink-900 dark:text-cream-100 mb-3">
           Không có sản phẩm để thanh toán
         </h1>
@@ -349,7 +349,7 @@ export function CheckoutPage({ onNavigate }: Props) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumb & Navigation Header */}
       <div className="flex items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-2 text-sm text-ink-400 dark:text-cream-400">
