@@ -263,6 +263,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('camera_auth_token');
     localStorage.removeItem('camera_auth_user');
     setUser(null);
+    window.dispatchEvent(new CustomEvent('camerahub_logout'));
   };
 
   return (

@@ -205,6 +205,15 @@ export default function App() {
     window.dispatchEvent(new Event('camerahub_route_change'));
   }, []);
 
+  // Lắng nghe sự kiện đăng xuất để lập tức điều hướng về trang chủ
+  useEffect(() => {
+    const handleLogout = () => {
+      navigate({ name: 'home' });
+    };
+    window.addEventListener('camerahub_logout', handleLogout);
+    return () => window.removeEventListener('camerahub_logout', handleLogout);
+  }, [navigate]);
+
   // Xác định Transition Key duy nhất cho từng màn hình
   const pageTransitionKey = (() => {
     switch (page.name) {

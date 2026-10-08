@@ -286,6 +286,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate, initialTab = '
     api.adminLogout();
     setAdminUser(null);
     toast.info('Đã đăng xuất khỏi Bảng điều khiển Quản trị.');
+    onNavigate({ name: 'home' });
+    window.dispatchEvent(new CustomEvent('camerahub_logout'));
   };
 
   // PRODUCT HANDLERS

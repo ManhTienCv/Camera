@@ -349,6 +349,7 @@ export function Header({ onNavigate, currentPage, categories }: Props) {
                         onClick={() => {
                           setUserDropdownOpen(false);
                           logout();
+                          onNavigate({ name: 'home' });
                         }}
                         className="w-full px-3.5 py-2.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-3 text-xs font-bold text-rose-600 dark:text-rose-400 transition-colors text-left cursor-pointer"
                       >

@@ -200,7 +200,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ initialTab = 'profile'
             <div className="sm:pb-2">
               <button
                 type="button"
-                onClick={logout}
+                onClick={() => {
+                  logout();
+                  onNavigate({ name: 'home' });
+                }}
                 className="w-full sm:w-auto px-4 py-2.5 rounded-2xl border border-cream-300 dark:border-ink-700 text-ink-700 dark:text-cream-200 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/50 dark:hover:bg-rose-950/30 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs active:scale-98"
               >
                 <LogOut size={14} />
