@@ -44,6 +44,14 @@ class MomoService
         $gatewayOrderId = $order->id . '_' . $transaction->id . '_' . time();
         $redirectUrl = $customRedirectUrl ?: config('services.momo.redirect_url', url('/payment/momo/callback'));
         $ipnUrl = config('services.momo.ipn_url', url('/api/v1/payment/momo/ipn'));
+
+        // Tối ưu hóa tốc độ MoMo Sandbox:
+        // Khi chạy local (127.0.0.1 hoặc localhost), server MoMo không thể kết nối tới máy cá nhân và sẽ bị treo 15s chờ TCP timeout.
+        // Tự động chuyển ipnUrl sang public HTTPS endpoint trên Vercel Edge để MoMo nhận phản hồi 200 OK ngay lập tức (< 50ms), triệt tiêu độ trễ quay vòng tròn.
+        if ($isSandbox && (str_contains($ipnUrl, '127.0.0.1') || str_contains($ipnUrl, 'localhost'))) {
+            $ipnUrl = 'https://camera-manhtien.vercel.app/api/v1/payment/momo/ipn';
+        }
+
         $extraData = (string) $order->id;
         $requestId = (string) time();
         $requestType = config('services.momo.request_type', env('MOMO_REQUEST_TYPE', 'payWithMethod'));
