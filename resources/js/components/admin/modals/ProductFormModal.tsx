@@ -93,21 +93,26 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
         toast.warning('Dung lượng ảnh vượt quá 5MB. Vui lòng chọn ảnh nhỏ hơn!');
+        e.target.value = '';
         return;
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData({ ...formData, image_url: reader.result as string });
+        setFormData((prev: any) => ({ ...prev, image_url: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
+    e.target.value = '';
   };
 
   const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
       Array.from(files).forEach((file) => {
-        if (file.size > 5 * 1024 * 1024) return;
+        if (file.size > 5 * 1024 * 1024) {
+          toast.warning(`Ảnh "${file.name}" vượt quá 5MB và đã bị bỏ qua.`);
+          return;
+        }
         const reader = new FileReader();
         reader.onloadend = () => {
           setFormData((prev: any) => ({
@@ -118,12 +123,15 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
         reader.readAsDataURL(file);
       });
     }
+    e.target.value = '';
   };
 
   const handleRemoveGalleryImage = (index: number) => {
-    const updated = [...(formData.gallery || [])];
-    updated.splice(index, 1);
-    setFormData({ ...formData, gallery: updated });
+    setFormData((prev: any) => {
+      const updated = [...(prev.gallery || [])];
+      updated.splice(index, 1);
+      return { ...prev, gallery: updated };
+    });
   };
 
   const handleAddFeature = () => {
