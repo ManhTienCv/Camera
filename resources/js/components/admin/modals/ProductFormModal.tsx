@@ -164,6 +164,15 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     setFormData({ ...formData, specs: updated });
   };
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.image_url) {
+      toast.warning('Vui lòng tải lên ảnh đại diện chính (Cover Image) cho sản phẩm!');
+      return;
+    }
+    onSubmit(e);
+  };
+
   return createPortal(
     <div className="fixed inset-0 w-screen h-screen min-h-[100dvh] z-[9999] bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto cursor-pointer" onClick={onClose}>
       <div className="bg-white dark:bg-ink-900 rounded-3xl max-w-3xl w-full p-6 shadow-2xl animate-scale-in border border-cream-200 dark:border-ink-800 my-auto max-h-[90vh] flex flex-col cursor-default text-ink-900 dark:text-cream-100" onClick={(e) => e.stopPropagation()}>
@@ -179,7 +188,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="py-4 space-y-6 overflow-y-auto flex-1 pr-2">
+        <form onSubmit={handleFormSubmit} className="py-4 space-y-6 overflow-y-auto flex-1 pr-2">
           {/* SECTION 1: THÔNG TIN CƠ BẢN */}
           <div className="space-y-4">
             <h4 className="text-xs font-bold text-accent-500 uppercase tracking-wider">1. Thông tin cơ bản & Phân loại</h4>
@@ -342,40 +351,75 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
           </div>
 
           {/* SECTION 3: HÌNH ẢNH & BỘ SƯU TẬP */}
-          <div className="space-y-4 pt-4 border-t border-cream-200">
-            <h4 className="text-xs font-bold text-accent-500 uppercase tracking-wider">3. Hình ảnh sản phẩm (Upload hoặc URL)</h4>
+          <div className="space-y-4 pt-4 border-t border-cream-200 dark:border-ink-800">
+            <h4 className="text-xs font-bold text-accent-500 uppercase tracking-wider">3. Hình ảnh sản phẩm (Tải lên)</h4>
 
             {/* Ảnh đại diện chính */}
             <div>
-              <label className="block text-xs font-bold text-ink-700 mb-1">Ảnh đại diện chính (Cover Image) *</label>
-              <div className="flex gap-3 items-center">
-                <input
-                  type="text"
-                  required
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  placeholder="https://... hoặc bấm tải ảnh bên phải"
-                  className="input-field text-sm flex-1"
-                />
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileUpload}
-                  accept="image/*"
-                  className="hidden"
-                />
-                <button
-                  type="button"
+              <label className="block text-xs font-bold text-ink-700 dark:text-cream-200 mb-1.5 uppercase">
+                Ảnh đại diện chính (Cover Image) *
+              </label>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                accept="image/*"
+                className="hidden"
+              />
+
+              {!formData.image_url ? (
+                <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2.5 bg-cream-100 hover:bg-cream-200 text-ink-700 rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0 border border-cream-300 cursor-pointer"
+                  className="border-2 border-dashed border-cream-300 dark:border-ink-700 hover:border-accent-500 dark:hover:border-accent-400 bg-cream-50/50 dark:bg-ink-900/40 hover:bg-accent-50/20 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all group text-center"
                 >
-                  <Upload size={14} />
-                  <span>Tải ảnh lên</span>
-                </button>
-              </div>
-              {formData.image_url && (
-                <div className="mt-2.5 w-24 h-24 rounded-2xl overflow-hidden border border-cream-300 bg-cream-50">
-                  <img src={formData.image_url} alt="Preview" className="w-full h-full object-cover" />
+                  <div className="w-12 h-12 rounded-2xl bg-white dark:bg-ink-800 border border-cream-300 dark:border-ink-700 group-hover:border-accent-400 flex items-center justify-center text-accent-500 shadow-2xs group-hover:scale-110 transition-transform">
+                    <Upload size={22} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-ink-900 dark:text-cream-50 group-hover:text-accent-600 transition-colors">
+                      Bấm vào đây để tải ảnh đại diện lên *
+                    </p>
+                    <p className="text-[11px] text-ink-400 mt-0.5">
+                      Hỗ trợ PNG, JPG, JPEG, WEBP (Tối đa 5MB)
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <div className="relative w-36 h-36 rounded-2xl overflow-hidden border-2 border-cream-200 dark:border-ink-700 bg-cream-50 dark:bg-ink-800 shadow-xs group">
+                    <img
+                      src={formData.image_url}
+                      alt="Cover Preview"
+                      className="w-full h-full object-cover"
+                    />
+                    {/* Nút xóa nhỏ trên đầu ảnh */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData({ ...formData, image_url: '' });
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }}
+                      className="absolute top-2 right-2 w-7 h-7 bg-rose-600 hover:bg-rose-700 active:scale-90 text-white rounded-full flex items-center justify-center shadow-md transition-all cursor-pointer z-10"
+                      title="Xóa ảnh đại diện"
+                    >
+                      <X size={15} />
+                    </button>
+                    {/* Nút đổi ảnh ở chân ảnh */}
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute bottom-2 left-2 right-2 py-1 bg-black/65 hover:bg-black/85 backdrop-blur-xs text-white text-[11px] font-semibold rounded-lg text-center transition-all cursor-pointer"
+                    >
+                      Đổi ảnh khác
+                    </button>
+                  </div>
+                  <div className="text-xs text-ink-500 space-y-1">
+                    <p className="font-bold text-ink-800 dark:text-cream-100">Đã chọn ảnh đại diện chính</p>
+                    <p className="text-[11px] text-ink-400 max-w-xs">
+                      Bấm nút <span className="text-rose-600 font-bold">X</span> màu đỏ trên đầu ảnh để xóa hoặc bấm "Đổi ảnh khác" để chọn ảnh mới từ máy.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -383,12 +427,15 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             {/* Gallery ảnh kèm theo */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-ink-700">Bộ sưu tập ảnh chi tiết (Gallery)</label>
+                <label className="text-xs font-bold text-ink-700 dark:text-cream-200 uppercase">
+                  Bộ sưu tập ảnh chi tiết (Gallery)
+                </label>
                 <input
                   type="file"
                   ref={galleryInputRef}
                   onChange={handleGalleryUpload}
                   accept="image/*"
+                  multiple
                   className="hidden"
                 />
                 <button
@@ -396,24 +443,35 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   onClick={() => galleryInputRef.current?.click()}
                   className="text-xs font-bold text-accent-500 hover:underline flex items-center gap-1 cursor-pointer"
                 >
-                  <Upload size={12} />
+                  <Upload size={13} />
                   <span>+ Tải thêm ảnh chi tiết</span>
                 </button>
               </div>
 
               <div className="grid grid-cols-4 sm:grid-cols-6 gap-2.5">
                 {(formData.gallery || []).map((img, idx) => (
-                  <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border border-cream-200 group">
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border border-cream-200 dark:border-ink-700 shadow-2xs group">
+                    <img src={img} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                    {/* Nút xóa nhỏ trên đầu ảnh */}
                     <button
                       type="button"
                       onClick={() => handleRemoveGalleryImage(idx)}
-                      className="absolute top-1 right-1 p-1 bg-rose-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-xs"
+                      className="absolute top-1.5 right-1.5 w-6 h-6 bg-rose-600 hover:bg-rose-700 active:scale-90 text-white rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md z-10"
+                      title="Xóa ảnh này"
                     >
-                      <X size={12} />
+                      <X size={13} />
                     </button>
                   </div>
                 ))}
+
+                <button
+                  type="button"
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="aspect-square border-2 border-dashed border-cream-300 dark:border-ink-700 hover:border-accent-500 rounded-2xl flex flex-col items-center justify-center gap-1 bg-cream-50/50 dark:bg-ink-900/30 hover:bg-accent-50/20 text-ink-500 hover:text-accent-600 transition-all cursor-pointer group"
+                >
+                  <Upload size={16} className="group-hover:scale-110 transition-transform" />
+                  <span className="text-[10px] font-bold">+ Thêm ảnh</span>
+                </button>
               </div>
             </div>
           </div>

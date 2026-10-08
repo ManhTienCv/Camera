@@ -230,6 +230,39 @@ class ProductController extends Controller
         return response()->json($this->formatProduct($product));
     }
 
+    private function saveBase64Image(?string $imageData, string $subfolder = 'products'): string
+    {
+        if (empty($imageData)) {
+            return 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=1000';
+        }
+
+        if (!str_starts_with($imageData, 'data:image/')) {
+            return $imageData;
+        }
+
+        try {
+            if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
+                $raw = substr($imageData, strpos($imageData, ',') + 1);
+                $ext = strtolower($type[1]);
+                if ($ext === 'jpeg') $ext = 'jpg';
+                $decoded = base64_decode($raw);
+                if ($decoded !== false) {
+                    $filename = 'prod_' . time() . '_' . Str::random(8) . '.' . $ext;
+                    $dir = public_path("uploads/{$subfolder}");
+                    if (!file_exists($dir)) {
+                        mkdir($dir, 0755, true);
+                    }
+                    file_put_contents($dir . '/' . $filename, $decoded);
+                    return "/uploads/{$subfolder}/" . $filename;
+                }
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Base64 image save error: ' . $e->getMessage());
+        }
+
+        return $imageData;
+    }
+
     // Admin APIs
     public function store(Request $request)
     {
@@ -245,7 +278,7 @@ class ProductController extends Controller
         ]);
 
         $slug = Str::slug($request->name) . '-' . Str::random(5);
-        $imageUrl = $request->image_url ?: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=1000';
+        $imageUrl = $this->saveBase64Image($request->image_url);
 
         $brandName = trim($request->input('brand', 'Khác'));
         $brandModel = !empty($brandName) && $brandName !== 'Khác'
@@ -282,9 +315,10 @@ class ProductController extends Controller
         if ($request->has('gallery') && is_array($request->gallery)) {
             foreach ($request->gallery as $idx => $gUrl) {
                 if (!empty($gUrl)) {
+                    $savedGalleryUrl = $this->saveBase64Image($gUrl, 'products/gallery');
                     \App\Models\ProductImage::create([
                         'product_id' => $product->id,
-                        'image_url' => $gUrl,
+                        'image_url' => $savedGalleryUrl,
                         'is_primary' => $idx === 0,
                         'display_order' => $idx,
                     ]);
@@ -302,24 +336,39 @@ class ProductController extends Controller
         // Save features
         if ($request->has('features') && is_array($request->features)) {
             foreach ($request->features as $idx => $feat) {
-                if (!empty(trim($feat))) {
+                if (is_array($feat)) {
+                    $feat = $feat['feature_text'] ?? ($feat['text'] ?? '');
+                }
+                $featText = trim((string) $feat);
+                if (!empty($featText)) {
                     \App\Models\ProductFeature::create([
                         'product_id' => $product->id,
-                        'feature_text' => trim($feat),
+                        'feature_text' => $featText,
                         'display_order' => $idx,
                     ]);
                 }
             }
         }
 
-        // Save specs
+        // Save specs (supports both key => value and [{key, value}])
         if ($request->has('specs') && is_array($request->specs)) {
             foreach ($request->specs as $key => $val) {
-                if (!empty(trim($key)) && !empty(trim($val))) {
+                $specKey = '';
+                $specVal = '';
+                if (is_array($val)) {
+                    $specKey = $val['key'] ?? ($val['spec_key'] ?? '');
+                    $specVal = $val['value'] ?? ($val['spec_value'] ?? '');
+                } else {
+                    $specKey = (string) $key;
+                    $specVal = (string) $val;
+                }
+                $specKey = trim((string) $specKey);
+                $specVal = trim((string) $specVal);
+                if (!empty($specKey) && !empty($specVal)) {
                     \App\Models\ProductSpecification::create([
                         'product_id' => $product->id,
-                        'spec_key' => trim($key),
-                        'spec_value' => trim($val),
+                        'spec_key' => $specKey,
+                        'spec_value' => $specVal,
                     ]);
                 }
             }
@@ -384,7 +433,9 @@ class ProductController extends Controller
             }
         }
         if ($request->has('description')) $product->description = $request->description;
-        if ($request->has('image_url')) $product->image_url = $request->image_url;
+        if ($request->has('image_url') && !empty($request->image_url)) {
+            $product->image_url = $this->saveBase64Image($request->image_url);
+        }
         if ($request->has('status')) $product->status = $request->status;
 
         $product->save();
@@ -394,9 +445,10 @@ class ProductController extends Controller
             \App\Models\ProductImage::where('product_id', $product->id)->delete();
             foreach ($request->gallery as $idx => $gUrl) {
                 if (!empty($gUrl)) {
+                    $savedGalleryUrl = $this->saveBase64Image($gUrl, 'products/gallery');
                     \App\Models\ProductImage::create([
                         'product_id' => $product->id,
-                        'image_url' => $gUrl,
+                        'image_url' => $savedGalleryUrl,
                         'is_primary' => $idx === 0,
                         'display_order' => $idx,
                     ]);
@@ -408,10 +460,14 @@ class ProductController extends Controller
         if ($request->has('features') && is_array($request->features)) {
             \App\Models\ProductFeature::where('product_id', $product->id)->delete();
             foreach ($request->features as $idx => $feat) {
-                if (!empty(trim($feat))) {
+                if (is_array($feat)) {
+                    $feat = $feat['feature_text'] ?? ($feat['text'] ?? '');
+                }
+                $featText = trim((string) $feat);
+                if (!empty($featText)) {
                     \App\Models\ProductFeature::create([
                         'product_id' => $product->id,
-                        'feature_text' => trim($feat),
+                        'feature_text' => $featText,
                         'display_order' => $idx,
                     ]);
                 }
@@ -422,11 +478,22 @@ class ProductController extends Controller
         if ($request->has('specs') && is_array($request->specs)) {
             \App\Models\ProductSpecification::where('product_id', $product->id)->delete();
             foreach ($request->specs as $key => $val) {
-                if (!empty(trim($key)) && !empty(trim($val))) {
+                $specKey = '';
+                $specVal = '';
+                if (is_array($val)) {
+                    $specKey = $val['key'] ?? ($val['spec_key'] ?? '');
+                    $specVal = $val['value'] ?? ($val['spec_value'] ?? '');
+                } else {
+                    $specKey = (string) $key;
+                    $specVal = (string) $val;
+                }
+                $specKey = trim((string) $specKey);
+                $specVal = trim((string) $specVal);
+                if (!empty($specKey) && !empty($specVal)) {
                     \App\Models\ProductSpecification::create([
                         'product_id' => $product->id,
-                        'spec_key' => trim($key),
-                        'spec_value' => trim($val),
+                        'spec_key' => $specKey,
+                        'spec_value' => $specVal,
                     ]);
                 }
             }
