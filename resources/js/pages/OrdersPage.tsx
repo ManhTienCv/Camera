@@ -291,24 +291,24 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 animate-fade-in space-y-8">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 animate-fade-in space-y-8">
       {/* 1. Page Header */}
       <div className="flex items-center gap-3.5">
         <div className="w-11 h-11 rounded-2xl bg-accent-50 text-accent-600 flex items-center justify-center border border-accent-200/80 shadow-2xs">
           <Package size={24} />
         </div>
         <div>
-          <h2 className="text-2xl lg:text-3xl font-display font-bold text-ink-900 tracking-tight">
+          <h2 className="text-2xl lg:text-3xl font-display font-bold text-ink-900 dark:text-cream-50 tracking-tight">
             Lịch Sử Đơn Hàng & Hành Trình Giao Hàng
           </h2>
-          <p className="text-xs text-ink-500 mt-0.5">
+          <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">
             Theo dõi trạng thái đóng gói, đối tác vận chuyển và lịch sử mua máy ảnh của bạn
           </p>
         </div>
       </div>
 
       {/* 2. Sub-Tabs: Filter by Delivery Status */}
-      <div className="flex flex-wrap gap-2.5 pb-1 relative">
+      <div className="flex flex-wrap items-center gap-2 pb-1 relative">
         {[
           { id: 'pending', label: `Chờ đóng gói (${pendingOrdersCount})` },
           { id: 'shipping', label: `Đang giao hàng (${shippingOrdersCount})` },
@@ -320,52 +320,60 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
           return (
             <button
               key={tab.id}
-              onClick={() => setOrderStatusTab(tab.id as any)}
-              className={`relative px-5 py-2.5 rounded-full text-xs font-bold transition-colors cursor-pointer border ${
+              onClick={() => {
+                setOrderStatusTab(tab.id as any);
+                setCurrentPage(1);
+              }}
+              className={`px-4 sm:px-5 py-2.5 rounded-full text-xs font-bold transition-all duration-150 cursor-pointer border select-none ${
                 isActive
-                  ? 'border-ink-900 dark:border-accent-500 text-white shadow-xs'
-                  : 'border-cream-200 dark:border-ink-800 text-ink-700 dark:text-cream-200 hover:border-cream-300 hover:bg-cream-50 bg-white shadow-2xs'
+                  ? 'bg-ink-900 dark:bg-accent-500 border-ink-900 dark:border-accent-500 text-white shadow-xs'
+                  : 'bg-white dark:bg-ink-900 border-cream-200 dark:border-ink-800 text-ink-700 dark:text-cream-200 hover:border-cream-300 dark:hover:border-ink-700 hover:bg-cream-50/80 dark:hover:bg-ink-800 shadow-2xs'
               }`}
             >
-              {isActive && (
-                <motion.div
-                  layoutId="orders-status-tab-capsule"
-                  className="absolute inset-0 bg-ink-900 dark:bg-accent-500 rounded-full z-0"
-                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                />
-              )}
-              <span className="relative z-10">{tab.label}</span>
+              <span>{tab.label}</span>
             </button>
           );
         })}
       </div>
 
-      {/* 3. Orders List */}
-      {filteredOrders.length === 0 ? (
-        <div className="bg-white p-12 rounded-3xl border border-cream-200 text-center space-y-3">
-          <Package size={36} className="text-cream-300 mx-auto" />
-          <p className="font-bold text-ink-800">Không có đơn hàng nào trong mục này</p>
-          <p className="text-xs text-ink-400">Các đơn hàng của bạn sẽ được hiển thị và cập nhật liên tục tại đây</p>
+      {/* 3. Orders List Area with Fixed Min-Height to eliminate vertical height bounce */}
+      <div className="min-h-[460px] space-y-4">
+        {/* Status Counter Bar - always rendered to keep vertical layout stable */}
+        <div className="flex items-center justify-between text-xs text-ink-500 dark:text-ink-400 font-medium min-h-[22px]">
+          {filteredOrders.length > 0 ? (
+            <div>
+              Hiển thị <strong className="text-ink-900 dark:text-cream-100">{(currentPage - 1) * itemsPerPage + 1}</strong> -{' '}
+              <strong className="text-ink-900 dark:text-cream-100">{Math.min(currentPage * itemsPerPage, filteredOrders.length)}</strong> trên tổng số{' '}
+              <strong className="text-ink-900 dark:text-cream-100">{filteredOrders.length}</strong> đơn hàng
+            </div>
+          ) : (
+            <span className="text-ink-400 dark:text-ink-500">Mục này hiện không có đơn hàng nào</span>
+          )}
         </div>
-      ) : (
-        <>
-          <div className="text-xs text-ink-500 font-medium">
-            Hiển thị <strong className="text-ink-900">{(currentPage - 1) * itemsPerPage + 1}</strong> -{' '}
-            <strong className="text-ink-900">{Math.min(currentPage * itemsPerPage, filteredOrders.length)}</strong> trên tổng số{' '}
-            <strong className="text-ink-900">{filteredOrders.length}</strong> đơn hàng
-          </div>
 
-          <div className="space-y-6">
+        {filteredOrders.length === 0 ? (
+          <div className="bg-white dark:bg-ink-900 p-12 sm:p-16 rounded-3xl border border-cream-200 dark:border-ink-800 text-center space-y-3.5 shadow-2xs transition-colors">
+            <div className="w-16 h-16 rounded-3xl bg-cream-100/80 dark:bg-ink-800 text-cream-400 dark:text-ink-500 flex items-center justify-center mx-auto border border-cream-200/60 dark:border-ink-700 shadow-2xs">
+              <Package size={32} className="stroke-[1.5]" />
+            </div>
+            <p className="font-bold text-base text-ink-900 dark:text-cream-100">Không có đơn hàng nào trong mục này</p>
+            <p className="text-xs text-ink-500 dark:text-ink-400 max-w-sm mx-auto">
+              Các đơn hàng của bạn sẽ được hiển thị và cập nhật liên tục tại đây khi có giao dịch mới.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-6">
             {paginatedOrders.map((ord) => (
               <div
                 key={ord.id}
-                className="bg-white rounded-3xl border border-cream-200/90 shadow-xs p-6 sm:p-8 space-y-6 hover:shadow-md transition-shadow"
+                className="bg-white dark:bg-ink-900 rounded-3xl border border-cream-200/90 dark:border-ink-800 shadow-xs p-6 sm:p-8 space-y-6 hover:shadow-md transition-shadow"
               >
                 {/* Order Card Header */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-cream-100">
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-cream-100 dark:border-ink-800">
                   <div>
-                    <span className="text-xs text-ink-400 font-medium">Mã đơn hàng:</span>
-                    <h4 className="font-display font-bold text-lg text-ink-900">{ord.order_code}</h4>
+                    <span className="text-xs text-ink-400 dark:text-ink-500 font-medium">Mã đơn hàng:</span>
+                    <h4 className="font-display font-bold text-lg text-ink-900 dark:text-cream-50">{ord.order_code}</h4>
                   </div>
 
                   <div className="flex items-center gap-3">
@@ -404,7 +412,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                       </span>
                     )}
 
-                    <span className="text-xs text-ink-500 font-semibold">{ord.date}</span>
+                    <span className="text-xs text-ink-500 dark:text-ink-400 font-semibold">{ord.date}</span>
                   </div>
                 </div>
 
@@ -417,18 +425,18 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                           <img
                             src={item.image_url}
                             alt={item.name}
-                            className="w-10 h-10 rounded-xl object-cover border border-cream-200 shrink-0"
+                            className="w-10 h-10 rounded-xl object-cover border border-cream-200 dark:border-ink-700 shrink-0"
                           />
                         )}
-                        <span className="text-[11px] font-bold text-ink-600 bg-cream-100/90 border border-cream-200 px-2.5 py-0.5 rounded-full shrink-0">
+                        <span className="text-[11px] font-bold text-ink-600 dark:text-cream-300 bg-cream-100/90 dark:bg-ink-800 border border-cream-200 dark:border-ink-700 px-2.5 py-0.5 rounded-full shrink-0">
                           {item.categoryTag}
                         </span>
-                        <span className="text-sm font-semibold text-ink-900 truncate">
+                        <span className="text-sm font-semibold text-ink-900 dark:text-cream-100 truncate">
                           {item.name}{' '}
-                          <span className="text-xs font-normal text-ink-400">x{item.quantity}</span>
+                          <span className="text-xs font-normal text-ink-400 dark:text-ink-500">x{item.quantity}</span>
                         </span>
                       </div>
-                      <span className="font-display font-bold text-sm text-ink-900 shrink-0">
+                      <span className="font-display font-bold text-sm text-ink-900 dark:text-cream-100 shrink-0">
                         {formatCurrency(item.price * item.quantity)}
                       </span>
                     </div>
@@ -436,9 +444,9 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                 </div>
 
                 {/* Shipping & Delivery Information Box */}
-                <div className="bg-cream-50/60 border border-cream-200/80 rounded-2xl p-5 space-y-4">
+                <div className="bg-cream-50/60 dark:bg-ink-800/40 border border-cream-200/80 dark:border-ink-800 rounded-2xl p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs font-bold text-ink-900">
+                    <div className="flex items-center gap-2 text-xs font-bold text-ink-900 dark:text-cream-100">
                       <Truck size={16} className="text-accent-500" />
                       <span>Thông tin vận chuyển & Nhận hàng</span>
                     </div>
@@ -471,7 +479,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
 
                         <button
                           onClick={() => handleOpenEditOrderAddress(ord)}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-white hover:bg-cream-100 border border-cream-200 text-ink-700 hover:text-accent-600 text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-2xs"
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-white dark:bg-ink-800 hover:bg-cream-100 dark:hover:bg-ink-700 border border-cream-200 dark:border-ink-700 text-ink-700 dark:text-cream-200 hover:text-accent-600 text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-2xs"
                         >
                           <Edit3 size={13} />
                           <span>Sửa Địa Chỉ</span>
@@ -479,7 +487,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
 
                         <button
                           onClick={() => handleOpenCancelModal(ord)}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-2xs active:scale-95"
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-2xs active:scale-95"
                           title="Hủy đơn hàng này"
                         >
                           <XCircle size={13} />
@@ -493,7 +501,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                         <button
                           onClick={() => handleSyncGhn(ord)}
                           disabled={syncingOrderId === ord.id}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 text-xs font-bold rounded-xl transition-all shadow-2xs active:scale-95 disabled:opacity-50 cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-bold rounded-xl transition-all shadow-2xs active:scale-95 disabled:opacity-50 cursor-pointer"
                           title="Đồng bộ trạng thái trực tiếp từ Giao Hàng Nhanh (GHN)"
                         >
                           <RefreshCw size={13} className={syncingOrderId === ord.id ? 'animate-spin' : ''} />
@@ -502,7 +510,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
 
                         <button
                           onClick={() => handleOpenCancelModal(ord)}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-2xs active:scale-95"
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-2xs active:scale-95"
                           title="Hủy đơn hàng này"
                         >
                           <XCircle size={13} />
@@ -531,25 +539,25 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                   </div>
 
                   {/* Recipient & Address Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-ink-700">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-ink-700 dark:text-cream-200">
                     <div>
-                      <span className="text-ink-400">Người nhận: </span>
-                      <strong className="text-ink-900">{ord.recipientName}</strong> ({ord.recipientPhone})
+                      <span className="text-ink-400 dark:text-ink-500">Người nhận: </span>
+                      <strong className="text-ink-900 dark:text-cream-50">{ord.recipientName}</strong> ({ord.recipientPhone})
                     </div>
                     <div className="md:text-right">
-                      <span className="text-ink-400">Đối tác giao: </span>
-                      <strong className="text-accent-700 font-bold">{ord.shippingPartner}</strong>{' '}
-                      <span className="text-ink-400 font-mono">({ord.trackingCode})</span>
+                      <span className="text-ink-400 dark:text-ink-500">Đối tác giao: </span>
+                      <strong className="text-accent-700 dark:text-accent-400 font-bold">{ord.shippingPartner}</strong>{' '}
+                      <span className="text-ink-400 dark:text-ink-500 font-mono">({ord.trackingCode})</span>
                     </div>
                     <div className="md:col-span-2">
-                      <span className="text-ink-400">Địa chỉ nhận hàng: </span>
-                      <span className="text-ink-800 font-medium">{ord.shippingAddress}</span>
+                      <span className="text-ink-400 dark:text-ink-500">Địa chỉ nhận hàng: </span>
+                      <span className="text-ink-800 dark:text-cream-200 font-medium">{ord.shippingAddress}</span>
                     </div>
                   </div>
 
                   {/* Status Notice Callout Box */}
                   {ord.status === 'pending' && (
-                    <div className="p-3.5 bg-amber-50/90 border border-amber-200/80 rounded-xl text-xs text-amber-900 flex items-start gap-2.5">
+                    <div className="p-3.5 bg-amber-50/90 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
                       <Clock size={16} className="text-amber-600 shrink-0 mt-0.5" />
                       <div>
                         <strong>Đơn hàng đang chờ xử lý:</strong> Nhân viên kho đang chuẩn bị và đóng gói sản phẩm. Bạn có thể thay đổi địa chỉ hoặc bấm <strong>Hủy đơn hàng</strong> nếu không còn nhu cầu trước khi đơn được bàn giao vận chuyển.
@@ -558,7 +566,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                   )}
 
                   {ord.status === 'shipping' && (
-                    <div className="p-3.5 bg-blue-50/90 border border-blue-200/80 rounded-xl text-xs text-blue-900 flex items-start gap-2.5">
+                    <div className="p-3.5 bg-blue-50/90 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/60 rounded-xl text-xs text-blue-900 dark:text-blue-200 flex items-start gap-2.5">
                       <Truck size={16} className="text-blue-600 shrink-0 mt-0.5" />
                       <div>
                         <strong>Đang vận chuyển:</strong> Đơn hàng {ord.order_code} đã được giao cho Shipper {ord.shippingPartner}. Bấm nút "Tra Cứu Hành Trình" ở trên để theo dõi vị trí kiện hàng.
@@ -567,7 +575,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                   )}
 
                   {ord.status === 'delivered' && (
-                    <div className="p-3.5 bg-accent-50/70 border border-accent-200/80 rounded-xl text-xs text-ink-900 flex items-start gap-2.5">
+                    <div className="p-3.5 bg-accent-50/70 dark:bg-accent-950/30 border border-accent-200/80 dark:border-accent-800/60 rounded-xl text-xs text-ink-900 dark:text-cream-100 flex items-start gap-2.5">
                       <CheckCircle2 size={16} className="text-accent-600 shrink-0 mt-0.5" />
                       <div>
                         <strong>Đã nhận hàng thành công:</strong> Kiện hàng {ord.order_code} đã được giao đến tay bạn. Bạn có thể bấm "Đánh giá sản phẩm" bên dưới để chia sẻ cảm nhận!
@@ -576,27 +584,27 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                   )}
 
                   {ord.status === 'refund_pending' && (
-                    <div className="p-3.5 bg-amber-50/90 border border-amber-300/80 rounded-xl text-xs text-amber-900 flex items-start gap-2.5">
+                    <div className="p-3.5 bg-amber-50/90 dark:bg-amber-950/30 border border-amber-300/80 dark:border-amber-800/60 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
                       <RotateCcw size={16} className="text-amber-600 shrink-0 mt-0.5" />
                       <div>
                         <strong>Yêu cầu hoàn tiền đang được xử lý:</strong> Đơn hàng {ord.order_code} đã được tiếp nhận yêu cầu hủy và toàn bộ tồn kho đã được hoàn lại. Cửa hàng đang xử lý chuyển khoản hoàn tiền vào số tài khoản <strong>{ord.bankAccountNumber} ({ord.bankName} - {ord.bankAccountHolder})</strong> trong vòng 24h làm việc.
                         {ord.cancelReason && (
-                          <div className="mt-1 text-amber-800 font-medium">Lý do hủy: {ord.cancelReason}</div>
+                          <div className="mt-1 text-amber-800 dark:text-amber-300 font-medium">Lý do hủy: {ord.cancelReason}</div>
                         )}
                       </div>
                     </div>
                   )}
 
                   {ord.status === 'cancelled' && (
-                    <div className="p-3.5 bg-rose-50/90 border border-rose-200/80 rounded-xl text-xs text-rose-900 flex items-start gap-2.5">
+                    <div className="p-3.5 bg-rose-50/90 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-800/60 rounded-xl text-xs text-rose-900 dark:text-rose-200 flex items-start gap-2.5">
                       <AlertCircle size={16} className="text-rose-600 shrink-0 mt-0.5" />
                       <div>
                         <strong>Đơn hàng đã được hủy:</strong> Đơn hàng {ord.order_code} đã dừng xử lý và số lượng sản phẩm đã được tự động hoàn lại kho.
                         {ord.cancelReason && (
-                          <div className="mt-1 text-rose-700 font-medium">Lý do hủy: {ord.cancelReason}</div>
+                          <div className="mt-1 text-rose-700 dark:text-rose-300 font-medium">Lý do hủy: {ord.cancelReason}</div>
                         )}
                         {ord.refundRefCode && (
-                          <div className="mt-1 text-emerald-700 font-bold">
+                          <div className="mt-1 text-emerald-700 dark:text-emerald-400 font-bold">
                             ✓ Đã hoàn tiền qua ngân hàng. Mã GD: {ord.refundRefCode}
                           </div>
                         )}
@@ -605,20 +613,31 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                   )}
                 </div>
 
-                {/* Card Footer: Payment & Actions */}
-                <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
-                  <div className="text-xs text-ink-500">
-                    Thanh toán:{' '}
-                    <strong className="text-ink-800 uppercase font-bold">
-                      {ord.paymentMethod}
-                    </strong>
+                {/* Card Footer: Cân xứng 2 phân tầng chuyên nghiệp */}
+                <div className="pt-4 border-t border-cream-100 dark:border-ink-800 space-y-3.5">
+                  {/* Hàng 1: Tóm tắt thanh toán & Tổng tiền nổi bật */}
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-xs text-ink-600 dark:text-cream-200">
+                      <span className="text-ink-400 dark:text-ink-500">Phương thức thanh toán:</span>
+                      <span className="font-bold text-ink-900 dark:text-cream-50 uppercase px-2.5 py-1 rounded-xl bg-cream-100 dark:bg-ink-800 border border-cream-200 dark:border-ink-700 text-[11px] tracking-wide">
+                        {ord.paymentMethod}
+                      </span>
+                    </div>
+
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-xs font-medium text-ink-500 dark:text-ink-400">Tổng thanh toán:</span>
+                      <span className="font-display text-lg sm:text-xl font-bold text-accent-600 dark:text-accent-400">
+                        {formatCurrency(ord.totalAmount)}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  {/* Hàng 2: Thanh nút thao tác (Action Bar) căn phải đều đặn */}
+                  <div className="flex flex-wrap items-center justify-end gap-2.5 pt-1 border-t border-cream-100/60 dark:border-ink-800/60">
                     {ord.status === 'pending' && (
                       <button
                         onClick={() => handleOpenCancelModal(ord)}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition-colors cursor-pointer active:scale-95"
+                        className="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800 text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-2xs flex items-center gap-1.5"
                       >
                         <XCircle size={14} />
                         <span>Hủy đơn hàng</span>
@@ -630,7 +649,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                         {ord.isReviewed ? (
                           <button
                             onClick={() => setRatingOrder(ord)}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-accent-50 hover:bg-accent-100 text-accent-700 border border-accent-200/80 text-xs font-bold transition-colors cursor-pointer"
+                            className="px-4 py-2 rounded-xl bg-accent-50 dark:bg-accent-950/40 hover:bg-accent-100 text-accent-700 dark:text-accent-400 border border-accent-200/80 dark:border-accent-800 text-xs font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1.5"
                           >
                             <CheckCircle2 size={14} className="text-accent-600" />
                             <span>Đã đánh giá</span>
@@ -638,7 +657,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                         ) : (
                           <button
                             onClick={() => setRatingOrder(ord)}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-accent-50 hover:bg-accent-100 text-accent-700 border border-accent-200/80 text-xs font-bold transition-colors cursor-pointer shadow-2xs"
+                            className="px-4 py-2 rounded-xl bg-accent-50 dark:bg-accent-950/50 hover:bg-accent-100 text-accent-700 dark:text-accent-400 border border-accent-200 dark:border-accent-800 text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95 flex items-center gap-1.5"
                           >
                             <Star size={14} className="text-accent-500 fill-accent-500" />
                             <span>Đánh giá sản phẩm</span>
@@ -649,18 +668,11 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
 
                     <button
                       onClick={() => handleRepurchase(ord)}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-cream-100 hover:bg-cream-200 text-ink-700 text-xs font-bold transition-colors cursor-pointer border border-cream-200"
+                      className="px-4 py-2 rounded-xl bg-cream-100 dark:bg-ink-800 hover:bg-cream-200 dark:hover:bg-ink-700 text-ink-800 dark:text-cream-100 text-xs font-bold transition-all cursor-pointer border border-cream-200 dark:border-ink-700 shadow-2xs active:scale-95 flex items-center gap-1.5"
                     >
                       <RotateCcw size={13} />
                       <span>Mua lại</span>
                     </button>
-
-                    <div className="text-xs">
-                      <span className="text-ink-400">Tổng tiền: </span>
-                      <strong className="font-display text-base text-accent-600 font-bold">
-                        {formatCurrency(ord.totalAmount)}
-                      </strong>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -669,23 +681,23 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
 
           {/* Orders Pagination Controls */}
           {filteredOrders.length > 0 && (
-            <div className="mt-8 bg-white border border-cream-200 rounded-2xl p-4 px-6 flex flex-wrap items-center justify-between gap-4 shadow-xs">
-              <div className="flex items-center gap-3 text-xs text-ink-600 font-medium">
+            <div className="mt-8 bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-800 rounded-2xl p-4 px-6 flex flex-wrap items-center justify-between gap-4 shadow-xs">
+              <div className="flex items-center gap-3 text-xs text-ink-600 dark:text-cream-200 font-medium">
                 <div>
-                  Hiển thị <span className="font-bold text-ink-900">{(currentPage - 1) * itemsPerPage + 1}</span> -{' '}
-                  <span className="font-bold text-ink-900">{Math.min(currentPage * itemsPerPage, filteredOrders.length)}</span> trên{' '}
-                  <span className="font-bold text-ink-900">{filteredOrders.length}</span> đơn hàng
+                  Hiển thị <span className="font-bold text-ink-900 dark:text-cream-100">{(currentPage - 1) * itemsPerPage + 1}</span> -{' '}
+                  <span className="font-bold text-ink-900 dark:text-cream-100">{Math.min(currentPage * itemsPerPage, filteredOrders.length)}</span> trên{' '}
+                  <span className="font-bold text-ink-900 dark:text-cream-100">{filteredOrders.length}</span> đơn hàng
                 </div>
 
-                <div className="flex items-center gap-1.5 border-l border-cream-200 pl-3">
-                  <span className="text-[11px] text-ink-400">Hiển thị:</span>
+                <div className="flex items-center gap-1.5 border-l border-cream-200 dark:border-ink-800 pl-3">
+                  <span className="text-[11px] text-ink-400 dark:text-ink-500">Hiển thị:</span>
                   <select
                     value={itemsPerPage}
                     onChange={(e) => {
                       setItemsPerPage(Number(e.target.value));
                       setCurrentPage(1);
                     }}
-                    className="px-2 py-1 bg-white border border-cream-200 rounded-lg text-xs font-bold text-ink-800 focus:outline-none focus:border-accent-500 cursor-pointer shadow-2xs"
+                    className="px-2 py-1 bg-white dark:bg-ink-800 border border-cream-200 dark:border-ink-700 rounded-lg text-xs font-bold text-ink-800 dark:text-cream-200 focus:outline-none focus:border-accent-500 cursor-pointer shadow-2xs"
                   >
                     <option value={5}>5 đơn / trang</option>
                     <option value={10}>10 đơn / trang</option>
@@ -702,7 +714,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                     disabled={currentPage === 1}
-                    className="px-3.5 py-1.5 bg-white border border-cream-300 rounded-xl text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                    className="px-3.5 py-1.5 bg-white dark:bg-ink-800 border border-cream-300 dark:border-ink-700 rounded-xl text-xs font-semibold text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                   >
                     ‹ Trước
                   </button>
@@ -717,7 +729,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                       className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         currentPage === pageNum
                           ? 'bg-ink-900 dark:bg-accent-500 text-white shadow-xs'
-                          : 'bg-white text-ink-700 border border-cream-300 hover:bg-cream-100'
+                          : 'bg-white dark:bg-ink-800 text-ink-700 dark:text-cream-200 border border-cream-300 dark:border-ink-700 hover:bg-cream-100 dark:hover:bg-ink-700'
                       }`}
                     >
                       {pageNum}
@@ -730,7 +742,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                     disabled={currentPage === totalPages}
-                    className="px-3.5 py-1.5 bg-white border border-cream-300 rounded-xl text-xs font-semibold text-ink-700 hover:bg-cream-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+                    className="px-3.5 py-1.5 bg-white dark:bg-ink-800 border border-cream-300 dark:border-ink-700 rounded-xl text-xs font-semibold text-ink-700 dark:text-cream-200 hover:bg-cream-100 dark:hover:bg-ink-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
                   >
                     Sau ›
                   </button>
@@ -740,6 +752,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
           )}
         </>
       )}
+      </div>
 
       {/* 4. DIALOG: EDIT ORDER SHIPPING ADDRESS */}
       <OrderEditAddressModal

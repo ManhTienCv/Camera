@@ -39,6 +39,10 @@
 }
 
 @layer base {
+  html {
+    scrollbar-gutter: stable;
+    overflow-y: scroll;
+  }
   body {
     background-color: var(--color-cream-50);
     color: var(--color-ink-800);
