@@ -150,10 +150,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ initialTab = 'profile'
         <div className="h-40 sm:h-52 w-full bg-gradient-to-r from-ink-950 via-[#1f2421] to-ink-900 relative overflow-hidden flex items-end justify-end p-6">
           <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#e85d1b_1px,transparent_1px)] [background-size:20px_20px]" />
           <div className="absolute -top-16 -right-16 w-64 h-64 bg-accent-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="relative z-10 hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-white/80 text-[11px] font-bold">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>CameraHub Pro Member</span>
-          </div>
+          
         </div>
 
         {/* Profile Info Bar */}
