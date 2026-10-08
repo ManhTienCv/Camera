@@ -109,7 +109,7 @@ export const ordersApi = {
     }),
 
   payAgainMomo: (orderId: string, redirectUrl?: string) =>
-    request<{ success: boolean; payUrl: string; qrCodeUrl?: string; deeplink?: string }>(`/orders/${orderId}/pay/momo`, {
+    request<{ success: boolean; payUrl: string; qrCodeUrl?: string; deeplink?: string; message?: string }>(`/orders/${orderId}/pay/momo`, {
       method: 'POST',
       body: JSON.stringify({ redirect_url: redirectUrl }),
     }),

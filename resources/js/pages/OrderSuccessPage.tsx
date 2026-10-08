@@ -145,10 +145,10 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
   const isVietQR = order?.payment_method === 'vietqr' || order?.payment_method === 'bank_transfer';
   const qrUrl = order
     ? vietqrService.generateQRUrl({
-        amount: order.total_amount,
-        orderCode: order.order_code || order.id,
-        template: 'compact2',
-      })
+      amount: order.total_amount,
+      orderCode: order.order_code || order.id,
+      template: 'compact2',
+    })
     : '';
 
   return (
@@ -332,19 +332,17 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
           {/* 15-Minute Countdown "Thời Gian Giữ Hàng" Banner */}
           {!paymentConfirmed && (
             <div
-              className={`p-4 rounded-2xl border transition-all flex flex-wrap items-center justify-between gap-3 ${
-                isExpired
+              className={`p-4 rounded-2xl border transition-all flex flex-wrap items-center justify-between gap-3 ${isExpired
                   ? 'bg-rose-50 border-rose-200 text-rose-900'
                   : timeLeft < 180
-                  ? 'bg-rose-50/70 border-rose-200 text-rose-900 animate-pulse'
-                  : 'bg-amber-50/80 border-amber-200/90 text-amber-900'
-              }`}
+                    ? 'bg-rose-50/70 border-rose-200 text-rose-900 animate-pulse'
+                    : 'bg-amber-50/80 border-amber-200/90 text-amber-900'
+                }`}
             >
               <div className="flex items-center gap-2.5">
                 <div
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                    isExpired ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'
-                  }`}
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${isExpired ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'
+                    }`}
                 >
                   {isExpired ? (
                     <AlertTriangle size={18} />
@@ -531,8 +529,8 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
                       </>
                     ) : (
                       <>
-                        <Zap size={16} className="fill-white" />
-                        <span>Tôi đã chuyển khoản thành công (Tự động duyệt đơn)</span>
+
+                        <span>Tôi đã chuyển khoản thành công</span>
                       </>
                     )}
                   </button>
@@ -590,10 +588,10 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
                   {isVietQR
                     ? 'Chuyển khoản VietQR (Vietcombank)'
                     : order.payment_method === 'vnpay'
-                    ? 'Cổng VNPAY'
-                    : order.payment_method === 'momo'
-                    ? 'Ví MoMo'
-                    : 'Thanh toán khi nhận hàng (COD)'}
+                      ? 'Cổng VNPAY'
+                      : order.payment_method === 'momo'
+                        ? 'Ví MoMo'
+                        : 'Thanh toán khi nhận hàng (COD)'}
                 </span>
               </div>
             </div>
