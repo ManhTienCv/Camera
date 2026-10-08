@@ -1,5 +1,6 @@
 import type {
   Category,
+  Brand,
   Product,
   Order,
   ReportSummaryData,
@@ -75,6 +76,23 @@ export const adminApi = {
     }),
   deleteAdminCategory: (id: string) =>
     request<{ message: string }>(`/admin/categories/${id}`, {
+      method: 'DELETE',
+    }),
+
+  // Brands Management
+  getAdminBrands: () => request<Brand[]>('/brands'),
+  createAdminBrand: (data: { name: string; description?: string; logo_url?: string }) =>
+    request<{ message: string; brand: Brand }>('/admin/brands', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateAdminBrand: (id: string | number, data: { name?: string; description?: string; logo_url?: string }) =>
+    request<{ message: string; brand: Brand }>(`/admin/brands/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deleteAdminBrand: (id: string | number) =>
+    request<{ message: string }>(`/admin/brands/${id}`, {
       method: 'DELETE',
     }),
 

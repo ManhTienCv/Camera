@@ -103,6 +103,11 @@ Route::prefix('v1')->group(function () {
         Route::put('/admin/categories/{id}', [CategoryController::class, 'update']);
         Route::delete('/admin/categories/{id}', [CategoryController::class, 'destroy']);
 
+        // Brands Management
+        Route::post('/admin/brands', [BrandController::class, 'store']);
+        Route::put('/admin/brands/{id}', [BrandController::class, 'update']);
+        Route::delete('/admin/brands/{id}', [BrandController::class, 'destroy']);
+
         // Orders Management
         Route::get('/admin/orders', [\App\Http\Controllers\Admin\OrderController::class, 'index']);
         Route::get('/admin/orders/{id}', [\App\Http\Controllers\Admin\OrderController::class, 'show']);

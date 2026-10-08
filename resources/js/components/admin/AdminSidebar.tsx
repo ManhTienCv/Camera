@@ -69,7 +69,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const navItemsSection1: AdminNavItem[] = [
     { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard },
     { id: 'products', label: 'Sản phẩm', icon: Package },
-    { id: 'categories', label: 'Danh mục', icon: FolderTree },
+    { id: 'categories', label: 'Danh mục & Thương hiệu', icon: FolderTree },
     { id: 'orders', label: 'Đơn hàng', icon: ShoppingCart, badge: orderCount > 0 ? orderCount : undefined },
     { id: 'vouchers', label: 'Mã Giảm Giá', icon: Ticket },
   ];

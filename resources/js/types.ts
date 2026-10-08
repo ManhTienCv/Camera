@@ -8,6 +8,16 @@ export interface Category {
   created_at?: string;
 }
 
+export interface Brand {
+  id: string | number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  logo_url?: string | null;
+  products_count?: number;
+  created_at?: string;
+}
+
 export interface Product {
   id: string;
   name: string;

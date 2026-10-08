@@ -1,8 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Trash2, Upload } from 'lucide-react';
-import type { Product, Category } from '../../../types';
+import { X, Trash2, Upload, Plus, Tag } from 'lucide-react';
+import type { Product, Category, Brand } from '../../../types';
 import { useToast } from '../../../context/ToastContext';
+import { api } from '../../../lib/api';
 
 export interface ProductFormModalProps {
   show: boolean;
@@ -39,6 +40,51 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
+
+  const [brands, setBrands] = useState<{ id: string | number; name: string }[]>([]);
+  const [isCustomBrand, setIsCustomBrand] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    api.getBrands()
+      .then((data) => {
+        if (isMounted && Array.isArray(data) && data.length > 0) {
+          setBrands(data);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setBrands([
+            { id: 1, name: 'Sony' },
+            { id: 2, name: 'Canon' },
+            { id: 3, name: 'Fujifilm' },
+            { id: 4, name: 'Nikon' },
+            { id: 5, name: 'DJI' },
+            { id: 6, name: 'Leica' },
+            { id: 7, name: 'Panasonic' },
+            { id: 8, name: 'Sigma' },
+            { id: 9, name: 'Tamron' },
+            { id: 10, name: 'GoPro' },
+            { id: 11, name: 'SanDisk' },
+            { id: 12, name: 'Peak Design' },
+          ]);
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (show && formData.brand && brands.length > 0) {
+      const match = brands.some(
+        (b) => b.name.toLowerCase() === formData.brand.trim().toLowerCase()
+      );
+      if (!match && formData.brand !== 'Khác') {
+        setIsCustomBrand(true);
+      }
+    }
+  }, [show, formData.brand, brands]);
 
   if (!show) return null;
 
@@ -152,23 +198,76 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-ink-700 uppercase mb-1">Thương hiệu *</label>
-                <select
-                  value={formData.brand}
-                  onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                  className="input-field text-sm"
-                >
-                  <option value="Sony">Sony</option>
-                  <option value="Canon">Canon</option>
-                  <option value="Fujifilm">Fujifilm</option>
-                  <option value="Nikon">Nikon</option>
-                  <option value="DJI">DJI</option>
-                  <option value="Leica">Leica</option>
-                  <option value="Panasonic">Panasonic</option>
-                  <option value="Sigma">Sigma</option>
-                  <option value="Tamron">Tamron</option>
-                  <option value="Khác">Khác</option>
-                </select>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-ink-700 uppercase">Thương hiệu *</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = !isCustomBrand;
+                      setIsCustomBrand(next);
+                      if (next) {
+                        setFormData({ ...formData, brand: '' });
+                      } else {
+                        setFormData({ ...formData, brand: brands[0]?.name || 'Sony' });
+                      }
+                    }}
+                    className="text-[11px] font-semibold text-accent-600 hover:text-accent-700 hover:underline transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    {isCustomBrand ? 'Chọn từ danh sách' : '+ Thêm hiệu mới'}
+                  </button>
+                </div>
+
+                {isCustomBrand ? (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      value={formData.brand}
+                      onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                      placeholder="Nhập tên hãng mới (VD: Hasselblad, Insta360...)"
+                      className="input-field text-sm border-accent-300 focus:border-accent-500"
+                      autoFocus
+                    />
+                  </div>
+                ) : (
+                  <select
+                    value={formData.brand}
+                    onChange={(e) => {
+                      if (e.target.value === '__custom__') {
+                        setIsCustomBrand(true);
+                        setFormData({ ...formData, brand: '' });
+                      } else {
+                        setFormData({ ...formData, brand: e.target.value });
+                      }
+                    }}
+                    className="input-field text-sm"
+                  >
+                    {brands.length > 0 ? (
+                      brands.map((b) => (
+                        <option key={b.id || b.name} value={b.name}>
+                          {b.name}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="Sony">Sony</option>
+                        <option value="Canon">Canon</option>
+                        <option value="Fujifilm">Fujifilm</option>
+                        <option value="Nikon">Nikon</option>
+                        <option value="DJI">DJI</option>
+                        <option value="Leica">Leica</option>
+                        <option value="Panasonic">Panasonic</option>
+                        <option value="Sigma">Sigma</option>
+                        <option value="Tamron">Tamron</option>
+                        <option value="GoPro">GoPro</option>
+                      </>
+                    )}
+                    <option value="Khác">Khác</option>
+                    <option value="__custom__" className="font-bold text-accent-600">
+                      + Nhập thương hiệu mới...
+                    </option>
+                  </select>
+                )}
               </div>
             </div>
 

@@ -247,10 +247,23 @@ class ProductController extends Controller
         $slug = Str::slug($request->name) . '-' . Str::random(5);
         $imageUrl = $request->image_url ?: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=1000';
 
+        $brandName = trim($request->input('brand', 'Khác'));
+        $brandModel = !empty($brandName) && $brandName !== 'Khác'
+            ? \App\Models\Brand::firstOrCreate(
+                ['name' => $brandName],
+                ['slug' => Str::slug($brandName)]
+            )
+            : null;
+
+        if ($brandModel) {
+            \Illuminate\Support\Facades\Cache::forget('brands_all_cached');
+        }
+
         $product = Product::create([
             'name' => $request->name,
             'slug' => $slug,
-            'brand' => $request->input('brand', 'Khác'),
+            'brand' => $brandName,
+            'brand_id' => $brandModel?->id,
             'category_id' => $request->category_id,
             'sku' => 'CAM-' . strtoupper(Str::random(6)),
             'description' => $request->input('description', ''),
@@ -332,7 +345,21 @@ class ProductController extends Controller
             $product->slug = Str::slug($request->name) . '-' . Str::random(5);
         }
 
-        if ($request->has('brand')) $product->brand = $request->brand;
+        if ($request->has('brand')) {
+            $brandName = trim($request->brand);
+            if (!empty($brandName) && $brandName !== 'Khác') {
+                $brandModel = \App\Models\Brand::firstOrCreate(
+                    ['name' => $brandName],
+                    ['slug' => Str::slug($brandName)]
+                );
+                $product->brand_id = $brandModel->id;
+                $product->brand = $brandModel->name;
+                \Illuminate\Support\Facades\Cache::forget('brands_all_cached');
+            } else {
+                $product->brand = $brandName;
+                $product->brand_id = null;
+            }
+        }
         if ($request->has('category_id')) $product->category_id = $request->category_id;
         if ($request->has('price')) $product->price = $request->price;
         if ($request->has('original_price')) $product->original_price = $request->original_price;
