@@ -15,44 +15,13 @@ export interface ShippingCarrier {
 export const AVAILABLE_CARRIERS: ShippingCarrier[] = [
   {
     id: 'ghn',
-    name: 'Giao Hàng Nhanh (GHN)',
+    name: 'Giao Hàng Nhanh (GHN Express)',
     code: 'GHN',
-    tagline: 'Giao toàn quốc 1-2 ngày, mạng lưới bưu cục rộng khắp',
+    tagline: 'Đối tác vận chuyển chính thức — Giao toàn quốc 1-3 ngày, đóng gói chống sốc và bảo hiểm 100% giá trị thiết bị',
     baseFee: 30000,
-    estimatedTime: '1 - 2 ngày',
-    logoColor: 'from-orange-500 to-amber-600',
-    badgeText: 'Phổ biến nhất',
-  },
-  {
-    id: 'ghtk',
-    name: 'Giao Hàng Tiết Kiệm (GHTK)',
-    code: 'GHTK',
-    tagline: 'Tối ưu chi phí, thích hợp mọi đơn hàng máy ảnh & phụ kiện',
-    baseFee: 25000,
-    estimatedTime: '2 - 3 ngày',
-    logoColor: 'from-emerald-600 to-teal-700',
-    badgeText: 'Tiết kiệm nhất',
-  },
-  {
-    id: 'viettel_post',
-    name: 'Viettel Post Chuyên Nghiệp',
-    code: 'VIETTEL',
-    tagline: 'Bảo hiểm trọn gói, an toàn tuyệt đối cho thiết bị đắt tiền',
-    baseFee: 28000,
     estimatedTime: '1 - 3 ngày',
-    logoColor: 'from-red-600 to-rose-700',
-    badgeText: 'An toàn cao cấp',
-  },
-  {
-    id: 'grab_express',
-    name: 'GrabExpress Hỏa Tốc',
-    code: 'GRAB',
-    tagline: 'Giao tức thì trong 2 giờ nội thành (Hà Nội & TP.HCM)',
-    baseFee: 45000,
-    estimatedTime: 'Trong 2 giờ',
-    isExpress: true,
-    logoColor: 'from-green-600 to-emerald-700',
-    badgeText: 'Hỏa tốc 2H',
+    logoColor: 'from-orange-500 to-amber-600',
+    badgeText: 'Đối tác chính thức',
   },
 ];
 
@@ -75,10 +44,13 @@ export function calculateShippingFee(params: ShippingCalculationParams): {
     AVAILABLE_CARRIERS.find((c) => c.id === params.carrierId) || AVAILABLE_CARRIERS[0];
   const settings = getStoreSettings();
   const threshold = settings.freeShippingThreshold || FREE_SHIPPING_THRESHOLD;
-  const originalFee = carrier.baseFee;
+  const originalFee =
+    typeof settings.shippingFee === 'number' && settings.shippingFee >= 0
+      ? settings.shippingFee
+      : carrier.baseFee;
 
-  // Freeship for orders >= freeShippingThreshold, except GrabExpress Hỏa Tốc
-  const isEligibleForFree = params.subtotal >= threshold && !carrier.isExpress;
+  // Freeship for orders >= freeShippingThreshold
+  const isEligibleForFree = params.subtotal >= threshold;
   const fee = isEligibleForFree ? 0 : originalFee;
 
   return {
@@ -96,4 +68,3 @@ export interface TrackingStep {
   completed: boolean;
   current?: boolean;
 }
-

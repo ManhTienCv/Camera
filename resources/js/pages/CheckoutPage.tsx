@@ -569,16 +569,20 @@ export function CheckoutPage({ onNavigate }: Props) {
             </div>
           </div>
 
-          {/* 3. Shipping Carrier Selection (4 Carriers) */}
+          {/* 3. Shipping Carrier Selection (Chính thức GHN Express) */}
           <div className="card p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-display font-semibold text-lg text-ink-800 flex items-center gap-2">
                 <Truck size={18} className="text-accent-500" />
-                <span>Đơn vị vận chuyển</span>
+                <span>Phương thức vận chuyển</span>
               </h2>
-              {subtotal >= FREE_SHIPPING_THRESHOLD && (
-                <span className="px-3 py-1 bg-accent-50 text-accent-700 rounded-full text-xs font-bold border border-accent-200">
-                  Miễn phí vận chuyển đơn &gt; 1.000.000đ
+              {subtotal >= (getStoreSettings().freeShippingThreshold || FREE_SHIPPING_THRESHOLD) ? (
+                <span className="px-3 py-1 bg-accent-50 text-accent-700 dark:bg-accent-950/60 dark:text-accent-300 rounded-full text-xs font-bold border border-accent-200 dark:border-accent-800">
+                  Miễn phí vận chuyển đơn &gt; {formatCurrency(getStoreSettings().freeShippingThreshold || FREE_SHIPPING_THRESHOLD)}
+                </span>
+              ) : (
+                <span className="text-xs text-ink-400">
+                  Đơn từ {formatCurrency(getStoreSettings().freeShippingThreshold || FREE_SHIPPING_THRESHOLD)} được Freeship
                 </span>
               )}
             </div>
@@ -590,57 +594,56 @@ export function CheckoutPage({ onNavigate }: Props) {
                   subtotal,
                   province: form.city,
                 });
-                const isSelected = form.carrierId === carrier.id;
 
                 return (
-                  <label
+                  <div
                     key={carrier.id}
-                    className={`flex items-start justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all ${isSelected
-                      ? 'border-accent-500 bg-accent-50/40 dark:bg-accent-500/10 shadow-xs'
-                      : 'border-cream-200 dark:border-ink-700 hover:border-cream-300 dark:hover:border-ink-600 bg-white dark:bg-ink-800'
-                      }`}
+                    className="p-4 sm:p-5 rounded-2xl border-2 border-accent-500 bg-accent-50/30 dark:bg-accent-500/10 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all"
                   >
-                    <div className="flex items-start gap-3">
-                      <input
-                        type="radio"
-                        name="carrier"
-                        value={carrier.id}
-                        checked={isSelected}
-                        onChange={() => setForm({ ...form, carrierId: carrier.id })}
-                        className="w-4 h-4 text-accent-500 focus:ring-accent-400 mt-1 cursor-pointer"
-                      />
+                    <div className="flex items-start gap-3.5">
+                      <div className="w-11 h-11 rounded-2xl bg-orange-500 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                        <Truck size={22} />
+                      </div>
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-bold text-sm text-ink-900 dark:text-cream-50">{carrier.name}</p>
-                          {carrier.badgeText && (
-                            <span className="px-2 py-0.5 bg-cream-100 dark:bg-ink-700 text-ink-700 dark:text-cream-200 text-[10px] font-bold rounded-full border border-cream-300 dark:border-ink-600">
-                              {carrier.badgeText}
-                            </span>
-                          )}
+                          <span className="px-2.5 py-0.5 bg-orange-100 dark:bg-orange-950/80 text-orange-700 dark:text-orange-300 text-[10px] font-bold rounded-full border border-orange-200 dark:border-orange-800">
+                            {carrier.badgeText || 'Đối tác chính thức'}
+                          </span>
+                          <span className="text-2xs px-2 py-0.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 rounded-full font-semibold border border-emerald-200 dark:border-emerald-800">
+                            ✓ Đồng bộ vận đơn tự động
+                          </span>
                         </div>
-                        <p className="text-xs text-ink-500 dark:text-ink-400 mt-0.5">{carrier.tagline}</p>
-                        <p className="text-[11px] text-accent-600 dark:text-accent-400 font-semibold mt-1 flex items-center gap-1">
-                          <Clock size={12} />
-                          <span>Thời gian giao dự kiến: {carrier.estimatedTime}</span>
-                        </p>
+                        <p className="text-xs text-ink-500 dark:text-ink-400 mt-1 max-w-xl">{carrier.tagline}</p>
+                        <div className="flex items-center gap-3 text-[11px] text-ink-500 dark:text-ink-400 font-medium mt-2 flex-wrap">
+                          <span className="flex items-center gap-1 text-accent-600 dark:text-accent-400 font-semibold">
+                            <Clock size={12} />
+                            Thời gian giao: {carrier.estimatedTime}
+                          </span>
+                          <span>•</span>
+                          <span>Đóng hộp chống sốc chuyên dụng máy ảnh</span>
+                          <span>•</span>
+                          <span>Bảo hiểm 100% bưu kiện</span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="text-right shrink-0">
+                    <div className="text-left sm:text-right shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-cream-200 dark:border-ink-700">
+                      <div className="text-[11px] text-ink-400 mb-0.5">Cước vận chuyển:</div>
                       {calc.isFree ? (
                         <div>
                           <span className="text-xs text-ink-400 line-through mr-1.5">
                             {formatCurrency(calc.originalFee)}
                           </span>
-                          <span className="font-bold text-sm text-accent-600 dark:text-accent-400">Miễn phí</span>
+                          <span className="font-bold text-base text-accent-600 dark:text-accent-400">Miễn phí</span>
                         </div>
                       ) : (
-                        <span className="font-bold text-sm text-ink-900 dark:text-cream-50">
+                        <span className="font-bold text-base text-ink-900 dark:text-cream-50">
                           {formatCurrency(calc.fee)}
                         </span>
                       )}
                     </div>
-                  </label>
+                  </div>
                 );
               })}
             </div>

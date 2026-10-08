@@ -17,7 +17,7 @@
 
 ### 💳 2. Thanh Toán Thông Minh VietQR & Đếm Ngược 15 Phút
 - **Bản đồ định vị GPS Leaflet**: Kéo ghim toạ độ trên OpenStreetMap để tự động lấy tên đường, số nhà, phường/xã.
-- **4 Đơn vị vận chuyển**: Giao Hàng Nhanh (GHN), GHTK, Viettel Post, GrabExpress Hỏa Tốc 2H.
+- **Đơn vị vận chuyển chính thức**: Giao Hàng Nhanh (GHN Express) với API tự động tạo mã vận đơn, tính cước và đồng bộ hành trình kiện hàng thời gian thực.
 - **Thanh toán VietQR động**: Tự động sinh mã QR ngân hàng Vietcombank (STK: `88888888`, Chủ TK: *NGUYEN MANH TIEN*) kèm nút sao chép 1 chạm.
 - **Đồng hồ đếm ngược 15 phút**: Phiên thanh toán được bảo lưu trong 15 phút để bảo vệ số lượng tồn kho.
 - **Tự động duyệt đơn hàng trực tuyến**: Bấm xác nhận chuyển khoản thành công sẽ tự động chuyển đơn sang trạng thái `Đang vận chuyển (shipping)` và trừ tồn kho.
