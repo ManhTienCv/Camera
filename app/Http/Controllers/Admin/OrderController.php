@@ -43,9 +43,9 @@ class OrderController extends Controller
             });
         }
 
-        // Lọc theo Tab trạng thái Lab 08 (Mặc định: pending)
-        $activeTab = $request->input('tab', 'pending');
-        if (isset(self::TABS[$activeTab])) {
+        // Lọc theo Tab trạng thái Lab 08 nếu có truyền tham số tab (nếu không truyền hoặc truyền 'all' thì trả về tất cả để React Admin tự phân tab và đếm số lượng)
+        $activeTab = $request->input('tab');
+        if ($activeTab && $activeTab !== 'all' && isset(self::TABS[$activeTab])) {
             $statuses = self::TABS[$activeTab]['statuses'];
             $query->whereIn('order_status', $statuses);
         }
@@ -110,7 +110,7 @@ class OrderController extends Controller
         $response = [
             'orders' => $orders,
             'tabCounts' => $tabCounts,
-            'activeTab' => $activeTab,
+            'activeTab' => $activeTab ?: 'all',
         ];
 
         if ($request->wantsJson() || $request->is('api/*')) {
