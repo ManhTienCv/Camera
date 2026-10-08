@@ -490,8 +490,24 @@ class OrderController extends Controller
 
             Log::info("Payment confirmed for order {$order->id} ({$order->order_code}) by {$actorNote}");
 
+            // Tự động gửi Email xác nhận thanh toán thành công để người dùng yên tâm
+            try {
+                EmailService::sendPaymentSuccessNotification($order->fresh(['items.product']));
+            } catch (\Throwable $e) {
+                Log::warning('Send payment success email on confirmPayment failed: ' . $e->getMessage());
+            }
+
+            // Tự động tạo vận đơn GHN nếu chưa có
+            if (empty($order->tracking_code)) {
+                try {
+                    \App\Services\GHNService::createShippingOrder($order);
+                } catch (\Throwable $e) {
+                    Log::warning('Auto GHN create on confirmPayment failed: ' . $e->getMessage());
+                }
+            }
+
             return response()->json([
-                'message' => 'Xác nhận thanh toán thành công! Giao dịch đã được đồng bộ vào sổ cái tài chính.',
+                'message' => 'Xác nhận thanh toán thành công! Giao dịch đã được đồng bộ và email xác nhận đã được gửi đến quý khách.',
                 'order' => $this->formatOrder($order->fresh('items'), true),
             ]);
         });

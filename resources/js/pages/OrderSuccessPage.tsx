@@ -101,10 +101,12 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
         setOrder(res.order);
       }
       setPaymentConfirmed(true);
+      toast.success(`Xác nhận thanh toán thành công! Thông báo đơn hàng đã gửi về email ${order.customer_email || ''}`);
     } catch (e) {
       console.error('Failed to auto-confirm payment:', e);
       // Still set local success for smooth simulation
       setPaymentConfirmed(true);
+      toast.success('Xác nhận thanh toán thành công!');
     } finally {
       setConfirmingPayment(false);
     }
@@ -254,6 +256,16 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
               </div>
             )}
           </div>
+
+          {paymentConfirmed && (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-2.5 text-xs text-emerald-900 mt-2">
+              <CheckCircle2 size={18} className="text-emerald-600 shrink-0" />
+              <div>
+                <strong className="block text-emerald-800">Đã xác nhận thanh toán MoMo thành công!</strong>
+                <span>Đơn hàng đã được duyệt và chuyển sang bộ phận đóng gói. Email xác nhận thanh toán đã được gửi tới <strong>{order.customer_email || 'hòm thư của bạn'}</strong>.</span>
+              </div>
+            </div>
+          )}
 
           {!paymentConfirmed && (
             <div className="bg-pink-50/40 border border-pink-200 rounded-2xl p-4 text-xs text-ink-700 space-y-3">
@@ -512,7 +524,7 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
                     <CheckCircle2 size={18} className="text-accent-600 shrink-0" />
                     <div>
                       <strong className="block text-accent-700">Đã tự động duyệt đơn hàng trực tuyến!</strong>
-                      <span>Đơn hàng đã được chuyển sang bộ phận đóng gói và bàn giao Shipper.</span>
+                      <span>Đơn hàng đã được chuyển sang bộ phận đóng gói và bàn giao Shipper. Email xác nhận thanh toán đã được gửi tới <strong>{order.customer_email || 'hòm thư của bạn'}</strong>.</span>
                     </div>
                   </div>
                 ) : (

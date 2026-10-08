@@ -227,7 +227,15 @@ class OrderController extends Controller
                 }
             }
         } elseif ($newStatus === 'completed' || $newStatus === 'delivered') {
+            $wasPaid = in_array($order->payment_status, ['completed', 'paid'], true);
             $order->payment_status = 'completed';
+            if (!$wasPaid) {
+                try {
+                    \App\Services\EmailService::sendPaymentSuccessNotification($order->fresh(['items.product']));
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('Admin updateStatus payment success email failed: ' . $e->getMessage());
+                }
+            }
         }
 
         $order->save();

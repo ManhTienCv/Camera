@@ -218,9 +218,9 @@ class PaymentController extends Controller
                 }
 
                 try {
-                    EmailService::sendOrderConfirmation($order->fresh('items'));
+                    EmailService::sendPaymentSuccessNotification($order->fresh(['items.product']));
                 } catch (\Throwable $e) {
-                    Log::error('Send order confirmation email on MoMo IPN error: ' . $e->getMessage());
+                    Log::error('Send payment success email on MoMo IPN error: ' . $e->getMessage());
                 }
             };
 
@@ -312,9 +312,9 @@ class PaymentController extends Controller
                 }
 
                 try {
-                    EmailService::sendOrderConfirmation($order->fresh('items'));
+                    EmailService::sendPaymentSuccessNotification($order->fresh(['items.product']));
                 } catch (\Throwable $e) {
-                    Log::error('Send order confirmation email on MoMo callback error: ' . $e->getMessage());
+                    Log::error('Send payment success email on MoMo callback error: ' . $e->getMessage());
                 }
             };
 

@@ -10,7 +10,7 @@ class EmailService
     /**
      * Common Email HTML Shell Wrapper
      */
-    private static function wrapTemplate(string $title, string $contentHtml): string
+    private static function wrapTemplate(string $title, string $contentHtml, string $badgeText = '📷 CAMERAHUB VIETNAM', string $badgeColor = '#f17a35'): string
     {
         return <<<HTML
 <!DOCTYPE html>
@@ -30,7 +30,7 @@ class EmailService
                     <tr>
                         <td style="background: linear-gradient(135deg, #151513 0%, #22221f 100%); padding: 32px 40px; text-align: center;">
                             <div style="display: inline-block; padding: 6px 14px; background: rgba(255,255,255,0.1); border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); margin-bottom: 8px;">
-                                <span style="color: #f17a35; font-weight: 800; font-size: 13px; letter-spacing: 1px;">📷 CAMERAHUB VIETNAM</span>
+                                <span style="color: {$badgeColor}; font-weight: 800; font-size: 13px; letter-spacing: 1px;">{$badgeText}</span>
                             </div>
                             <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: -0.5px;">{$title}</h1>
                         </td>
@@ -186,7 +186,7 @@ HTML;
     }
 
     /**
-     * Send Order Confirmation Email
+     * Send Order Confirmation Email (Khi đặt đơn hàng thành công)
      */
     public static function sendOrderConfirmation($order): bool
     {
@@ -194,29 +194,41 @@ HTML;
             $toEmail = $order->customer_email;
             if (!$toEmail) return false;
 
-            $subject = "[CameraHub] Xác nhận đơn hàng #" . $order->order_code . " - Đặt hàng thành công!";
+            $orderCode = htmlspecialchars($order->order_code ?: ('CAM-' . $order->id));
+            $subject = "[CameraHub] Xác nhận đơn hàng #" . $orderCode . " - Đặt hàng thành công!";
             $customerName = htmlspecialchars($order->customer_name ?: 'Quý khách');
-            $orderCode = htmlspecialchars($order->order_code);
-            $totalAmountFormatted = number_format($order->total_amount) . ' ₫';
+            $totalAmountFormatted = number_format((float) $order->total_amount, 0, ',', '.') . ' ₫';
             $shippingAddress = htmlspecialchars($order->shipping_address . ($order->city ? ', ' . $order->city : ''));
             $phone = htmlspecialchars($order->customer_phone ?: 'Chưa cung cấp');
-            $paymentMethodName = $order->payment_method === 'vietqr' ? 'Chuyển khoản VietQR' : ($order->payment_method === 'cod' ? 'Thanh toán khi nhận hàng (COD)' : strtoupper($order->payment_method));
+            
+            $methodMap = [
+                'vietqr' => 'Chuyển khoản VietQR (Napas 24/7)',
+                'bank_transfer' => 'Chuyển khoản ngân hàng',
+                'momo' => 'Ví điện tử MoMo',
+                'vnpay' => 'Cổng VNPAY',
+                'cod' => 'Thanh toán khi nhận hàng (COD)',
+            ];
+            $paymentMethodName = $methodMap[$order->payment_method] ?? strtoupper($order->payment_method ?: 'COD');
 
-            // Generate items table rows
+            // Generate items table rows with correct subtotal calculation
             $itemsHtml = '';
-            foreach ($order->items as $item) {
-                $pName = htmlspecialchars($item->product_name);
-                $pPrice = number_format($item->price) . ' ₫';
-                $pSubtotal = number_format($item->subtotal) . ' ₫';
-                $pQty = $item->quantity;
+            $items = $order->items ?? [];
+            foreach ($items as $item) {
+                $pName = htmlspecialchars($item->name ?? ($item->product?->name ?? 'Thiết bị máy ảnh'));
+                $price = (float) $item->price;
+                $qty = (int) $item->quantity;
+                $lineTotal = $price * $qty;
+                $pPrice = number_format($price, 0, ',', '.') . ' ₫';
+                $pSubtotal = number_format($lineTotal, 0, ',', '.') . ' ₫';
 
                 $itemsHtml .= <<<HTML
                 <tr>
                     <td style="padding: 12px 0; border-bottom: 1px solid #f5ede0; font-size: 13px; color: #22221f; font-weight: 600;">
                         {$pName}
+                        <div style="font-size: 11px; color: #888; font-weight: normal; margin-top: 2px;">Đơn giá: {$pPrice}</div>
                     </td>
                     <td style="padding: 12px 10px; border-bottom: 1px solid #f5ede0; font-size: 13px; color: #5a5a52; text-align: center;">
-                        {$pQty}
+                        {$qty}
                     </td>
                     <td style="padding: 12px 0; border-bottom: 1px solid #f5ede0; font-size: 13px; color: #e85d1b; font-weight: 700; text-align: right;">
                         {$pSubtotal}
@@ -250,6 +262,10 @@ HTML;
                         <td style="color: #7a7a73; font-weight: 500;">Phương thức:</td>
                         <td style="color: #22221f; font-weight: 600;">{$paymentMethodName}</td>
                     </tr>
+                    <tr>
+                        <td style="color: #7a7a73; font-weight: 500;">Đối tác vận chuyển:</td>
+                        <td style="color: #f97316; font-weight: 700;">Giao Hàng Nhanh (GHN Express)</td>
+                    </tr>
                 </table>
             </div>
 
@@ -275,7 +291,7 @@ HTML;
             </table>
 
             <p style="font-size: 13px; color: #7a7a73; line-height: 1.6; margin: 25px 0 0 0; padding-top: 15px; border-top: 1px solid #f5ede0;">
-                Chúng tôi sẽ thông báo cho bạn ngay khi kiện hàng được bàn giao cho đối tác vận chuyển. Mọi thắc mắc xin liên hệ Hotline: <strong>1900-8888</strong>.
+                Chúng tôi sẽ thông báo cho bạn ngay khi kiện hàng được bàn giao cho đối tác vận chuyển GHN Express. Mọi thắc mắc xin liên hệ Hotline: <strong>1900-8888</strong>.
             </p>
 HTML;
 
@@ -289,6 +305,159 @@ HTML;
             return true;
         } catch (\Throwable $e) {
             Log::error("Failed to send order confirmation email to {$order->customer_email}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send Payment Success Email (Thông báo xác nhận thanh toán thành công để khách an tâm)
+     */
+    public static function sendPaymentSuccessNotification($order): bool
+    {
+        try {
+            $toEmail = $order->customer_email;
+            if (!$toEmail) return false;
+
+            $customerName = htmlspecialchars($order->customer_name ?: 'Quý khách');
+            $orderCode = htmlspecialchars($order->order_code ?: ('CAM-' . $order->id));
+            $subject = "[CameraHub] ✅ Xác nhận thanh toán thành công đơn hàng #" . $orderCode . " - Đang chuẩn bị giao hàng!";
+            $totalAmountFormatted = number_format((float) $order->total_amount, 0, ',', '.') . ' ₫';
+            $shippingAddress = htmlspecialchars($order->shipping_address . ($order->city ? ', ' . $order->city : ''));
+            $phone = htmlspecialchars($order->customer_phone ?: 'Chưa cung cấp');
+
+            $methodMap = [
+                'vietqr' => 'Chuyển khoản VietQR (Napas 24/7)',
+                'bank_transfer' => 'Chuyển khoản ngân hàng',
+                'momo' => 'Ví điện tử MoMo Gateway',
+                'vnpay' => 'Cổng thanh toán VNPAY',
+                'cod' => 'Thanh toán khi nhận hàng (COD)',
+            ];
+            $paymentMethodName = $methodMap[$order->payment_method] ?? strtoupper($order->payment_method ?: 'Trực tuyến');
+            $paidTime = now()->format('H:i:s d/m/Y');
+
+            // Generate items table rows with calculated subtotals
+            $itemsHtml = '';
+            $items = $order->items ?? [];
+            foreach ($items as $item) {
+                $pName = htmlspecialchars($item->name ?? ($item->product?->name ?? 'Thiết bị máy ảnh'));
+                $price = (float) $item->price;
+                $qty = (int) $item->quantity;
+                $lineTotal = $price * $qty;
+                $pPrice = number_format($price, 0, ',', '.') . ' ₫';
+                $pSubtotal = number_format($lineTotal, 0, ',', '.') . ' ₫';
+
+                $itemsHtml .= <<<HTML
+                <tr>
+                    <td style="padding: 12px 0; border-bottom: 1px solid #f5ede0; font-size: 13px; color: #22221f; font-weight: 600;">
+                        <span style="display: block; font-size: 13px; font-weight: 600; color: #151513;">{$pName}</span>
+                        <span style="font-size: 11px; color: #888; font-weight: normal;">Đơn giá: {$pPrice}</span>
+                    </td>
+                    <td style="padding: 12px 10px; border-bottom: 1px solid #f5ede0; font-size: 13px; color: #5a5a52; text-align: center;">
+                        x{$qty}
+                    </td>
+                    <td style="padding: 12px 0; border-bottom: 1px solid #f5ede0; font-size: 13px; color: #059669; font-weight: 700; text-align: right;">
+                        {$pSubtotal}
+                    </td>
+                </tr>
+HTML;
+            }
+
+            $bodyHtml = <<<HTML
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="display: inline-block; width: 56px; height: 56px; line-height: 56px; border-radius: 28px; background: #ecfdf5; border: 2px solid #a7f3d0; text-align: center; font-size: 26px; margin-bottom: 10px;">
+                    ✅
+                </div>
+                <h2 style="font-size: 20px; font-weight: 800; color: #065f46; margin: 0 0 6px 0;">XÁC NHẬN THANH TOÁN THÀNH CÔNG</h2>
+                <p style="font-size: 13px; color: #047857; margin: 0;">Giao dịch đối soát thành công • Đơn hàng đã được duyệt đóng gói</p>
+            </div>
+
+            <p style="font-size: 14px; line-height: 1.6; color: #44443d; margin: 0 0 20px 0;">
+                Xin chào <strong>{$customerName}</strong>, CameraHub xin thông báo đơn hàng <strong>#{$orderCode}</strong> của bạn đã được xác nhận thanh toán thành công số tiền <strong>{$totalAmountFormatted}</strong>! Kho hàng của chúng tôi đang tiến hành kiểm tra kỹ thuật, dán tem bảo hành và đóng gói chống sốc chuyên dụng để chuẩn bị bàn giao cho <strong>Giao Hàng Nhanh (GHN Express)</strong>.
+            </p>
+
+            <!-- Payment Receipt Box -->
+            <div style="background-color: #faf6ee; border-radius: 14px; padding: 20px; margin-bottom: 24px; border: 1px solid #f2e3cd;">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 13px; line-height: 1.9;">
+                    <tr>
+                        <td width="42%" style="color: #7a7a73;">Mã đơn hàng:</td>
+                        <td style="color: #e85d1b; font-weight: 800; font-family: monospace; font-size: 14px;">#{$orderCode}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Trạng thái thanh toán:</td>
+                        <td><span style="display: inline-block; padding: 3px 9px; border-radius: 6px; background-color: #ecfdf5; color: #059669; font-weight: 700; font-size: 11px; border: 1px solid #a7f3d0;">✓ ĐÃ THANH TOÁN THÀNH CÔNG</span></td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Số tiền đã thanh toán:</td>
+                        <td style="color: #059669; font-weight: 800; font-size: 15px;">{$totalAmountFormatted}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Phương thức:</td>
+                        <td style="color: #22221f; font-weight: 600;">{$paymentMethodName}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Thời gian xác nhận:</td>
+                        <td style="color: #22221f;">{$paidTime}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Người nhận:</td>
+                        <td style="color: #22221f; font-weight: 600;">{$customerName} ({$phone})</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Địa chỉ giao hàng:</td>
+                        <td style="color: #22221f;">{$shippingAddress}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Đối tác vận chuyển:</td>
+                        <td style="color: #f97316; font-weight: 700;">Giao Hàng Nhanh (GHN Express)</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Items Table -->
+            <h3 style="font-size: 14px; font-weight: 700; color: #22221f; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px;">Thiết Bị Trong Kiện Hàng</h3>
+            <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #dec9a6;">
+                        <th align="left" style="padding-bottom: 8px; font-size: 12px; color: #7a7a73; font-weight: 600;">Sản phẩm</th>
+                        <th align="center" style="padding-bottom: 8px; font-size: 12px; color: #7a7a73; font-weight: 600; width: 50px;">SL</th>
+                        <th align="right" style="padding-bottom: 8px; font-size: 12px; color: #7a7a73; font-weight: 600; width: 110px;">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {$itemsHtml}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2" style="padding-top: 15px; font-size: 14px; font-weight: 700; color: #22221f;">Tổng tiền đã thanh toán:</td>
+                        <td align="right" style="padding-top: 15px; font-size: 17px; font-weight: 800; color: #059669;">{$totalAmountFormatted}</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <!-- Reassurance Commitments -->
+            <div style="background-color: #f8fafc; border-radius: 12px; padding: 16px 18px; margin: 25px 0 0 0; border: 1px solid #e2e8f0; font-size: 12px; color: #475569; line-height: 1.6;">
+                <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px; font-size: 13px;">🛡️ Cam Kết Dịch Vụ & Bảo Vệ Khách Hàng:</div>
+                <div style="margin-bottom: 4px;">• <strong>Bảo hiểm 100%:</strong> Toàn bộ thiết bị máy ảnh và ống kính được bảo hiểm giá trị cao trong suốt quá trình vận chuyển.</div>
+                <div style="margin-bottom: 4px;">• <strong>Đóng gói chuyên dụng:</strong> Chèn xốp bóng khí 3 lớp chống sốc, niêm phong tem chống bóc mở trước khi gửi.</div>
+                <div>• <strong>Theo dõi hành trình:</strong> Khi bưu tá GHN nhận kiện hàng, bạn có thể tra cứu mã vận đơn trực tiếp tại trang web CameraHub.</div>
+            </div>
+
+            <p style="font-size: 13px; color: #7a7a73; line-height: 1.6; margin: 20px 0 0 0; text-align: center;">
+                Cần hỗ trợ gấp? Gọi ngay Hotline miễn phí: <strong style="color: #e85d1b;">1900-8888</strong> (08:30 - 21:30 hàng ngày).
+            </p>
+HTML;
+
+            $fullHtml = self::wrapTemplate("Xác Nhận Thanh Toán Thành Công #" . $orderCode, $bodyHtml, "✅ THANH TOÁN THÀNH CÔNG", "#10b981");
+
+            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
+                $message->to($toEmail)
+                    ->subject($subject);
+            });
+
+            Log::info("Payment success email sent to {$toEmail} for order #{$orderCode}");
+            return true;
+        } catch (\Throwable $e) {
+            Log::error("Failed to send payment success email to {$order->customer_email}: " . $e->getMessage());
             return false;
         }
     }
