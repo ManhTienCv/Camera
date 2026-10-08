@@ -207,21 +207,22 @@ class PaymentController extends Controller
             $order->payment_method = 'momo';
             $order->save();
 
-            // Tự động khởi tạo vận đơn GHN sau khi thanh toán MoMo thành công (Lab 06 Mục 3)
-            if (empty($order->tracking_code)) {
-                try {
-                    GHNService::createShippingOrder($order);
-                } catch (\Throwable $e) {
-                    Log::error('Auto GHN create after MoMo paid error: ' . $e->getMessage());
+            // Tự động khởi tạo vận đơn GHN và gửi Email bất đồng bộ sau khi phản hồi thành công (Lab 06 Mục 3)
+            defer(function () use ($order) {
+                if (empty($order->tracking_code)) {
+                    try {
+                        GHNService::createShippingOrder($order);
+                    } catch (\Throwable $e) {
+                        Log::error('Auto GHN create after MoMo paid error: ' . $e->getMessage());
+                    }
                 }
-            }
 
-            // Gửi email hóa đơn xác nhận tự động
-            try {
-                EmailService::sendOrderConfirmation($order->fresh('items'));
-            } catch (\Throwable $e) {
-                Log::error('Send order confirmation email on MoMo IPN error: ' . $e->getMessage());
-            }
+                try {
+                    EmailService::sendOrderConfirmation($order->fresh('items'));
+                } catch (\Throwable $e) {
+                    Log::error('Send order confirmation email on MoMo IPN error: ' . $e->getMessage());
+                }
+            });
 
             Log::info("MoMo Order #{$order->id} ({$order->order_code}) paid successfully with verified amount {$ipnAmount} VND!");
         } else {
@@ -294,20 +295,22 @@ class PaymentController extends Controller
             $order->order_status = 'shipping';
             $order->save();
 
-            if (empty($order->tracking_code)) {
-                try {
-                    GHNService::createShippingOrder($order);
-                } catch (\Throwable $e) {
-                    Log::error('Auto GHN create after MoMo callback error: ' . $e->getMessage());
+            // Xử lý GHN và gửi Email xác nhận ngầm để chuyển hướng người dùng ngay lập tức (< 30ms)
+            defer(function () use ($order) {
+                if (empty($order->tracking_code)) {
+                    try {
+                        GHNService::createShippingOrder($order);
+                    } catch (\Throwable $e) {
+                        Log::error('Auto GHN create after MoMo callback error: ' . $e->getMessage());
+                    }
                 }
-            }
 
-            // Gửi email xác nhận đơn hàng khi thanh toán MoMo thành công
-            try {
-                EmailService::sendOrderConfirmation($order->fresh('items'));
-            } catch (\Throwable $e) {
-                Log::error('Send order confirmation email on MoMo callback error: ' . $e->getMessage());
-            }
+                try {
+                    EmailService::sendOrderConfirmation($order->fresh('items'));
+                } catch (\Throwable $e) {
+                    Log::error('Send order confirmation email on MoMo callback error: ' . $e->getMessage());
+                }
+            });
 
             return redirect($frontendUrl ? "{$frontendUrl}/order-success?id={$order->id}&momo=1" : "/order-success?id={$order->id}&momo=1");
         }
