@@ -233,6 +233,26 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
     onNavigate({ name: 'cart' });
   };
 
+  const [confirmingOrderId, setConfirmingOrderId] = useState<string | null>(null);
+
+  const handleConfirmPaidOrder = async (orderId: string) => {
+    setConfirmingOrderId(orderId);
+    try {
+      toast.info('Đang xác nhận trạng thái thanh toán đơn hàng...');
+      const res = await api.confirmPayment(orderId);
+      if (res && res.order) {
+        toast.success('Xác nhận thanh toán MoMo thành công! Đơn hàng đã chuyển sang Đang giao.');
+        setRefreshKey((k) => k + 1);
+      } else {
+        toast.warning('Chưa thể xác nhận đơn hàng, vui lòng thử lại.');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi xác nhận đơn hàng.');
+    } finally {
+      setConfirmingOrderId(null);
+    }
+  };
+
   const handlePayAgain = async (orderId: string) => {
     setPayingAgainOrderId(orderId);
     try {
@@ -426,15 +446,27 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                     {ord.status === 'pending' && (
                       <div className="flex items-center gap-2 flex-wrap">
                         {ord.paymentMethod === 'VÍ ĐIỆN TỬ MOMO' && (
-                          <button
-                            onClick={() => handlePayAgain(ord.id)}
-                            disabled={payingAgainOrderId === ord.id}
-                            className="inline-flex items-center gap-1.5 px-3 py-1 bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold rounded-xl transition-all shadow-2xs active:scale-95 cursor-pointer disabled:opacity-50"
-                            title="Thanh toán lại đơn hàng này qua MoMo"
-                          >
-                            <RotateCcw size={13} className={payingAgainOrderId === ord.id ? 'animate-spin' : ''} />
-                            <span>Thanh toán lại MoMo</span>
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handlePayAgain(ord.id)}
+                              disabled={payingAgainOrderId === ord.id}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold rounded-xl transition-all shadow-2xs active:scale-95 cursor-pointer disabled:opacity-50"
+                              title="Thanh toán lại đơn hàng này qua MoMo"
+                            >
+                              <RotateCcw size={13} className={payingAgainOrderId === ord.id ? 'animate-spin' : ''} />
+                              <span>Thanh toán lại MoMo</span>
+                            </button>
+
+                            <button
+                              onClick={() => handleConfirmPaidOrder(ord.id)}
+                              disabled={confirmingOrderId === ord.id}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 text-xs font-bold rounded-xl transition-all shadow-2xs active:scale-95 cursor-pointer disabled:opacity-50"
+                              title="Xác nhận duyệt ngay nếu MoMo Sandbox bị treo hoặc quay tròn lâu"
+                            >
+                              <CheckCircle2 size={13} />
+                              <span>Xác nhận đã thanh toán</span>
+                            </button>
+                          </>
                         )}
 
                         <button
