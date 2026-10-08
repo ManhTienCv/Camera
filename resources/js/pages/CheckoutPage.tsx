@@ -302,14 +302,14 @@ export function CheckoutPage({ onNavigate }: Props) {
   if (!user) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center animate-fade-in">
-        <div className="w-20 h-20 bg-cream-100 rounded-3xl flex items-center justify-center mx-auto mb-6 text-accent-600 border border-cream-200 shadow-xs">
+        <div className="w-20 h-20 bg-cream-100 dark:bg-ink-800 rounded-3xl flex items-center justify-center mx-auto mb-6 text-accent-600 border border-cream-200 dark:border-ink-700 shadow-xs">
           <ShieldCheck size={36} />
         </div>
-        <h1 className="font-display font-bold text-2xl text-ink-900 mb-2">
+        <h1 className="font-display font-bold text-2xl text-ink-900 dark:text-cream-100 mb-2">
           Yêu cầu đăng nhập tài khoản
         </h1>
-        <p className="text-ink-500 mb-8 max-w-md mx-auto text-sm leading-relaxed">
-          Vui lòng đăng nhập tài khoản để xác thực danh tính, sử dụng địa chỉ giao hàng và hoàn tất đặt hàng an toàn.
+        <p className="text-ink-500 dark:text-cream-400 mb-8 max-w-md mx-auto text-sm leading-relaxed">
+          Vui lòng đăng nhập tài khoản để xác thực danh tính, sử định địa chỉ giao hàng và hoàn tất đặt hàng an toàn.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4">
           <button
@@ -337,10 +337,10 @@ export function CheckoutPage({ onNavigate }: Props) {
   if (items.length === 0) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center animate-fade-in">
-        <h1 className="font-display font-bold text-2xl text-ink-900 mb-3">
+        <h1 className="font-display font-bold text-2xl text-ink-900 dark:text-cream-100 mb-3">
           Không có sản phẩm để thanh toán
         </h1>
-        <p className="text-ink-400 mb-8">Giỏ hàng của bạn đang trống.</p>
+        <p className="text-ink-400 dark:text-cream-400 mb-8">Giỏ hàng của bạn đang trống.</p>
         <button onClick={() => onNavigate({ name: 'catalog' })} className="btn-primary">
           Khám phá sản phẩm
         </button>
@@ -352,29 +352,29 @@ export function CheckoutPage({ onNavigate }: Props) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumb & Navigation Header */}
       <div className="flex items-center justify-between gap-4 mb-4">
-        <div className="flex items-center gap-2 text-sm text-ink-400">
+        <div className="flex items-center gap-2 text-sm text-ink-400 dark:text-cream-400">
           <button
             onClick={() => {
               sessionStorage.removeItem('camerahub_checkout_deadline');
               onNavigate({ name: 'home' });
             }}
-            className="hover:text-ink-700 cursor-pointer"
+            className="hover:text-ink-700 dark:hover:text-cream-200 cursor-pointer"
           >
             Trang chủ
           </button>
           <ChevronRight size={14} />
-          <button onClick={() => setIsLeaveModalOpen(true)} className="hover:text-ink-700 cursor-pointer">
+          <button onClick={() => setIsLeaveModalOpen(true)} className="hover:text-ink-700 dark:hover:text-cream-200 cursor-pointer">
             Giỏ hàng
           </button>
           <ChevronRight size={14} />
-          <span className="text-ink-700 font-semibold">Thanh toán</span>
+          <span className="text-ink-700 dark:text-cream-200 font-semibold">Thanh toán</span>
         </div>
 
         {/* Back to Cart Trigger (Matches Image 1) */}
         <button
           type="button"
           onClick={() => setIsLeaveModalOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-cream-100 hover:bg-cream-200 text-ink-700 rounded-full text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95 border border-cream-200"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-cream-100 dark:bg-ink-800 hover:bg-cream-200 dark:hover:bg-ink-700 text-ink-700 dark:text-cream-200 rounded-full text-xs font-bold transition-all cursor-pointer shadow-2xs active:scale-95 border border-cream-200 dark:border-ink-700"
         >
           <ArrowLeft size={13} />
           <span>Quay về Giỏ hàng</span>
@@ -383,8 +383,8 @@ export function CheckoutPage({ onNavigate }: Props) {
 
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="font-display font-bold text-2xl sm:text-3xl text-ink-900">Thanh toán đơn hàng</h1>
-          <p className="text-xs text-ink-500 mt-1">Hoàn tất thông tin giao hàng và chọn hình thức thanh toán an toàn</p>
+          <h1 className="font-display font-bold text-2xl sm:text-3xl text-ink-900 dark:text-cream-100">Thanh toán đơn hàng</h1>
+          <p className="text-xs text-ink-500 dark:text-cream-400 mt-1">Hoàn tất thông tin giao hàng và chọn hình thức thanh toán an toàn</p>
         </div>
 
         {/* 15-min Countdown Timer Header Badge */}

@@ -183,7 +183,7 @@ class FinanceController extends Controller
                 ->groupBy('gateway')->get()->keyBy('gateway');
         }
 
-        if ($request->wantsJson() || $request->is('api/*')) {
+        if ($request->wantsJson() || $request->is('api/*') || !view()->exists('admin.finance.index')) {
             return response()->json([
                 'filters' => $filters,
                 'summary' => [
@@ -196,6 +196,7 @@ class FinanceController extends Controller
                 'methods' => [
                     'cod' => 'COD (Thanh toán khi nhận hàng)',
                     'momo' => 'Ví điện tử MoMo',
+                    'vietqr' => 'Chuyển khoản VietQR',
                     'unknown' => 'Chưa xác định',
                 ],
             ]);
@@ -210,6 +211,7 @@ class FinanceController extends Controller
             'methods' => [
                 'cod' => 'COD (Thanh toán khi nhận hàng)',
                 'momo' => 'Ví điện tử MoMo',
+                'vietqr' => 'Chuyển khoản VietQR',
                 'unknown' => 'Chưa xác định',
             ],
         ]);
@@ -228,7 +230,7 @@ class FinanceController extends Controller
 
         $orders = $query->orderBy($column, $direction)->orderBy('id', $direction)->paginate(15)->withQueryString();
 
-        if ($request->wantsJson() || $request->is('api/*')) {
+        if ($request->wantsJson() || $request->is('api/*') || !view()->exists('admin.finance.transactions')) {
             return response()->json([
                 'orders' => $orders,
                 'filters' => $filters,
@@ -237,6 +239,7 @@ class FinanceController extends Controller
                 'methods' => [
                     'cod' => 'COD',
                     'momo' => 'MoMo',
+                    'vietqr' => 'VietQR',
                     'unknown' => 'Chưa xác định',
                 ],
             ]);

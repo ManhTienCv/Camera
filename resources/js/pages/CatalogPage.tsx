@@ -139,26 +139,26 @@ export function CatalogPage({ onNavigate, categories, categorySlug, brand }: Pro
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-ink-400 mb-4">
-        <button onClick={() => onNavigate({ name: 'home' })} className="hover:text-ink-700">
+      <div className="flex items-center gap-2 text-sm text-ink-400 dark:text-ink-500 mb-4">
+        <button onClick={() => onNavigate({ name: 'home' })} className="hover:text-ink-700 dark:hover:text-cream-200">
           Trang chủ
         </button>
         <span>/</span>
-        <button onClick={() => onNavigate({ name: 'catalog' })} className="hover:text-ink-700">
+        <button onClick={() => onNavigate({ name: 'catalog' })} className="hover:text-ink-700 dark:hover:text-cream-200">
           Sản phẩm
         </button>
         {activeCategory && (
           <>
             <span>/</span>
-            <span className="text-ink-700">{activeCategory.name}</span>
+            <span className="text-ink-700 dark:text-cream-300 font-semibold">{activeCategory.name}</span>
           </>
         )}
       </div>
 
-      <h1 className="font-display font-bold text-3xl text-ink-900 mb-2">
+      <h1 className="font-display font-bold text-3xl text-ink-900 dark:text-cream-50 mb-2">
         {activeCategory ? activeCategory.name : 'Tất cả sản phẩm Máy ảnh'}
       </h1>
-      <p className="text-ink-400 mb-6">
+      <p className="text-ink-400 dark:text-ink-400 mb-6">
         {activeCategory?.description || 'Khám phá bộ sưu tập máy ảnh, ống kính và phụ kiện chuyên nghiệp'}
       </p>
 
@@ -244,7 +244,7 @@ export function CatalogPage({ onNavigate, categories, categorySlug, brand }: Pro
         <aside className="hidden lg:block w-64 shrink-0">
           <div className="sticky top-24 space-y-6">
             <div className="card p-5">
-              <h3 className="font-display font-semibold text-ink-800 mb-4">Thương hiệu</h3>
+              <h3 className="font-display font-semibold text-ink-800 dark:text-cream-100 mb-4">Thương hiệu</h3>
               <div className="space-y-2.5">
                 {brands.length === 0 ? (
                   <p className="text-xs text-ink-400">Đang cập nhật thương hiệu...</p>
@@ -255,9 +255,9 @@ export function CatalogPage({ onNavigate, categories, categorySlug, brand }: Pro
                         type="checkbox"
                         checked={selectedBrands.includes(brand)}
                         onChange={() => toggleBrand(brand)}
-                        className="w-4 h-4 rounded border-ink-300 text-accent-500 focus:ring-accent-400"
+                        className="w-4 h-4 rounded border-ink-300 dark:border-ink-700 text-accent-500 focus:ring-accent-400 cursor-pointer"
                       />
-                      <span className="text-sm text-ink-600 group-hover:text-ink-800">{brand}</span>
+                      <span className="text-sm text-ink-600 dark:text-ink-300 group-hover:text-ink-800 dark:group-hover:text-cream-100 transition-colors">{brand}</span>
                     </label>
                   ))
                 )}
@@ -265,7 +265,7 @@ export function CatalogPage({ onNavigate, categories, categorySlug, brand }: Pro
             </div>
 
             <div className="card p-5">
-              <h3 className="font-display font-semibold text-ink-800 mb-4">Khoảng giá</h3>
+              <h3 className="font-display font-semibold text-ink-800 dark:text-cream-100 mb-4">Khoảng giá</h3>
               <div className="space-y-3">
                 {[
                   { label: 'Dưới 25 triệu', min: 0, max: 25000000 },
@@ -279,14 +279,14 @@ export function CatalogPage({ onNavigate, categories, categorySlug, brand }: Pro
                       name="price"
                       checked={priceRange[0] === range.min && priceRange[1] === range.max}
                       onChange={() => setPriceRange([range.min, range.max])}
-                      className="w-4 h-4 border-ink-300 text-accent-500 focus:ring-accent-400"
+                      className="w-4 h-4 border-ink-300 dark:border-ink-700 text-accent-500 focus:ring-accent-400 cursor-pointer"
                     />
-                    <span className="text-sm text-ink-600 group-hover:text-ink-800">{range.label}</span>
+                    <span className="text-sm text-ink-600 dark:text-ink-300 group-hover:text-ink-800 dark:group-hover:text-cream-100 transition-colors">{range.label}</span>
                   </label>
                 ))}
                 <button
                   onClick={() => setPriceRange([0, 200000000])}
-                  className="text-xs text-accent-500 hover:underline pt-2 block"
+                  className="text-xs text-accent-500 dark:text-accent-400 hover:underline pt-2 block cursor-pointer"
                 >
                   Xóa bộ lọc giá
                 </button>
@@ -299,13 +299,13 @@ export function CatalogPage({ onNavigate, categories, categorySlug, brand }: Pro
         <div className="flex-1">
           {/* Toolbar */}
           <div className="flex items-center justify-between mb-6">
-            <p className="text-sm text-ink-500">
+            <p className="text-sm text-ink-500 dark:text-ink-400">
               {loading ? 'Đang tải...' : `Hiển thị ${paginatedFiltered.length} / ${filtered.length} sản phẩm`}
             </p>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowFilters(true)}
-                className="lg:hidden flex items-center gap-2 px-4 py-2 bg-white border border-ink-200 rounded-xl text-sm font-medium"
+                className="lg:hidden flex items-center gap-2 px-4 py-2 bg-white dark:bg-ink-900 border border-ink-200 dark:border-ink-700 rounded-xl text-sm font-medium text-ink-800 dark:text-cream-100"
               >
                 <SlidersHorizontal size={16} /> Lọc
               </button>
@@ -313,7 +313,7 @@ export function CatalogPage({ onNavigate, categories, categorySlug, brand }: Pro
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as SortOption)}
-                  className="appearance-none pl-4 pr-10 py-2.5 bg-white border border-ink-200 rounded-xl text-sm font-medium focus:outline-none focus:border-ink-400 cursor-pointer"
+                  className="appearance-none pl-4 pr-10 py-2.5 bg-white dark:bg-ink-900 border border-ink-200 dark:border-ink-700 rounded-xl text-sm font-medium text-ink-800 dark:text-cream-100 focus:outline-none focus:border-accent-500 cursor-pointer shadow-2xs"
                 >
                   {Object.entries(sortLabels).map(([val, label]) => (
                     <option key={val} value={val}>{label}</option>

@@ -15,11 +15,11 @@ export function CartPage({ onNavigate }: Props) {
   if (!user) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center animate-fade-in">
-        <div className="w-20 h-20 bg-cream-100 rounded-3xl flex items-center justify-center mx-auto mb-6 text-accent-600 border border-cream-200 shadow-xs">
+        <div className="w-20 h-20 bg-cream-100 dark:bg-ink-800 rounded-3xl flex items-center justify-center mx-auto mb-6 text-accent-600 border border-cream-200 dark:border-ink-700 shadow-xs">
           <Lock size={36} />
         </div>
-        <h2 className="font-display font-bold text-2xl text-ink-900 mb-2">Yêu cầu đăng nhập</h2>
-        <p className="text-ink-500 mb-8 max-w-md mx-auto text-sm leading-relaxed">
+        <h2 className="font-display font-bold text-2xl text-ink-900 dark:text-cream-100 mb-2">Yêu cầu đăng nhập</h2>
+        <p className="text-ink-500 dark:text-cream-400 mb-8 max-w-md mx-auto text-sm leading-relaxed">
           Bạn cần đăng nhập tài khoản để xem giỏ hàng của mình và tiến hành đặt mua máy ảnh, thiết bị.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4">
@@ -43,11 +43,11 @@ export function CartPage({ onNavigate }: Props) {
   if (items.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center animate-fade-in">
-        <div className="w-20 h-20 bg-cream-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <ShoppingBag size={36} className="text-ink-400" />
+        <div className="w-20 h-20 bg-cream-100 dark:bg-ink-800 rounded-full flex items-center justify-center mx-auto mb-6">
+          <ShoppingBag size={36} className="text-ink-400 dark:text-cream-400" />
         </div>
-        <h2 className="font-display font-bold text-2xl text-ink-900 mb-2">Giỏ hàng của bạn đang trống</h2>
-        <p className="text-ink-400 mb-8 max-w-md mx-auto">
+        <h2 className="font-display font-bold text-2xl text-ink-900 dark:text-cream-100 mb-2">Giỏ hàng của bạn đang trống</h2>
+        <p className="text-ink-400 dark:text-cream-400 mb-8 max-w-md mx-auto">
           Hãy khám phá danh mục máy ảnh và phụ kiện phong phú để chọn cho mình sản phẩm ưng ý nhất.
         </p>
         <button onClick={() => onNavigate({ name: 'catalog' })} className="btn-primary">
@@ -60,7 +60,7 @@ export function CartPage({ onNavigate }: Props) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
-      <h1 className="font-display font-bold text-3xl text-ink-900 mb-8">Giỏ hàng của bạn</h1>
+      <h1 className="font-display font-bold text-3xl text-ink-900 dark:text-cream-100 mb-8">Giỏ hàng của bạn</h1>
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Items list */}
@@ -87,14 +87,14 @@ export function CartPage({ onNavigate }: Props) {
                   onClick={() => onNavigate({ name: 'product', slug: product.slug })}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-ink-400 font-medium uppercase">{product.brand}</p>
+                  <p className="text-xs text-ink-400 dark:text-cream-400 font-medium uppercase">{product.brand}</p>
                   <h3
                     onClick={() => onNavigate({ name: 'product', slug: product.slug })}
-                    className="font-display font-semibold text-ink-900 text-sm truncate cursor-pointer hover:text-accent-500"
+                    className="font-display font-semibold text-ink-900 dark:text-cream-100 text-sm truncate cursor-pointer hover:text-accent-500"
                   >
                     {product.name}
                   </h3>
-                  <p className="font-display font-bold text-ink-900 text-sm mt-1">
+                  <p className="font-display font-bold text-ink-900 dark:text-cream-100 text-sm mt-1">
                     {formatCurrency(product.price)}
                   </p>
                 </div>
@@ -120,7 +120,7 @@ export function CartPage({ onNavigate }: Props) {
 
                   <button
                     onClick={() => removeFromCart(item.id)}
-                    className="p-2 text-ink-400 hover:text-rose-500 transition-colors"
+                    className="p-2 text-ink-400 dark:text-cream-400 hover:text-rose-500 transition-colors"
                     aria-label="Xóa"
                   >
                     <Trash2 size={18} />
@@ -134,18 +134,18 @@ export function CartPage({ onNavigate }: Props) {
         {/* Summary */}
         <div>
           <div className="card p-6 sticky top-24">
-            <h3 className="font-display font-bold text-lg text-ink-900 mb-4">Tóm tắt đơn hàng</h3>
+            <h3 className="font-display font-bold text-lg text-ink-900 dark:text-cream-100 mb-4">Tóm tắt đơn hàng</h3>
 
             <div className="space-y-3 text-sm mb-6">
-              <div className="flex justify-between text-ink-600">
+              <div className="flex justify-between text-ink-600 dark:text-cream-400">
                 <span>Tạm tính</span>
-                <span className="font-semibold text-ink-900">{formatCurrency(subtotal)}</span>
+                <span className="font-semibold text-ink-900 dark:text-cream-100">{formatCurrency(subtotal)}</span>
               </div>
-              <div className="flex justify-between text-ink-600">
+              <div className="flex justify-between text-ink-600 dark:text-cream-400">
                 <span>Phí vận chuyển</span>
                 <span className="font-semibold text-accent-600">Miễn phí</span>
               </div>
-              <div className="border-t border-ink-100 dark:border-ink-700 pt-3 flex justify-between text-base font-bold text-ink-900">
+              <div className="border-t border-ink-100 dark:border-ink-700 pt-3 flex justify-between text-base font-bold text-ink-900 dark:text-cream-100">
                 <span>Tổng cộng</span>
                 <span className="font-display text-xl text-accent-600">{formatCurrency(subtotal)}</span>
               </div>

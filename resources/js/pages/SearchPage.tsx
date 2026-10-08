@@ -40,11 +40,11 @@ export function SearchPage({ query, onNavigate }: Props) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
       <div className="flex items-center gap-3 mb-2">
         <Search size={24} className="text-accent-500" />
-        <h1 className="font-display font-bold text-2xl lg:text-3xl text-ink-900">
+        <h1 className="font-display font-bold text-2xl lg:text-3xl text-ink-900 dark:text-cream-50">
           Kết quả tìm kiếm cho "{query}"
         </h1>
       </div>
-      <p className="text-ink-400 mb-8">
+      <p className="text-ink-400 dark:text-cream-400 mb-8">
         {loading ? 'Đang tìm kiếm...' : `Tìm thấy ${products.length} sản phẩm phù hợp`}
       </p>
 
@@ -60,7 +60,7 @@ export function SearchPage({ query, onNavigate }: Props) {
         </div>
       ) : products.length === 0 ? (
         <div className="card p-12 text-center">
-          <p className="text-ink-400 mb-4">Không tìm thấy sản phẩm máy ảnh nào phù hợp với từ khóa "{query}"</p>
+          <p className="text-ink-400 dark:text-cream-400 mb-4">Không tìm thấy sản phẩm máy ảnh nào phù hợp với từ khóa "{query}"</p>
           <button onClick={() => onNavigate({ name: 'catalog' })} className="btn-secondary">
             Xem tất cả sản phẩm
           </button>
