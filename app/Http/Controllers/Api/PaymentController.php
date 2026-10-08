@@ -178,7 +178,8 @@ class PaymentController extends Controller
             // 3. KIỂM TRA ĐỐI SOÁT SỐ TIỀN CHỐNG GIAN LẬN (Amount Tampering Prevention)
             $ipnAmount = (int) ($data['amount'] ?? 0);
             $expectedAmount = (int) round($order->total_amount);
-            $isSandboxAllowed = ($expectedAmount > 50000000 && $ipnAmount === 50000000) || ($expectedAmount < 1000 && $ipnAmount === 1000);
+            $isSandbox = str_contains(config('services.momo.endpoint', ''), 'test-payment.momo.vn');
+            $isSandboxAllowed = $isSandbox && ($ipnAmount === 50000 || ($expectedAmount > 50000000 && $ipnAmount === 50000000) || ($expectedAmount < 1000 && $ipnAmount === 1000));
 
             if ($ipnAmount !== $expectedAmount && !$isSandboxAllowed) {
                 Log::channel('daily')->emergency("🚨 CẢNH BÁO GIAN LẬN SỐ TIỀN MoMo: Đơn {$order->order_code} số tiền {$order->total_amount} nhưng IPN gửi về {$ipnAmount}");
@@ -274,7 +275,8 @@ class PaymentController extends Controller
         if ($this->momoService->isValidResponse($data) && $this->momoService->isSuccessful($data)) {
             $ipnAmount = (int) ($data['amount'] ?? 0);
             $expectedAmount = (int) round($order->total_amount);
-            $isSandboxAllowed = ($expectedAmount > 50000000 && $ipnAmount === 50000000) || ($expectedAmount < 1000 && $ipnAmount === 1000);
+            $isSandbox = str_contains(config('services.momo.endpoint', ''), 'test-payment.momo.vn');
+            $isSandboxAllowed = $isSandbox && ($ipnAmount === 50000 || ($expectedAmount > 50000000 && $ipnAmount === 50000000) || ($expectedAmount < 1000 && $ipnAmount === 1000));
 
             if ($ipnAmount !== $expectedAmount && !$isSandboxAllowed) {
                 Log::channel('daily')->emergency("🚨 CẢNH BÁO GIAN LẬN MoMo Callback: Đơn {$order->order_code} số tiền {$order->total_amount} != callback {$ipnAmount}");
@@ -298,6 +300,13 @@ class PaymentController extends Controller
                 } catch (\Throwable $e) {
                     Log::error('Auto GHN create after MoMo callback error: ' . $e->getMessage());
                 }
+            }
+
+            // Gửi email xác nhận đơn hàng khi thanh toán MoMo thành công
+            try {
+                EmailService::sendOrderConfirmation($order->fresh('items'));
+            } catch (\Throwable $e) {
+                Log::error('Send order confirmation email on MoMo callback error: ' . $e->getMessage());
             }
 
             return redirect($frontendUrl ? "{$frontendUrl}/order-success?id={$order->id}&momo=1" : "/order-success?id={$order->id}&momo=1");
