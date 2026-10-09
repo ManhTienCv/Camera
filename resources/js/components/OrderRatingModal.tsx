@@ -8,6 +8,8 @@ import {
   Plus,
   Loader2,
   Package,
+  CheckCircle2,
+  MessageSquare,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
@@ -19,6 +21,16 @@ interface Props {
   order?: {
     id: string;
     order_code: string;
+    isReviewed?: boolean;
+    review?: {
+      id: string;
+      rating: number;
+      comment: string;
+      images?: string[];
+      createdAt?: string;
+      adminReply?: string;
+      repliedAt?: string;
+    } | null;
     items: Array<{
       product_id?: string;
       categoryTag?: string;
@@ -37,6 +49,15 @@ interface Props {
     quantity?: number;
     price?: number;
   }>;
+  existingReview?: {
+    id: string;
+    rating: number;
+    comment: string;
+    images?: string[];
+    createdAt?: string;
+    adminReply?: string;
+    repliedAt?: string;
+  } | null;
   onSubmitted?: () => void;
   onSuccess?: () => void;
 }
@@ -49,7 +70,7 @@ const RATING_FEEDBACK: Record<number, string> = {
   1: 'Rất Tệ (1/5)',
 };
 
-export function OrderRatingModal({ isOpen = true, onClose, order, orderCode, items, onSubmitted, onSuccess }: Props) {
+export function OrderRatingModal({ isOpen = true, onClose, order, orderCode, items, existingReview, onSubmitted, onSuccess }: Props) {
   const { user, openAuthModal } = useAuth();
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -59,6 +80,56 @@ export function OrderRatingModal({ isOpen = true, onClose, order, orderCode, ite
   const [comment, setComment] = useState('');
   const [attachedImages, setAttachedImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingReview, setLoadingReview] = useState(false);
+  const [currentReview, setCurrentReview] = useState<any>(null);
+
+  // Sync / fetch existing review when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const preReview = order?.review || existingReview;
+    if (preReview) {
+      setRating(Number(preReview.rating) || 5);
+      setComment(preReview.comment || '');
+      setAttachedImages(Array.isArray(preReview.images) ? preReview.images : []);
+      setCurrentReview(preReview);
+      return;
+    }
+
+    const orderIdToFetch = order?.id || order?.order_code || orderCode;
+    if (orderIdToFetch && (order?.isReviewed || !order)) {
+      setLoadingReview(true);
+      api
+        .getOrderReview(orderIdToFetch)
+        .then((res) => {
+          if (res?.review) {
+            setRating(Number(res.review.rating) || 5);
+            setComment(res.review.comment || '');
+            setAttachedImages(Array.isArray(res.review.images) ? res.review.images : []);
+            setCurrentReview(res.review);
+          } else {
+            setRating(5);
+            setComment('');
+            setAttachedImages([]);
+            setCurrentReview(null);
+          }
+        })
+        .catch(() => {
+          setRating(5);
+          setComment('');
+          setAttachedImages([]);
+          setCurrentReview(null);
+        })
+        .finally(() => {
+          setLoadingReview(false);
+        });
+    } else {
+      setRating(5);
+      setComment('');
+      setAttachedImages([]);
+      setCurrentReview(null);
+    }
+  }, [isOpen, order, existingReview, orderCode]);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -131,15 +202,16 @@ export function OrderRatingModal({ isOpen = true, onClose, order, orderCode, ite
     try {
       const targetProductId = (firstItem as any)?.product_id || (firstItem as any)?.id || '1';
 
-      // 1. Gửi review trực tiếp lên API Database
+      // 1. Gửi review trực tiếp lên API Database kèm order_id
       await api.createProductReview(String(targetProductId), {
         rating,
         variant: firstItem?.name ? `${firstItem.name}` : 'Chính Hãng',
         comment: comment.trim(),
         images: attachedImages,
+        order_id: order?.id,
       });
 
-      toast.success('Cảm ơn bạn đã gửi đánh giá sản phẩm thành công!');
+      toast.success(currentReview ? 'Cập nhật đánh giá thành công!' : 'Cảm ơn bạn đã gửi đánh giá sản phẩm thành công!');
       window.dispatchEvent(new Event('camerahub_reviews_updated'));
 
       if (onSubmitted) {
@@ -150,10 +222,8 @@ export function OrderRatingModal({ isOpen = true, onClose, order, orderCode, ite
       }
 
       onClose();
-      setComment('');
-      setAttachedImages([]);
     } catch (err: any) {
-      toast.error(err.message || 'Không thể gửi đánh giá. Vui lòng kiểm tra lại đơn hàng.');
+      toast.error(err.message || 'Không thể lưu đánh giá. Vui lòng kiểm tra lại đơn hàng.');
     } finally {
       setSubmitting(false);
     }
@@ -178,7 +248,7 @@ export function OrderRatingModal({ isOpen = true, onClose, order, orderCode, ite
             <div className="flex items-center gap-2">
               <span className="text-xl">⭐</span>
               <h2 className="font-display font-bold text-lg sm:text-xl text-ink-900 leading-tight">
-                Đánh Giá Đơn Hàng {order.order_code}
+                Đánh Giá Đơn Hàng {effectiveOrderCode}
               </h2>
             </div>
             <p className="text-xs text-ink-500 mt-1">
@@ -194,6 +264,42 @@ export function OrderRatingModal({ isOpen = true, onClose, order, orderCode, ite
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* Loading indicator */}
+          {loadingReview && (
+            <div className="flex items-center justify-center gap-2 p-3 bg-cream-50 rounded-2xl text-xs text-ink-500">
+              <Loader2 size={15} className="animate-spin text-accent-500" />
+              <span>Đang tải thông tin đánh giá trước đó của bạn...</span>
+            </div>
+          )}
+
+          {/* Existing Review Badge & Notice */}
+          {currentReview && (
+            <div className="p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-2xl flex items-start gap-2.5">
+              <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
+              <div className="space-y-0.5 text-xs text-emerald-900">
+                <p className="font-bold">
+                  Bạn đã gửi đánh giá cho đơn hàng này{currentReview.createdAt ? ` vào ngày ${currentReview.createdAt}` : ''}.
+                </p>
+                <p className="text-[11px] text-emerald-700">
+                  Dữ liệu đánh giá của bạn đã được hiển thị bên dưới. Bạn có thể thay đổi số sao, nhận xét hoặc hình ảnh rồi bấm "Cập nhật đánh giá".
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Admin Reply Box (if any) */}
+          {currentReview?.adminReply && (
+            <div className="p-3.5 bg-blue-50/90 border border-blue-200 rounded-2xl space-y-1">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900">
+                <MessageSquare size={14} className="text-blue-600" />
+                <span>Phản hồi từ CameraHub{currentReview.repliedAt ? ` (${currentReview.repliedAt})` : ''}:</span>
+              </div>
+              <p className="text-xs text-blue-800 italic pl-5">
+                "{currentReview.adminReply}"
+              </p>
+            </div>
+          )}
+
           {/* Product Preview Box (Matches Image 5) */}
           {firstItem && (
             <div className="p-3.5 bg-accent-50/50 border border-accent-200/80 rounded-2xl flex items-center justify-between gap-3">
@@ -344,7 +450,12 @@ export function OrderRatingModal({ isOpen = true, onClose, order, orderCode, ite
               {submitting ? (
                 <>
                   <Loader2 size={14} className="animate-spin" />
-                  <span>Đang gửi...</span>
+                  <span>Đang lưu...</span>
+                </>
+              ) : currentReview ? (
+                <>
+                  <Check size={14} />
+                  <span>Cập Nhật Đánh Giá</span>
                 </>
               ) : (
                 <>

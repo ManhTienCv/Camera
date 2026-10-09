@@ -173,13 +173,27 @@ class ReviewController extends Controller
         ]);
 
         // 1. Kiểm tra xem người dùng đã từng mua sản phẩm này trong đơn hàng đã giao thành công hay chưa
-        $deliveredOrder = Order::where('user_id', $user->id)
-            ->whereIn('order_status', ['delivered', 'completed'])
-            ->whereHas('items', function ($q) use ($product) {
-                $q->where('product_id', $product->id);
-            })
-            ->latest()
-            ->first();
+        $orderIdInput = $request->input('order_id');
+        $deliveredOrder = null;
+        if ($orderIdInput) {
+            $deliveredOrder = Order::where(function ($q) use ($user) {
+                    $q->where('user_id', $user->id)->orWhere('customer_email', $user->email);
+                })
+                ->where(function ($q) use ($orderIdInput) {
+                    $q->where('id', $orderIdInput)->orWhere('order_code', $orderIdInput);
+                })
+                ->first();
+        }
+
+        if (!$deliveredOrder) {
+            $deliveredOrder = Order::where('user_id', $user->id)
+                ->whereIn('order_status', ['delivered', 'completed'])
+                ->whereHas('items', function ($q) use ($product) {
+                    $q->where('product_id', $product->id);
+                })
+                ->latest()
+                ->first();
+        }
 
         if (!$deliveredOrder && $user->role !== 'admin') {
             return response()->json([
@@ -254,6 +268,50 @@ class ReviewController extends Controller
                 'rating' => round($avgRating, 1),
                 'review_count' => $reviewCount,
             ],
+        ]);
+    }
+
+    /**
+     * Lấy đánh giá của một đơn hàng cụ thể để xem lại hoặc chỉnh sửa
+     */
+    public function getOrderReview(Request $request, $orderId)
+    {
+        $user = $this->resolveUser($request);
+        if (!$user) {
+            return response()->json(['message' => 'Vui lòng đăng nhập'], 401);
+        }
+
+        $order = Order::with('items')
+            ->where(function ($q) use ($orderId) {
+                $q->where('id', $orderId)->orWhere('order_code', $orderId);
+            })
+            ->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)->orWhere('customer_email', $user->email);
+            })
+            ->first();
+
+        if (!$order) {
+            return response()->json(['message' => 'Không tìm thấy đơn hàng'], 404);
+        }
+
+        $review = Review::where('order_id', $order->id)->where('user_id', $user->id)->first();
+        if (!$review && $order->items->isNotEmpty()) {
+            $productIds = $order->items->pluck('product_id')->toArray();
+            $review = Review::whereIn('product_id', $productIds)->where('user_id', $user->id)->latest()->first();
+        }
+
+        return response()->json([
+            'success' => true,
+            'is_reviewed' => (bool) $review,
+            'review' => $review ? [
+                'id' => (string) $review->id,
+                'rating' => (int) $review->rating,
+                'comment' => $review->comment,
+                'images' => $review->images ?: [],
+                'createdAt' => $review->created_at ? $review->created_at->format('d/m/Y') : null,
+                'adminReply' => $review->admin_reply,
+                'repliedAt' => $review->replied_at ? $review->replied_at->format('d/m/Y H:i') : null,
+            ] : null,
         ]);
     }
 

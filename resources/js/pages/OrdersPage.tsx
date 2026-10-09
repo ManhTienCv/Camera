@@ -102,6 +102,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                 refundRefCode: o.refund_ref_code,
                 refundedAt: o.refunded_at,
                 isReviewed: Boolean((o as any).is_reviewed),
+                review: (o as any).review || null,
                 cancelReason: o.cancel_reason,
                 items: (o.items || []).map((i: any) => ({
                   product_id: i.product_id,
@@ -828,6 +829,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
           order={ratingOrder}
           orderCode={ratingOrder.order_code}
           items={ratingOrder.items}
+          existingReview={ratingOrder.review}
           onClose={() => setRatingOrder(null)}
           onSuccess={() => {
             setRatingOrder(null);

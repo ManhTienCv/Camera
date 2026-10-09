@@ -80,6 +80,21 @@ export const productsApi = {
       count: number;
     }>(`/reviews/featured?limit=${limit}`),
 
+  getOrderReview: (orderId: string) =>
+    request<{
+      success: boolean;
+      is_reviewed: boolean;
+      review: {
+        id: string;
+        rating: number;
+        comment: string;
+        images?: string[];
+        createdAt?: string;
+        adminReply?: string;
+        repliedAt?: string;
+      } | null;
+    }>(`/orders/${orderId}/review`),
+
   getProductReviews: (productId: string) =>
     request<{
       reviews: any[];
@@ -94,7 +109,7 @@ export const productsApi = {
 
   createProductReview: (
     productId: string,
-    data: { rating: number; comment: string; variant?: string; images?: string[] }
+    data: { rating: number; comment: string; variant?: string; images?: string[]; order_id?: string }
   ) =>
     request<{ message: string; review: any; newProductStats: { rating: number; review_count: number } }>(
       `/products/${productId}/reviews`,

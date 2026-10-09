@@ -541,18 +541,9 @@ class AuthController extends Controller
             return response()->json([]);
         }
 
-        $reviewedOrderIds = Review::where('user_id', $user->id)
-            ->whereNotNull('order_id')
-            ->pluck('order_id')
-            ->map(fn ($id) => (string) $id)
-            ->flip()
-            ->all();
-
-        $reviewedProductIds = Review::where('user_id', $user->id)
-            ->pluck('product_id')
-            ->map(fn ($id) => (string) $id)
-            ->flip()
-            ->all();
+        $userReviews = Review::where('user_id', $user->id)->get();
+        $reviewsByOrderId = $userReviews->whereNotNull('order_id')->keyBy(fn ($r) => (string) $r->order_id);
+        $reviewsByProductId = $userReviews->keyBy(fn ($r) => (string) $r->product_id);
 
         $orders = Order::with('items')
             ->where(function ($q) use ($user) {
@@ -561,9 +552,13 @@ class AuthController extends Controller
             })
             ->orderByDesc('created_at')
             ->get()
-            ->map(function ($order) use ($reviewedOrderIds, $reviewedProductIds) {
-                $isReviewed = isset($reviewedOrderIds[(string) $order->id]) || 
-                              ($order->items->isNotEmpty() && $order->items->every(fn ($i) => isset($reviewedProductIds[(string) $i->product_id])));
+            ->map(function ($order) use ($reviewsByOrderId, $reviewsByProductId) {
+                $firstItemPid = (string) ($order->items->first()?->product_id ?? '');
+                $matchedReview = $reviewsByOrderId->get((string) $order->id)
+                    ?? ($firstItemPid ? $reviewsByProductId->get($firstItemPid) : null);
+
+                $isReviewed = (bool) $matchedReview || 
+                              ($order->items->isNotEmpty() && $order->items->every(fn ($i) => $reviewsByProductId->has((string) $i->product_id)));
 
                 return [
                     'id' => (string) $order->id,
@@ -579,6 +574,15 @@ class AuthController extends Controller
                     'total_amount' => (float) $order->total_amount,
                     'status' => $order->order_status,
                     'is_reviewed' => (bool) $isReviewed,
+                    'review' => $matchedReview ? [
+                        'id' => (string) $matchedReview->id,
+                        'rating' => (int) $matchedReview->rating,
+                        'comment' => $matchedReview->comment,
+                        'images' => $matchedReview->images ?: [],
+                        'createdAt' => $matchedReview->created_at ? $matchedReview->created_at->format('d/m/Y') : null,
+                        'adminReply' => $matchedReview->admin_reply,
+                        'repliedAt' => $matchedReview->replied_at ? $matchedReview->replied_at->format('d/m/Y H:i') : null,
+                    ] : null,
                     'created_at' => $order->created_at ? $order->created_at->toISOString() : null,
                     'items' => $order->items->map(function ($i) {
                         return [

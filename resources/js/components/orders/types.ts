@@ -20,6 +20,15 @@ export interface EnhancedOrder {
   refundRefCode?: string;
   refundedAt?: string;
   isReviewed?: boolean;
+  review?: {
+    id: string;
+    rating: number;
+    comment: string;
+    images?: string[];
+    createdAt?: string;
+    adminReply?: string;
+    repliedAt?: string;
+  } | null;
   items: Array<{
     product_id?: string;
     categoryTag: string;

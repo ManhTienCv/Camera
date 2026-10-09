@@ -47,6 +47,7 @@ Route::prefix('v1')->group(function () {
 
     // 4.1 Product Reviews (Real Database)
     Route::get('/reviews/featured', [\App\Http\Controllers\Api\ReviewController::class, 'featured']);
+    Route::get('/orders/{id}/review', [\App\Http\Controllers\Api\ReviewController::class, 'getOrderReview']);
     Route::get('/products/{id}/reviews', [\App\Http\Controllers\Api\ReviewController::class, 'index']);
     Route::post('/products/{id}/reviews', [\App\Http\Controllers\Api\ReviewController::class, 'store']);
     Route::post('/reviews/{id}/helpful', [\App\Http\Controllers\Api\ReviewController::class, 'helpful']);
