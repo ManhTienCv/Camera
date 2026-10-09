@@ -31,6 +31,7 @@ export interface EnhancedOrder {
   } | null;
   items: Array<{
     product_id?: string;
+    slug?: string;
     categoryTag: string;
     name: string;
     quantity: number;

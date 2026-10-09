@@ -545,7 +545,7 @@ class AuthController extends Controller
         $reviewsByOrderId = $userReviews->whereNotNull('order_id')->keyBy(fn ($r) => (string) $r->order_id);
         $reviewsByProductId = $userReviews->keyBy(fn ($r) => (string) $r->product_id);
 
-        $orders = Order::with('items')
+        $orders = Order::with(['items.product:id,slug,main_image'])
             ->where(function ($q) use ($user) {
                 $q->where('user_id', $user->id)
                   ->orWhere('customer_email', $user->email);
@@ -587,10 +587,11 @@ class AuthController extends Controller
                     'items' => $order->items->map(function ($i) {
                         return [
                             'product_id' => (string) $i->product_id,
+                            'slug' => $i->product ? $i->product->slug : (string) $i->product_id,
                             'name' => $i->name,
                             'price' => (float) $i->price,
                             'quantity' => (int) $i->quantity,
-                            'image_url' => $i->image_url ?? '',
+                            'image_url' => $i->image_url ?: ($i->product?->main_image ?? ''),
                         ];
                     }),
                 ];

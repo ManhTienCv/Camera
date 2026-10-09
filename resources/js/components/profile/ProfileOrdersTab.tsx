@@ -114,28 +114,43 @@ export const ProfileOrdersTab: React.FC<ProfileOrdersTabProps> = ({
 
                 {/* Order Items */}
                 <div className="space-y-3">
-                  {order.items?.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-3">
-                      {item.image_url ? (
-                        <img
-                          src={item.image_url}
-                          alt={item.name}
-                          className="w-12 h-12 rounded-xl object-cover border border-cream-200 dark:border-ink-700 shrink-0"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-xl bg-cream-100 dark:bg-ink-800 flex items-center justify-center shrink-0">
-                          <Package size={20} className="text-ink-400 dark:text-ink-500" />
+                  {order.items?.map((item, idx) => {
+                    const productTarget = (item as any).slug || (item as any).product_id;
+                    return (
+                      <div key={idx} className="flex items-center gap-3">
+                        <div
+                          className={`flex items-center gap-3 flex-1 min-w-0 ${productTarget ? 'cursor-pointer group' : ''}`}
+                          onClick={() => {
+                            if (productTarget) {
+                              onNavigate({ name: 'product', slug: String(productTarget) });
+                            }
+                          }}
+                          title={productTarget ? `Xem chi tiết ${item.name}` : undefined}
+                        >
+                          {item.image_url ? (
+                            <img
+                              src={item.image_url}
+                              alt={item.name}
+                              className="w-12 h-12 rounded-xl object-cover border border-cream-200 dark:border-ink-700 shrink-0 group-hover:scale-105 group-hover:border-accent-500 transition-all duration-200 shadow-2xs"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-xl bg-cream-100 dark:bg-ink-800 flex items-center justify-center shrink-0">
+                              <Package size={20} className="text-ink-400 dark:text-ink-500" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-xs text-ink-900 dark:text-cream-50 truncate group-hover:text-accent-600 dark:group-hover:text-accent-400 group-hover:underline transition-colors">
+                              {item.name}
+                            </p>
+                            <p className="text-[11px] text-ink-500 dark:text-ink-400">Số lượng: {item.quantity}</p>
+                          </div>
                         </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-xs text-ink-900 dark:text-cream-50 truncate">{item.name}</p>
-                        <p className="text-[11px] text-ink-500 dark:text-ink-400">Số lượng: {item.quantity}</p>
+                        <span className="font-bold text-xs text-ink-900 dark:text-cream-50">
+                          {formatCurrency(item.price * item.quantity)}
+                        </span>
                       </div>
-                      <span className="font-bold text-xs text-ink-900 dark:text-cream-50">
-                        {formatCurrency(item.price * item.quantity)}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Order Footer */}

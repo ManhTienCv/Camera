@@ -106,6 +106,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                 cancelReason: o.cancel_reason,
                 items: (o.items || []).map((i: any) => ({
                   product_id: i.product_id,
+                  slug: i.slug || i.product_id,
                   categoryTag: 'Sản phẩm',
                   name: i.name,
                   quantity: i.quantity,
@@ -397,29 +398,40 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
 
                 {/* Product Items List */}
                 <div className="space-y-3">
-                  {ord.items.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        {item.image_url && (
-                          <img
-                            src={item.image_url}
-                            alt={item.name}
-                            className="w-10 h-10 rounded-xl object-cover border border-cream-200 dark:border-ink-700 shrink-0"
-                          />
-                        )}
-                        <span className="text-[11px] font-bold text-ink-600 dark:text-cream-300 bg-cream-100/90 dark:bg-ink-800 border border-cream-200 dark:border-ink-700 px-2.5 py-0.5 rounded-full shrink-0">
-                          {item.categoryTag}
-                        </span>
-                        <span className="text-sm font-semibold text-ink-900 dark:text-cream-100 truncate">
-                          {item.name}{' '}
-                          <span className="text-xs font-normal text-ink-400 dark:text-ink-500">x{item.quantity}</span>
+                  {ord.items.map((item, idx) => {
+                    const productTarget = item.slug || item.product_id;
+                    return (
+                      <div key={idx} className="flex items-center justify-between gap-4">
+                        <div
+                          className={`flex items-center gap-3 min-w-0 ${productTarget ? 'cursor-pointer group' : ''}`}
+                          onClick={() => {
+                            if (productTarget) {
+                              onNavigate({ name: 'product', slug: String(productTarget) });
+                            }
+                          }}
+                          title={productTarget ? `Xem chi tiết ${item.name}` : undefined}
+                        >
+                          {item.image_url && (
+                            <img
+                              src={item.image_url}
+                              alt={item.name}
+                              className="w-10 h-10 rounded-xl object-cover border border-cream-200 dark:border-ink-700 shrink-0 group-hover:scale-105 group-hover:border-accent-500 transition-all duration-200 shadow-2xs"
+                            />
+                          )}
+                          <span className="text-[11px] font-bold text-ink-600 dark:text-cream-300 bg-cream-100/90 dark:bg-ink-800 border border-cream-200 dark:border-ink-700 px-2.5 py-0.5 rounded-full shrink-0 group-hover:border-accent-400 transition-colors">
+                            {item.categoryTag}
+                          </span>
+                          <span className="text-sm font-semibold text-ink-900 dark:text-cream-100 truncate group-hover:text-accent-600 dark:group-hover:text-accent-400 group-hover:underline transition-colors">
+                            {item.name}{' '}
+                            <span className="text-xs font-normal text-ink-400 dark:text-ink-500">x{item.quantity}</span>
+                          </span>
+                        </div>
+                        <span className="font-display font-bold text-sm text-ink-900 dark:text-cream-100 shrink-0">
+                          {formatCurrency(item.price * item.quantity)}
                         </span>
                       </div>
-                      <span className="font-display font-bold text-sm text-ink-900 dark:text-cream-100 shrink-0">
-                        {formatCurrency(item.price * item.quantity)}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Shipping & Delivery Information Box */}
