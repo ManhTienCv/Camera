@@ -62,6 +62,24 @@ export const productsApi = {
     }>(`/warranty/check?query=${encodeURIComponent(query)}`),
 
   // Reviews (Database connected)
+  getFeaturedReviews: (limit = 6) =>
+    request<{
+      success: boolean;
+      reviews: Array<{
+        id: string;
+        name: string;
+        role: string;
+        avatar: string;
+        product: string;
+        productSlug?: string;
+        rating: number;
+        comment: string;
+        verified: boolean;
+        createdAt?: string;
+      }>;
+      count: number;
+    }>(`/reviews/featured?limit=${limit}`),
+
   getProductReviews: (productId: string) =>
     request<{
       reviews: any[];

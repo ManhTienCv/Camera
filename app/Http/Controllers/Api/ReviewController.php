@@ -103,6 +103,42 @@ class ReviewController extends Controller
     }
 
     /**
+     * Lấy danh sách đánh giá thực tế mới nhất / nổi bật đã duyệt để hiển thị Trang chủ
+     */
+    public function featured(Request $request)
+    {
+        $limit = min(12, max(1, (int) $request->input('limit', 6)));
+
+        $reviews = Review::where('status', 'approved')
+            ->where('rating', '>=', 4)
+            ->with(['user:id,name,avatar_url', 'product:id,name,slug'])
+            ->orderBy('created_at', 'desc')
+            ->take($limit)
+            ->get();
+
+        $formatted = $reviews->map(function ($rev) {
+            return [
+                'id' => (string) $rev->id,
+                'name' => $rev->customer_name ?: ($rev->user ? $rev->user->name : 'Khách hàng'),
+                'role' => $rev->is_verified_purchase ? 'Khách hàng đã mua hàng' : 'Thành viên CameraHub',
+                'avatar' => $rev->user?->avatar_url ?: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+                'product' => $rev->product ? $rev->product->name : ($rev->variant ?: 'Thiết bị máy ảnh'),
+                'productSlug' => $rev->product?->slug,
+                'rating' => (int) $rev->rating,
+                'comment' => $rev->comment,
+                'verified' => (bool) $rev->is_verified_purchase,
+                'createdAt' => $rev->created_at ? $rev->created_at->format('d/m/Y') : null,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'reviews' => $formatted,
+            'count' => $formatted->count(),
+        ]);
+    }
+
+    /**
      * Gửi đánh giá cho sản phẩm - RÀNG BUỘC PHẢI MUA HÀNG THÀNH CÔNG
      */
     public function store(Request $request, $productId)

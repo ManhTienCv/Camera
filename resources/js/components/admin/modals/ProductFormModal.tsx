@@ -424,9 +424,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   </div>
                   <div className="text-xs text-ink-500 space-y-1">
                     <p className="font-bold text-ink-800 dark:text-cream-100">Đã chọn ảnh đại diện chính</p>
-                    <p className="text-[11px] text-ink-400 max-w-xs">
-                      Bấm nút <span className="text-rose-600 font-bold">X</span> màu đỏ trên đầu ảnh để xóa hoặc bấm "Đổi ảnh khác" để chọn ảnh mới từ máy.
-                    </p>
+                    
                   </div>
                 </div>
               )}

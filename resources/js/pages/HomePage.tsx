@@ -91,68 +91,35 @@ const BRANDS_SHOWCASE = [
   },
 ];
 
-
-const TESTIMONIALS = [
-  {
-    id: 1,
-    name: 'Nguyễn Tuấn Anh',
-    role: 'Nhiếp ảnh gia Cưới & Sự kiện (Wedding Pro)',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-    product: 'Sony Alpha A7 IV Body',
-    rating: 5,
-    comment:
-      'Máy fullbox nguyên seal chính hãng, kích hoạt bảo hành điện tử Sony Việt Nam ngay sau 10 phút nhận hàng. Đóng gói 3 lớp xốp khí chống sốc rất chu đáo!',
-    verified: true,
-  },
-  {
-    id: 2,
-    name: 'Lê Minh Khoa',
-    role: 'Street Photographer & Creator',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
-    product: 'Fujifilm X-T5 + Lens XF 33mm f/1.4',
-    rating: 5,
-    comment:
-      'Màu film của Fuji kết hợp ống 33mm cho bokeh mịn màng. Cửa hàng tư vấn rất có tâm, hỗ trợ trả góp 0% nhanh chóng không rườm rà.',
-    verified: true,
-  },
-  {
-    id: 3,
-    name: 'Trần Hoàng Long',
-    role: 'Travel Vlogger & Droner',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200',
-    product: 'DJI Mini 4 Pro Fly More Combo Plus',
-    rating: 5,
-    comment:
-      'Giao hỏa tốc 2 tiếng nhận ngay tại nội thành. Flycam kháng gió tốt, cảm biến đa hướng an toàn tuyệt đối cho anh em hay quay phong cảnh.',
-    verified: true,
-  },
-];
-
 export function HomePage({ onNavigate, categories }: Props) {
   const toast = useToast();
   const [featured, setFeatured] = useState<Product[]>([]);
   const [newProducts, setNewProducts] = useState<Product[]>([]);
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
   const [vouchers, setVouchers] = useState<any[]>([]);
+  const [realReviews, setRealReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const [feat, news, best, vList] = await Promise.all([
+        const [feat, news, best, vList, revRes] = await Promise.all([
           api.getFeaturedProducts('featured'),
           api.getFeaturedProducts('new'),
           api.getBestSellers(4),
           api.getAvailableVouchers().catch(() => []),
+          api.getFeaturedReviews(6).catch(() => ({ reviews: [] })),
         ]);
         setFeatured(feat || []);
         setNewProducts(news || []);
         setBestSellers(best || []);
         setVouchers(vList || []);
+        setRealReviews(revRes?.reviews || []);
       } catch (e) {
         console.error('Error fetching home products:', e);
         setVouchers([]);
+        setRealReviews([]);
       } finally {
         setLoading(false);
       }
@@ -634,64 +601,71 @@ export function HomePage({ onNavigate, categories }: Props) {
         )}
       </section>
 
-      {/* 10. ĐỒNG HÀNH CÙNG CỘNG ĐỒNG NHIẾP ẢNH GIA (GIỮ LẠI THEO ẢNH CHỤP CỦA BẠN) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="bg-cream-100/70 dark:bg-ink-900 p-8 sm:p-12 rounded-3xl border border-cream-200 dark:border-ink-800 space-y-8">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-ink-800 text-ink-700 dark:text-cream-200 rounded-full text-xs font-bold shadow-2xs">
-              <ShieldCheck size={14} className="text-emerald-500" />
-              <span>100% Đánh Giá Xác Thực</span>
+      {/* 10. ĐỒNG HÀNH CÙNG CỘNG ĐỒNG NHIẾP ẢNH GIA (CHỈ HIỂN THỊ KHI CÓ ĐÁNH GIÁ THỰC TẾ TRONG DATABASE) */}
+      {realReviews.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="bg-cream-100/70 dark:bg-ink-900 p-8 sm:p-12 rounded-3xl border border-cream-200 dark:border-ink-800 space-y-8">
+            <div className="text-center max-w-2xl mx-auto space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-ink-800 text-ink-700 dark:text-cream-200 rounded-full text-xs font-bold shadow-2xs">
+                <ShieldCheck size={14} className="text-emerald-500" />
+                <span>100% Đánh Giá Xác Thực</span>
+              </div>
+              <h2 className="font-display font-bold text-2xl lg:text-3xl text-ink-900 dark:text-cream-50">
+                Đồng hành cùng cộng đồng Nhiếp ảnh gia
+              </h2>
+              <p className="text-sm text-ink-500 dark:text-ink-400">
+                Lắng nghe cảm nhận thực tế từ những khách hàng đã tin tưởng lựa chọn CameraHub
+              </p>
             </div>
-            <h2 className="font-display font-bold text-2xl lg:text-3xl text-ink-900 dark:text-cream-50">
-              Đồng hành cùng cộng đồng Nhiếp ảnh gia
-            </h2>
-            <p className="text-sm text-ink-500 dark:text-ink-400">
-              Lắng nghe cảm nhận thực tế từ những người cầm máy chuyên nghiệp đã tin tưởng lựa chọn CameraHub
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t) => (
-              <div
-                key={t.id}
-                className="bg-white dark:bg-ink-800 p-6 rounded-2xl border border-cream-200/80 dark:border-ink-700 shadow-xs flex flex-col justify-between space-y-4"
-              >
-                <div className="space-y-3">
-                  {/* Stars */}
-                  <div className="flex items-center gap-1 text-amber-500">
-                    {Array.from({ length: t.rating }).map((_, idx) => (
-                      <Star key={idx} size={15} className="fill-amber-500" />
-                    ))}
-                  </div>
-                  <p className="text-xs sm:text-sm text-ink-700 dark:text-cream-200 leading-relaxed italic">
-                    "{t.comment}"
-                  </p>
-                </div>
-
-                <div className="pt-4 border-t border-cream-100 dark:border-ink-700/60 flex items-center gap-3">
-                  <img
-                    src={t.avatar}
-                    alt={t.name}
-                    className="w-10 h-10 rounded-full object-cover border border-cream-200 dark:border-ink-600 shrink-0"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1">
-                      <p className="font-bold text-xs text-ink-900 dark:text-cream-100 truncate">
-                        {t.name}
-                      </p>
-                      <BadgeCheck size={14} className="text-accent-500 shrink-0" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {realReviews.map((t) => (
+                <div
+                  key={t.id}
+                  className="bg-white dark:bg-ink-800 p-6 rounded-2xl border border-cream-200/80 dark:border-ink-700 shadow-xs flex flex-col justify-between space-y-4"
+                >
+                  <div className="space-y-3">
+                    {/* Stars */}
+                    <div className="flex items-center gap-1 text-amber-500">
+                      {Array.from({ length: t.rating || 5 }).map((_, idx) => (
+                        <Star key={idx} size={15} className="fill-amber-500" />
+                      ))}
                     </div>
-                    <p className="text-3xs text-ink-400 truncate">{t.role}</p>
-                    <p className="text-3xs font-semibold text-accent-500 truncate mt-0.5">
-                      Đã mua: {t.product}
+                    <p className="text-xs sm:text-sm text-ink-700 dark:text-cream-200 leading-relaxed italic">
+                      "{t.comment}"
                     </p>
                   </div>
+
+                  <div className="pt-4 border-t border-cream-100 dark:border-ink-700/60 flex items-center gap-3">
+                    <img
+                      src={t.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200'}
+                      alt={t.name}
+                      className="w-10 h-10 rounded-full object-cover border border-cream-200 dark:border-ink-600 shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1">
+                        <p className="font-bold text-xs text-ink-900 dark:text-cream-100 truncate">
+                          {t.name}
+                        </p>
+                        {t.verified && <BadgeCheck size={14} className="text-accent-500 shrink-0" />}
+                      </div>
+                      <p className="text-3xs text-ink-400 truncate">{t.role}</p>
+                      {t.product && (
+                        <p
+                          className={`text-3xs font-semibold text-accent-500 truncate mt-0.5 ${t.productSlug ? 'cursor-pointer hover:underline' : ''}`}
+                          onClick={() => t.productSlug && onNavigate({ name: 'product', slug: t.productSlug })}
+                        >
+                          Đã mua: {t.product}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }
