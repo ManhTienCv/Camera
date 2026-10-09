@@ -104,7 +104,7 @@ export const AdminCategoriesTab: React.FC<AdminCategoriesTabProps> = ({
 
   useEffect(() => {
     fetchBrands();
-  }, []);
+  }, [activeSubTab]);
 
   const totalBrandPages = Math.max(1, Math.ceil(brands.length / brandItemsPerPage));
   const paginatedBrands = brands.slice((brandPage - 1) * brandItemsPerPage, brandPage * brandItemsPerPage);

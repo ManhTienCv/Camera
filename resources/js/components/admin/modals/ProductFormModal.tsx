@@ -81,7 +81,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [show]);
 
   useEffect(() => {
     if (show && formData.brand && brands.length > 0) {
