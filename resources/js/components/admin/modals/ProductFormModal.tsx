@@ -28,6 +28,14 @@ export interface ProductFormModalProps {
   onClose: () => void;
 }
 
+// Hàm định dạng số có dấu chấm phân cách hàng nghìn (VD: 59990000 -> 59.990.000)
+export const formatNumberWithDots = (val: string | number | undefined | null): string => {
+  if (val === undefined || val === null || val === '') return '';
+  const digits = String(val).replace(/\D/g, '');
+  if (!digits) return '';
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+};
+
 export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   show,
   editingProduct,
@@ -170,6 +178,82 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     const updated = [...(formData.specs || [])];
     updated[index][field] = val;
     setFormData({ ...formData, specs: updated });
+  };
+
+  const handlePriceInputChange = (
+    field: 'price' | 'original_price',
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const input = e.target;
+    const rawVal = input.value;
+    const selectionStart = input.selectionStart || 0;
+
+    // Đếm số chữ số nằm trước vị trí con trỏ hiện tại
+    const digitsBeforeCursor = rawVal.slice(0, selectionStart).replace(/\D/g, '').length;
+    const cleanDigits = rawVal.replace(/\D/g, '');
+
+    setFormData((prev: any) => ({
+      ...prev,
+      [field]: cleanDigits,
+    }));
+
+    requestAnimationFrame(() => {
+      if (!input) return;
+      const formatted = formatNumberWithDots(cleanDigits);
+      let newCursorPos = 0;
+      let countedDigits = 0;
+      for (let i = 0; i < formatted.length; i++) {
+        if (/\d/.test(formatted[i])) {
+          countedDigits++;
+        }
+        if (countedDigits === digitsBeforeCursor) {
+          newCursorPos = i + 1;
+          break;
+        }
+      }
+      if (digitsBeforeCursor === 0) {
+        newCursorPos = 0;
+      }
+      input.setSelectionRange(newCursorPos, newCursorPos);
+    });
+  };
+
+  const handlePriceKeyDown = (
+    field: 'price' | 'original_price',
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (e.key === 'Backspace') {
+      const input = e.currentTarget;
+      const start = input.selectionStart || 0;
+      const end = input.selectionEnd || 0;
+      if (start === end && start > 0) {
+        // Nếu con trỏ đứng ngay sau dấu '.', bấm Backspace sẽ xóa số đứng trước dấu '.'
+        if (input.value[start - 1] === '.') {
+          e.preventDefault();
+          const raw = input.value;
+          const before = raw.slice(0, start - 2);
+          const after = raw.slice(start);
+          const clean = (before + after).replace(/\D/g, '');
+          setFormData((prev: any) => ({ ...prev, [field]: clean }));
+
+          const digitsBeforeCursor = Math.max(0, raw.slice(0, start - 2).replace(/\D/g, '').length);
+          requestAnimationFrame(() => {
+            const formatted = formatNumberWithDots(clean);
+            let newCursorPos = 0;
+            let counted = 0;
+            for (let i = 0; i < formatted.length; i++) {
+              if (/\d/.test(formatted[i])) counted++;
+              if (counted === digitsBeforeCursor) {
+                newCursorPos = i + 1;
+                break;
+              }
+            }
+            if (digitsBeforeCursor === 0) newCursorPos = 0;
+            input.setSelectionRange(newCursorPos, newCursorPos);
+          });
+        }
+      }
+    }
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
@@ -326,21 +410,25 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               <div>
                 <label className="block text-xs font-bold text-ink-700 uppercase mb-1">Giá bán hiện tại (VNĐ) *</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   required
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  placeholder="59990000"
+                  value={formatNumberWithDots(formData.price)}
+                  onChange={(e) => handlePriceInputChange('price', e)}
+                  onKeyDown={(e) => handlePriceKeyDown('price', e)}
+                  placeholder="59.990.000"
                   className="input-field text-sm font-semibold text-accent-600"
                 />
               </div>
               <div>
                 <label className="block text-xs font-bold text-ink-700 uppercase mb-1">Giá gốc(VNĐ)</label>
                 <input
-                  type="number"
-                  value={formData.original_price}
-                  onChange={(e) => setFormData({ ...formData, original_price: e.target.value })}
-                  placeholder="65000000"
+                  type="text"
+                  inputMode="numeric"
+                  value={formatNumberWithDots(formData.original_price)}
+                  onChange={(e) => handlePriceInputChange('original_price', e)}
+                  onKeyDown={(e) => handlePriceKeyDown('original_price', e)}
+                  placeholder="65.000.000"
                   className="input-field text-sm"
                 />
               </div>
@@ -349,6 +437,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 <input
                   type="number"
                   required
+                  min={0}
                   value={formData.stock}
                   onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                   placeholder="10"

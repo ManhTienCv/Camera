@@ -719,7 +719,7 @@ export const AdminVouchersTab: React.FC = () => {
                     required
                     min="1"
                     max={formData.discount_type === 'percent' ? 100 : undefined}
-                    placeholder={formData.discount_type === 'percent' ? '10' : '50000'}
+                    placeholder={formData.discount_type === 'percent' ? '10' : '50.000'}
                     value={formData.discount_value}
                     onChange={(e) => setFormData({ ...formData, discount_value: e.target.value })}
                     className="w-full px-3.5 py-2.5 bg-cream-50/60 border border-cream-300 rounded-xl text-sm font-semibold focus:outline-none focus:border-accent-500"
@@ -751,7 +751,7 @@ export const AdminVouchersTab: React.FC = () => {
                     <input
                       type="number"
                       min="0"
-                      placeholder="VD: 200000"
+                      placeholder="VD: 200.000"
                       value={formData.max_discount_amount}
                       onChange={(e) =>
                         setFormData({ ...formData, max_discount_amount: e.target.value })
