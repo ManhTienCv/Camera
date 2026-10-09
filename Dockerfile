@@ -33,7 +33,7 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --ignore-platform-reqs
 
 # Setup Nginx configuration template and startup script
-RUN mkdir -p /etc/nginx/templates /etc/nginx/conf.d
+RUN mkdir -p /etc/nginx/templates /etc/nginx/conf.d /run/nginx /var/log/nginx /var/lib/nginx/tmp
 COPY docker/nginx.conf /etc/nginx/templates/nginx.conf.template
 COPY docker/start.sh /usr/local/bin/start.sh
 
@@ -41,7 +41,8 @@ COPY docker/start.sh /usr/local/bin/start.sh
 RUN dos2unix /usr/local/bin/start.sh 2>/dev/null || true \
     && chmod +x /usr/local/bin/start.sh \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 777 /run/nginx /var/log/nginx /var/lib/nginx /tmp 2>/dev/null || true
 
 # Default Render port
 EXPOSE 10000

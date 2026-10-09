@@ -8,7 +8,11 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\AuthController;
 
+// API Health Check Endpoint
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'timestamp' => now()]));
+
 Route::prefix('v1')->group(function () {
+    Route::get('/health', fn () => response()->json(['status' => 'ok', 'timestamp' => now()]));
     // 1. Authentication & Profile
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);

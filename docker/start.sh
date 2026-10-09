@@ -4,11 +4,18 @@ set -e
 # Render exposes PORT variable (defaults to 10000 if not set)
 export PORT=${PORT:-10000}
 
+# Create required runtime directories
+mkdir -p /run/nginx /var/log/nginx /var/lib/nginx/tmp /tmp
+chmod -R 777 /run/nginx /var/log/nginx /var/lib/nginx /tmp 2>/dev/null || true
+
 # Remove any conflicting default alpine configs
 rm -rf /etc/nginx/http.d/* /etc/nginx/conf.d/* 2>/dev/null || true
 
 # Generate main nginx.conf from template with injected PORT
 envsubst '${PORT}' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf
+
+echo "==> Validating Nginx configuration..."
+nginx -t
 
 echo "==> Configuring Laravel storage and caches..."
 php artisan storage:link --force || true
@@ -39,5 +46,5 @@ fi
 echo "==> Starting PHP-FPM on port 9000..."
 php-fpm -D
 
-echo "==> Starting Nginx on port $PORT..."
+echo "==> Starting Nginx on 0.0.0.0:$PORT..."
 exec nginx -g "daemon off;"

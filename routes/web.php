@@ -52,6 +52,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::patch('/finance/{order}/status', [\App\Http\Controllers\Admin\FinanceController::class, 'updateStatus'])->name('finance.update-status');
 });
 
+// Health Check Routes for Render / Cloud Orchestrators (Fast 200 OK)
+Route::get('/health', fn () => response('OK', 200)->header('Content-Type', 'text/plain'));
+Route::get('/healthz', fn () => response('OK', 200)->header('Content-Type', 'text/plain'));
+Route::get('/up', fn () => response('OK', 200)->header('Content-Type', 'text/plain'));
+Route::get('/ping', fn () => response('pong', 200)->header('Content-Type', 'text/plain'));
+
 // Main React SPA Entrypoint
 Route::get('/{any?}', function () {
     if (!file_exists(public_path('build/manifest.json'))) {
