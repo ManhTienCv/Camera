@@ -10,7 +10,6 @@ import {
   AlertTriangle,
   QrCode,
   Info,
-  Clock,
   Sparkles,
   ExternalLink,
   RefreshCw,
@@ -231,17 +230,14 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ onSaveSucces
                 <label className="block text-xs font-bold text-ink-700 dark:text-ink-300 uppercase mb-2">
                   Giờ mở cửa phục vụ
                 </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    value={formData.businessHours}
-                    onChange={(e) => handleInputChange('businessHours', e.target.value)}
-                    className="input-field text-sm pl-9"
-                    placeholder="08:30 - 21:30 (Thứ 2 - Chủ Nhật)"
-                  />
-                  <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
-                </div>
+                <input
+                  type="text"
+                  required
+                  value={formData.businessHours}
+                  onChange={(e) => handleInputChange('businessHours', e.target.value)}
+                  className="input-field text-sm"
+                  placeholder="08:30 - 21:30 (Thứ 2 - Chủ Nhật)"
+                />
               </div>
             </div>
 

@@ -7,7 +7,6 @@ import {
   Send,
   Star,
   RotateCcw,
-  RefreshCw,
   Edit3,
   XCircle,
   AlertCircle,
@@ -200,27 +199,6 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
 
   const handleOpenEditOrderAddress = (order: EnhancedOrder) => {
     setEditingOrderAddress(order);
-  };
-
-  const [syncingOrderId, setSyncingOrderId] = useState<string | null>(null);
-
-  // Sync Live Status with GHN
-  const handleSyncGhn = async (order: EnhancedOrder) => {
-    setSyncingOrderId(order.id);
-    try {
-      toast.info(`Đang đồng bộ trạng thái đơn ${order.order_code} từ GHN...`);
-      const res = await api.syncGhnOrderStatus(order.id);
-      if (res && res.success) {
-        toast.success(res.message || 'Đồng bộ GHN thành công!');
-        setRefreshKey((k) => k + 1);
-      } else {
-        toast.warning(res?.message || 'Không thể đồng bộ trạng thái với GHN.');
-      }
-    } catch (err: any) {
-      toast.error(err.message || 'Lỗi khi đồng bộ đơn với GHN.');
-    } finally {
-      setSyncingOrderId(null);
-    }
   };
 
   // Open Cancel Modal
@@ -498,16 +476,6 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
 
                     {ord.status === 'shipping' && (
                       <div className="flex items-center gap-2 flex-wrap">
-                        <button
-                          onClick={() => handleSyncGhn(ord)}
-                          disabled={syncingOrderId === ord.id}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-bold rounded-xl transition-all shadow-2xs active:scale-95 disabled:opacity-50 cursor-pointer"
-                          title="Đồng bộ trạng thái trực tiếp từ Giao Hàng Nhanh (GHN)"
-                        >
-                          <RefreshCw size={13} className={syncingOrderId === ord.id ? 'animate-spin' : ''} />
-                          <span>Đồng bộ GHN</span>
-                        </button>
-
                         <button
                           onClick={() => handleOpenCancelModal(ord)}
                           className="inline-flex items-center gap-1 px-3 py-1 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-2xs active:scale-95"
