@@ -65,10 +65,15 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                     )}
                   </div>
                   {method.id === 'momo' && isSelected && (
-                    <div className="mt-2 text-xs text-pink-700 dark:text-pink-300 bg-pink-50/60 dark:bg-pink-950/30 px-3 py-2 rounded-xl border border-pink-200/80 dark:border-pink-900/40 flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-[11px]">💡 Thẻ Visa test:</span>
-                      <code className="bg-white dark:bg-ink-900 px-1.5 py-0.5 rounded text-[11px] font-mono font-bold text-pink-600 dark:text-pink-400 border border-pink-100 dark:border-pink-900/60">4111 1111 1111 1111</code>
-                      <span className="text-[11px] text-ink-600 dark:text-ink-400">• Hạn: 12/28 • CVV: 123</span>
+                    <div className="mt-2 text-xs text-pink-700 dark:text-pink-300 bg-pink-50/60 dark:bg-pink-950/30 px-3 py-2.5 rounded-xl border border-pink-200/80 dark:border-pink-900/40 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-[11px]">💡 Thẻ ATM test MoMo:</span>
+                        <code className="bg-white dark:bg-ink-900 px-1.5 py-0.5 rounded text-[11px] font-mono font-bold text-pink-600 dark:text-pink-400 border border-pink-100 dark:border-pink-900/60">9704 0000 0000 0018</code>
+                        <span className="text-[11px] text-ink-600 dark:text-ink-400">• Tên: NGUYEN VAN A • Hạn: 03/07 • OTP: 000000</span>
+                      </div>
+                      <p className="text-[10.5px] text-pink-600 dark:text-pink-400">
+                        * Trên cổng MoMo Sandbox, chọn tab <strong>"Thẻ ATM nội địa"</strong> để thanh toán (tránh tab Thẻ quốc tế vì máy chủ MoMo Sandbox đang bị timeout 504).
+                      </p>
                     </div>
                   )}
                 </div>

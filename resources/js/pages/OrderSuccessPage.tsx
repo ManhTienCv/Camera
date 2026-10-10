@@ -279,17 +279,19 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
                 <div className="bg-white border border-pink-200 p-3.5 rounded-xl space-y-1.5 shadow-2xs">
                   <p className="font-bold text-pink-950 mb-1 flex items-center justify-between">
-                    <span>💳 Cách 1: Thẻ Quốc Tế Visa (Khuyên dùng)</span>
+                    <span>💳 Cách 1: Thẻ ATM Nội Địa Napas (Khuyên dùng)</span>
                     <span className="text-[10px] bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded-full">Thành công 100%</span>
                   </p>
                   <p className="text-[10px] text-pink-800">
-                    * Trên cổng MoMo, bấm chọn tab <strong>"Thẻ quốc tế"</strong> và điền:
+                    * Trên cổng MoMo, bấm chọn tab <strong>"Thẻ ATM nội địa"</strong> (chọn ngân hàng bất kỳ như NCB/Vietcombank) và điền:
                   </p>
-                  <p>• Số thẻ: <strong className="font-mono font-bold text-pink-700">4111 1111 1111 1111</strong></p>
+                  <p>• Số thẻ: <strong className="font-mono font-bold text-pink-700">9704 0000 0000 0018</strong></p>
                   <p>• Tên chủ thẻ: <strong className="font-mono font-bold text-pink-700">NGUYEN VAN A</strong></p>
-                  <p>• Ngày hết hạn: <strong className="font-mono font-bold text-pink-700">12/28</strong> (hoặc bất kỳ tháng tương lai)</p>
-                  <p>• Mã CVV/CVC: <strong className="font-mono font-bold text-pink-700">123</strong></p>
-                  <p>• OTP (nếu hỏi): <strong className="font-mono font-bold text-pink-700">000000</strong></p>
+                  <p>• Ngày phát hành: <strong className="font-mono font-bold text-pink-700">03/07</strong></p>
+                  <p>• Mã OTP xác thực: <strong className="font-mono font-bold text-pink-700">000000</strong> (hoặc 123456)</p>
+                  <p className="text-[10px] text-amber-700 pt-1 border-t border-cream-100">
+                    ⚠️ <em>Lưu ý: Tránh tab Thẻ quốc tế (Visa/Mastercard) vì máy chủ thanh toán thẻ quốc tế MoMo Sandbox thường bị lỗi 504 Gateway Time-out.</em>
+                  </p>
                 </div>
                 <div className="bg-white border border-pink-200 p-3.5 rounded-xl space-y-1.5 shadow-2xs">
                   <p className="font-bold text-pink-950 mb-1 flex items-center justify-between">
@@ -300,8 +302,8 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
                   <p>• Quét mã QR hiển thị trên màn hình cổng MoMo</p>
                   <p>• SĐT test: <strong className="font-mono font-bold text-pink-700">0968202605</strong></p>
                   <p>• Mật khẩu / OTP: <strong className="font-mono font-bold text-pink-700">000000</strong></p>
-                  <p className="text-[10px] text-amber-700 pt-1 border-t border-cream-100">
-                    ⚠️ <em>Lưu ý: Không dùng tab Thẻ ATM nội địa vì hệ thống Sandbox MoMo hiện đã đóng cổng Napas nên luôn bị báo chối (Error 1002).</em>
+                  <p className="text-[10px] text-pink-700 pt-1 border-t border-cream-100">
+                    💡 <em>Nếu đã quét hoặc không muốn mở cổng MoMo, bạn có thể bấm nút <strong>"Xác nhận đã quét mã MoMo xong"</strong> ở trên để hoàn tất ngay.</em>
                   </p>
                 </div>
               </div>

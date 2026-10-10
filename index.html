@@ -16,6 +16,69 @@
     
     <script>
         (function() {
+            // Chặn và triệt tiêu lỗi phát sinh từ các Extension/tiện ích mở rộng của trình duyệt (content_main.js, v.v.)
+            function isExtensionError(eventOrMsg, source) {
+                var src = (source || (eventOrMsg && eventOrMsg.filename) || '').toLowerCase();
+                var msg = (typeof eventOrMsg === 'string' ? eventOrMsg : (eventOrMsg && eventOrMsg.message) || '').toLowerCase();
+                if (src.indexOf('content_main') !== -1 ||
+                    src.indexOf('chrome-extension:') !== -1 ||
+                    src.indexOf('moz-extension:') !== -1 ||
+                    src.indexOf('safari-extension:') !== -1 ||
+                    src.indexOf('extension') !== -1) {
+                    return true;
+                }
+                if (msg.indexOf('istriggerkey') !== -1 ||
+                    (msg.indexOf('tolowercase') !== -1 && src.indexOf('content_main') !== -1)) {
+                    return true;
+                }
+                return false;
+            }
+
+            window.addEventListener('error', function(event) {
+                if (isExtensionError(event)) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    return true;
+                }
+            }, true);
+
+            window.addEventListener('unhandledrejection', function(event) {
+                var reason = event && event.reason;
+                var str = String(reason || '').toLowerCase();
+                if (str.indexOf('content_main') !== -1 || str.indexOf('extension') !== -1 || str.indexOf('istriggerkey') !== -1) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }
+            }, true);
+
+            var origOnError = window.onerror;
+            window.onerror = function(msg, url, line, col, error) {
+                if (isExtensionError(msg, url)) {
+                    return true;
+                }
+                if (typeof origOnError === 'function') {
+                    return origOnError.apply(this, arguments);
+                }
+            };
+
+            // Safeguard KeyboardEvent.prototype.key để không bao giờ trả về undefined khi bộ gõ tiếng Việt (Unikey/EVKey) gửi phím
+            try {
+                if (window.KeyboardEvent && window.KeyboardEvent.prototype) {
+                    var desc = Object.getOwnPropertyDescriptor(window.KeyboardEvent.prototype, 'key');
+                    if (desc && typeof desc.get === 'function') {
+                        var origGet = desc.get;
+                        Object.defineProperty(window.KeyboardEvent.prototype, 'key', {
+                            get: function() {
+                                var val = origGet.call(this);
+                                return typeof val === 'string' ? val : '';
+                            },
+                            configurable: true,
+                            enumerable: true
+                        });
+                    }
+                }
+            } catch (e) {}
+
             try {
                 var isAdmin = window.location.pathname.indexOf('/admin') === 0;
                 if (isAdmin) {
