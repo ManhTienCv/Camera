@@ -31,6 +31,7 @@ import { OrdersPage } from './pages/OrdersPage';
 const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })));
 const ComparePage = lazy(() => import('./pages/ComparePage').then((m) => ({ default: m.ComparePage })));
 const WarrantyLookupPage = lazy(() => import('./pages/WarrantyLookupPage').then((m) => ({ default: m.WarrantyLookupPage })));
+const MomoPaymentGatewayPage = lazy(() => import('./pages/MomoPaymentGatewayPage').then((m) => ({ default: m.MomoPaymentGatewayPage })));
 
 interface PageFallbackProps {
   message?: string;
@@ -95,6 +96,10 @@ const parseLocation = (): Page => {
   }
   if (path.startsWith('/warranty') || path.startsWith('/tra-cuu-bao-hanh')) {
     return { name: 'warranty' };
+  }
+  if (path.startsWith('/payment/momo') || path.startsWith('/momo-gateway')) {
+    const orderId = search.get('orderId') || search.get('order_id') || search.get('id') || '';
+    return { name: 'momo-gateway', orderId };
   }
   return { name: 'home' };
 };
@@ -200,6 +205,8 @@ export default function App() {
       targetUrl = p.ids && p.ids.length > 0 ? `/compare?ids=${p.ids.join(',')}` : '/compare';
     } else if (p.name === 'warranty') {
       targetUrl = '/warranty';
+    } else if (p.name === 'momo-gateway') {
+      targetUrl = p.orderId ? `/payment/momo?orderId=${p.orderId}` : '/payment/momo';
     }
 
     if (window.location.pathname + window.location.search !== targetUrl) {
@@ -242,6 +249,8 @@ export default function App() {
         return `compare-${(page.ids || []).join('-')}`;
       case 'warranty':
         return 'warranty';
+      case 'momo-gateway':
+        return `momo-gateway-${page.orderId || ''}`;
       case 'admin':
         return `admin-${page.tab || 'dashboard'}`;
       default:
@@ -334,6 +343,11 @@ export default function App() {
                           {page.name === 'warranty' && (
                             <Suspense fallback={<PageFallback message="Đang tải hệ thống tra cứu bảo hành..." />}>
                               <WarrantyLookupPage onNavigate={navigate} />
+                            </Suspense>
+                          )}
+                          {page.name === 'momo-gateway' && (
+                            <Suspense fallback={<PageFallback message="Đang kết nối Cổng thanh toán MoMo..." />}>
+                              <MomoPaymentGatewayPage orderId={page.orderId} onNavigate={navigate} />
                             </Suspense>
                           )}
                         </motion.div>

@@ -345,6 +345,7 @@ export type Page =
   | { name: 'profile'; tab?: 'profile' | 'addresses' | 'orders' | 'wishlist' }
   | { name: 'compare'; ids?: string[] }
   | { name: 'warranty' }
+  | { name: 'momo-gateway'; orderId: string }
   | { name: 'admin'; tab?: 'dashboard' | 'products' | 'categories' | 'orders' | 'vouchers' | 'reviews' | 'settings' | 'reports' | 'finance' | 'users' | 'chat' };
 
 

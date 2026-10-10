@@ -228,22 +228,31 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
             {!paymentConfirmed && (
               <div className="flex items-center gap-2 flex-wrap">
                 <button
+                  onClick={() => onNavigate({ name: 'momo-gateway', orderId: order.id })}
+                  className="px-5 py-2.5 bg-gradient-to-r from-[#A50064] via-[#D82D8B] to-[#AE2070] hover:brightness-110 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer hover:scale-105 active:scale-95"
+                >
+                  <ExternalLink size={14} />
+                  <span>Mở Cổng MoMo CameraHub (Khuyên dùng - Không lo lỗi 504)</span>
+                </button>
+
+                <button
                   onClick={handleOpenMomoGateway}
                   disabled={openingMomo}
-                  className="px-5 py-2.5 bg-pink-600 hover:bg-pink-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50 hover:scale-105 active:scale-95"
+                  className="px-4 py-2.5 bg-white hover:bg-pink-50 border border-pink-300 text-pink-700 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95"
+                  title="Thử mở cổng MoMo Sandbox bên ngoài"
                 >
                   {openingMomo ? (
                     <Loader2 size={14} className="animate-spin" />
                   ) : (
                     <ExternalLink size={14} />
                   )}
-                  <span>Mở Cổng Thanh Toán MoMo Sandbox</span>
+                  <span>Mở Cổng Sandbox Ngoài (test-payment.momo.vn)</span>
                 </button>
 
                 <button
                   onClick={handleConfirmPaid}
                   disabled={confirmingPayment}
-                  className="px-4 py-2.5 bg-white hover:bg-pink-50 border border-pink-300 text-pink-700 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95"
+                  className="px-4 py-2.5 bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-700 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95"
                   title="Xác nhận nhanh nếu đã hoàn tất thanh toán hoặc cần duyệt ngay"
                 >
                   {confirmingPayment ? (

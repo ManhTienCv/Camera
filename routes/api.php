@@ -83,6 +83,7 @@ Route::prefix('v1')->group(function () {
 
     // 7. Payment Gateways (MoMo & VietQR Bank Webhook)
     Route::post('/payment/momo/create', [\App\Http\Controllers\Api\PaymentController::class, 'createMomoPayment']);
+    Route::post('/payment/momo/simulate', [\App\Http\Controllers\Api\PaymentController::class, 'simulateMomoPayment']);
     Route::post('/payment/momo/ipn', [\App\Http\Controllers\Api\PaymentController::class, 'handleMomoIpn']);
     Route::post('/orders/{id}/pay/momo', [\App\Http\Controllers\Api\PaymentController::class, 'payAgain']);
     Route::post('/payment/vietqr/webhook', [\App\Http\Controllers\Api\PaymentController::class, 'handleVietqrWebhook']);

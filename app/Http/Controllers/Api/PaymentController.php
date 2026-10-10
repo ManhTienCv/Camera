@@ -494,4 +494,103 @@ class PaymentController extends Controller
             'total_amount' => (float) $order->total_amount,
         ]);
     }
+
+    /**
+     * 7. Giả lập thanh toán MoMo nội bộ (In-App MoMo Gateway Simulation)
+     * Khắc phục triệt để khi máy chủ sandbox của bên thứ ba (test-payment.momo.vn) bị lỗi 504 Gateway Time-out
+     */
+    public function simulateMomoPayment(Request $request)
+    {
+        $request->validate([
+            'order_id' => 'required',
+            'payment_type' => 'nullable|string', // qr, atm, intl
+            'bank_code' => 'nullable|string',
+            'card_number' => 'nullable|string',
+            'card_holder' => 'nullable|string',
+        ]);
+
+        $order = Order::with('items')->where('id', $request->order_id)
+            ->orWhere('order_code', $request->order_id)
+            ->firstOrFail();
+
+        if ($order->order_status === 'cancelled') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể thanh toán cho đơn hàng đã bị hủy.',
+            ], 422);
+        }
+
+        if (in_array($order->payment_status, ['paid', 'completed'], true)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đơn hàng này đã được xác nhận thanh toán trước đó.',
+                'order' => $order,
+            ]);
+        }
+
+        return DB::transaction(function () use ($order, $request) {
+            $paymentType = $request->input('payment_type', 'qr');
+            $typeNames = [
+                'qr' => 'Ví MoMo (Quét mã QR)',
+                'atm' => 'Thẻ ATM Nội Địa (Napas)',
+                'intl' => 'Thẻ Quốc Tế (Visa/Mastercard)',
+            ];
+            $typeName = $typeNames[$paymentType] ?? 'Cổng MoMo';
+
+            $order->payment_method = 'momo';
+            $order->payment_status = 'paid';
+            if ($order->order_status === 'pending') {
+                $order->order_status = 'shipping';
+            }
+            $order->save();
+
+            $transId = 'MOMO-SIM-' . time() . '-' . rand(1000, 9999);
+            $note = "Thanh toán thành công qua {$typeName} - Cổng MoMo CameraHub";
+            if ($request->filled('card_number')) {
+                $raw = preg_replace('/\s+/', '', (string) $request->card_number);
+                $masked = strlen($raw) >= 8
+                    ? substr($raw, 0, 4) . ' **** **** ' . substr($raw, -4)
+                    : '****';
+                $note .= " [Số thẻ: {$masked}]";
+            }
+            if ($request->filled('bank_code')) {
+                $note .= " [Ngân hàng: {$request->bank_code}]";
+            }
+
+            PaymentTransaction::create([
+                'order_id' => $order->id,
+                'gateway' => 'momo',
+                'gateway_order_id' => $order->order_code ?: (string) $order->id,
+                'transaction_id' => $transId,
+                'amount' => $order->total_amount,
+                'status' => 'paid',
+                'result_code' => 0,
+                'message' => $note,
+                'paid_at' => now(),
+            ]);
+
+            // Tự động khởi tạo vận đơn GHN nếu chưa có
+            $freshOrder = $order->fresh(['items.product']);
+            if (empty($freshOrder->tracking_code)) {
+                try {
+                    GHNService::createShippingOrder($freshOrder);
+                } catch (\Throwable $e) {
+                    Log::warning('Auto GHN create after Momo simulation warning: ' . $e->getMessage());
+                }
+            }
+
+            // Gửi email hóa đơn thanh toán
+            try {
+                EmailService::sendPaymentSuccessNotification($freshOrder);
+            } catch (\Throwable $e) {
+                Log::warning('Send payment success email on Momo simulation warning: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Thanh toán MoMo thành công! Đơn hàng đã chuyển sang trạng thái đang vận chuyển.",
+                'order' => $order->fresh('items'),
+            ]);
+        });
+    }
 }

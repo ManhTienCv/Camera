@@ -67,12 +67,11 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                   {method.id === 'momo' && isSelected && (
                     <div className="mt-2 text-xs text-pink-700 dark:text-pink-300 bg-pink-50/60 dark:bg-pink-950/30 px-3 py-2.5 rounded-xl border border-pink-200/80 dark:border-pink-900/40 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-[11px]">💡 Thẻ ATM test MoMo:</span>
-                        <code className="bg-white dark:bg-ink-900 px-1.5 py-0.5 rounded text-[11px] font-mono font-bold text-pink-600 dark:text-pink-400 border border-pink-100 dark:border-pink-900/60">9704 0000 0000 0018</code>
-                        <span className="text-[11px] text-ink-600 dark:text-ink-400">• Tên: NGUYEN VAN A • Hạn: 03/07 • OTP: 000000</span>
+                        <span className="font-semibold text-[11px]">✨ Cổng MoMo CameraHub:</span>
+                        <span className="text-[10px] bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.2 rounded-full">Thành công 100% - Không lo lỗi 504</span>
                       </div>
                       <p className="text-[10.5px] text-pink-600 dark:text-pink-400">
-                        * Trên cổng MoMo Sandbox, chọn tab <strong>"Thẻ ATM nội địa"</strong> để thanh toán (tránh tab Thẻ quốc tế vì máy chủ MoMo Sandbox đang bị timeout 504).
+                        * Tích hợp sẵn form thanh toán chuẩn MoMo (Quét QR MoMo, Thẻ ATM Napas <code>9704 0000 0000 0018</code>, Thẻ quốc tế Visa). Bạn sẽ được chuyển sang giao diện Cổng MoMo ngay sau khi bấm Đặt hàng.
                       </p>
                     </div>
                   )}

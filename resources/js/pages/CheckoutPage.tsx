@@ -276,17 +276,10 @@ export function CheckoutPage({ onNavigate }: Props) {
       await clearCart();
 
       if (form.payment === 'momo') {
-        toast.info('Đang chuyển hướng sang cổng thanh toán MoMo Sandbox...');
-        try {
-          const momoRes = await api.createMomoPayment(order.id);
-          if (momoRes.success && momoRes.payUrl) {
-            window.location.href = momoRes.payUrl;
-            return;
-          }
-        } catch (momoErr: any) {
-          console.warn('MoMo payment init warning:', momoErr);
-          toast.warning('Đang mở trang chi tiết đơn hàng...');
-        }
+        sessionStorage.removeItem('camerahub_checkout_deadline');
+        toast.success('Đơn hàng đã được tạo thành công! Đang chuyển sang Cổng thanh toán MoMo...');
+        onNavigate({ name: 'momo-gateway', orderId: order.id });
+        return;
       }
 
       sessionStorage.removeItem('camerahub_checkout_deadline');

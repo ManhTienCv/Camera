@@ -114,6 +114,18 @@ export const ordersApi = {
       body: JSON.stringify({ redirect_url: redirectUrl }),
     }),
 
+  simulateMomoPayment: (data: {
+    order_id: string;
+    payment_type?: 'qr' | 'atm' | 'intl';
+    card_number?: string;
+    card_holder?: string;
+    bank_code?: string;
+  }) =>
+    request<{ success: boolean; message: string; order: Order }>('/payment/momo/simulate', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
   // Giao Hàng Nhanh (GHN) APIs
   getGhnProvinces: () =>
     request<Array<{ ProvinceID: number; ProvinceName: string }>>('/shipping/ghn/provinces'),
