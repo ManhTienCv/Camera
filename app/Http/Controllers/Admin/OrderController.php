@@ -240,6 +240,14 @@ class OrderController extends Controller
 
         $order->save();
 
+        if ($oldStatus !== $newStatus) {
+            try {
+                \App\Services\EmailService::sendOrderStatusUpdated($order->fresh(['items.product']), $newStatus, $order->cancel_reason);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Admin updateStatus order status email failed: ' . $e->getMessage());
+            }
+        }
+
         Cache::forget('admin_reports_index_data');
         Cache::forget('admin_reports_charts_data');
         Cache::forget('admin_finance_summary_default');

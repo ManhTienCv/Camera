@@ -145,6 +145,17 @@ class GoogleAuthController extends Controller
             // 4. Khởi tạo mã Auth Token cho hệ thống CameraHub
             $token = $user->createToken();
 
+            // Gửi email chào mừng (nếu tài khoản mới) hoặc email bảo mật đăng nhập
+            try {
+                if ($isNewUser) {
+                    \App\Services\EmailService::sendWelcomeRegistration($user);
+                } else {
+                    \App\Services\EmailService::sendLoginNotification($user, $request->ip(), $request->userAgent());
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('GoogleAuth email notice failed: ' . $e->getMessage());
+            }
+
             // 5. Trả về Blade view đồng bộ với Popup hoặc chuyển hướng
             return view('auth.google_callback', [
                 'token' => $token,

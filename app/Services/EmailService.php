@@ -461,4 +461,349 @@ HTML;
             return false;
         }
     }
+
+    /**
+     * Send Order Status Update Email (Theo từng giai đoạn: processing, shipping, delivered/completed, cancelled)
+     */
+    public static function sendOrderStatusUpdated($order, string $newStatus, ?string $reason = null): bool
+    {
+        try {
+            $toEmail = $order->customer_email;
+            if (!$toEmail) return false;
+
+            $orderCode = htmlspecialchars($order->order_code ?: ('CAM-' . $order->id));
+            $customerName = htmlspecialchars($order->customer_name ?: 'Quý khách');
+            $totalAmountFormatted = number_format((float) $order->total_amount, 0, ',', '.') . ' ₫';
+            $shippingAddress = htmlspecialchars($order->shipping_address . ($order->city ? ', ' . $order->city : ''));
+            $phone = htmlspecialchars($order->customer_phone ?: 'Chưa cung cấp');
+            $trackingCode = htmlspecialchars($order->tracking_code ?: ($order->ghn_order_code ?: 'Đang cập nhật'));
+
+            $statusConfig = [
+                'processing' => [
+                    'badge' => '📦 ĐANG CHUẨN BỊ HÀNG',
+                    'color' => '#f59e0b',
+                    'title' => 'Đơn Hàng Đang Được Đóng Gói Chuẩn Bị',
+                    'subject' => "[CameraHub] 📦 Đơn hàng #{$orderCode} đang được chuẩn bị và kiểm tra kỹ thuật",
+                    'message' => "Đơn hàng của bạn đã được chuyển cho đội ngũ kỹ thuật kho tại CameraHub. Chúng tôi đang tiến hành kiểm tra cảm biến, phụ kiện kèm theo, dán tem bảo hành điện tử và bọc xốp chống sốc 3 lớp chuyên dụng trước khi bàn giao cho đơn vị vận chuyển.",
+                    'step' => 'Giai đoạn 2/4: Chuẩn bị & Đóng gói hàng',
+                ],
+                'shipping' => [
+                    'badge' => '🚚 ĐANG VẬN CHUYỂN',
+                    'color' => '#3b82f6',
+                    'title' => 'Đơn Hàng Đang Trên Đường Giao Đến Bạn',
+                    'subject' => "[CameraHub] 🚚 Đơn hàng #{$orderCode} đã bàn giao cho GHN Express - Đang giao hàng!",
+                    'message' => "Kiện hàng của bạn đã được xuất kho và bàn giao thành công cho bưu tá <strong>Giao Hàng Nhanh (GHN Express)</strong>. Bưu tá sẽ liên hệ với bạn trước khi giao hàng qua số điện thoại <strong>{$phone}</strong>.",
+                    'step' => 'Giai đoạn 3/4: Đang trên đường giao hàng',
+                ],
+                'completed' => [
+                    'badge' => '🎉 GIAO HÀNG THÀNH CÔNG',
+                    'color' => '#10b981',
+                    'title' => 'Đơn Hàng Đã Giao Thành Công',
+                    'subject' => "[CameraHub] 🎉 Đơn hàng #{$orderCode} đã được giao thành công!",
+                    'message' => "CameraHub xác nhận bạn đã nhận được kiện hàng thành công! Cảm ơn bạn đã lựa chọn tin tưởng CameraHub. Toàn bộ thiết bị máy ảnh trong đơn hàng của bạn đã được tự động kích hoạt bảo hành điện tử chính hãng.",
+                    'step' => 'Giai đoạn 4/4: Giao hàng thành công hoàn tất',
+                ],
+                'delivered' => [
+                    'badge' => '🎉 GIAO HÀNG THÀNH CÔNG',
+                    'color' => '#10b981',
+                    'title' => 'Đơn Hàng Đã Giao Thành Công',
+                    'subject' => "[CameraHub] 🎉 Đơn hàng #{$orderCode} đã được giao thành công!",
+                    'message' => "CameraHub xác nhận bạn đã nhận được kiện hàng thành công! Cảm ơn bạn đã lựa chọn tin tưởng CameraHub. Toàn bộ thiết bị máy ảnh trong đơn hàng của bạn đã được tự động kích hoạt bảo hành điện tử chính hãng.",
+                    'step' => 'Giai đoạn 4/4: Giao hàng thành công hoàn tất',
+                ],
+                'cancelled' => [
+                    'badge' => '❌ ĐÃ HỦY ĐƠN HÀNG',
+                    'color' => '#ef4444',
+                    'title' => 'Thông Báo Hủy Đơn Hàng',
+                    'subject' => "[CameraHub] ⚠️ Thông báo hủy đơn hàng #{$orderCode}",
+                    'message' => "Đơn hàng của bạn tại CameraHub đã được hủy trên hệ thống. " . ($reason ? ("Lý do: <em>" . htmlspecialchars($reason) . "</em>.") : '') . " Toàn bộ số lượng sản phẩm trong đơn đã được hoàn trả về kho. Nếu bạn đã thanh toán trực tuyến trước đó, bộ phận kế toán sẽ tiến hành đối soát và hoàn tiền vào tài khoản ngân hàng của bạn.",
+                    'step' => 'Trạng thái: Đã hủy đơn',
+                ],
+            ];
+
+            $config = $statusConfig[$newStatus] ?? [
+                'badge' => '📋 CẬP NHẬT TRẠNG THÁI',
+                'color' => '#6b7280',
+                'title' => 'Cập Nhật Trạng Thái Đơn Hàng',
+                'subject' => "[CameraHub] Cập nhật trạng thái đơn hàng #{$orderCode}",
+                'message' => "Đơn hàng của bạn đã được cập nhật sang trạng thái: <strong>" . strtoupper($newStatus) . "</strong>.",
+                'step' => 'Trạng thái: ' . $newStatus,
+            ];
+
+            // Generate items summary
+            $itemsHtml = '';
+            $items = $order->items ?? [];
+            foreach ($items as $item) {
+                $pName = htmlspecialchars($item->name ?? ($item->product?->name ?? 'Thiết bị máy ảnh'));
+                $price = (float) $item->price;
+                $qty = (int) $item->quantity;
+                $lineTotal = $price * $qty;
+                $pPrice = number_format($price, 0, ',', '.') . ' ₫';
+                $pSubtotal = number_format($lineTotal, 0, ',', '.') . ' ₫';
+
+                $itemsHtml .= <<<HTML
+                <tr>
+                    <td style="padding: 10px 0; border-bottom: 1px solid #f5ede0; font-size: 13px; color: #22221f;">
+                        <strong>{$pName}</strong>
+                        <div style="font-size: 11px; color: #888;">Đơn giá: {$pPrice}</div>
+                    </td>
+                    <td style="padding: 10px 10px; border-bottom: 1px solid #f5ede0; font-size: 13px; color: #5a5a52; text-align: center;">
+                        x{$qty}
+                    </td>
+                    <td style="padding: 10px 0; border-bottom: 1px solid #f5ede0; font-size: 13px; color: #e85d1b; font-weight: 700; text-align: right;">
+                        {$pSubtotal}
+                    </td>
+                </tr>
+HTML;
+            }
+
+            $bodyHtml = <<<HTML
+            <div style="background-color: #faf6ee; border-left: 4px solid {$config['color']}; border-radius: 8px; padding: 14px 18px; margin-bottom: 22px;">
+                <div style="font-size: 11px; font-weight: 700; color: {$config['color']}; text-transform: uppercase; letter-spacing: 1px;">{$config['step']}</div>
+                <div style="font-size: 16px; font-weight: 700; color: #151513; margin-top: 4px;">{$config['title']}</div>
+            </div>
+
+            <p style="font-size: 14px; line-height: 1.6; color: #44443d; margin: 0 0 20px 0;">
+                Xin chào <strong>{$customerName}</strong>,<br>
+                {$config['message']}
+            </p>
+
+            <!-- Order Details Box -->
+            <div style="background-color: #faf6ee; border-radius: 12px; padding: 18px 20px; margin-bottom: 22px; border: 1px solid #f5ede0;">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 13px; line-height: 1.8;">
+                    <tr>
+                        <td width="40%" style="color: #7a7a73;">Mã đơn hàng:</td>
+                        <td style="color: #e85d1b; font-weight: 800; font-family: monospace; font-size: 14px;">#{$orderCode}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Người nhận:</td>
+                        <td style="color: #22221f; font-weight: 600;">{$customerName} ({$phone})</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Địa chỉ nhận hàng:</td>
+                        <td style="color: #22221f;">{$shippingAddress}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Đơn vị vận chuyển:</td>
+                        <td style="color: #f97316; font-weight: 700;">Giao Hàng Nhanh (GHN Express)</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Mã vận đơn GHN:</td>
+                        <td style="font-family: monospace; font-weight: 700; color: #2563eb;">{$trackingCode}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Tổng thanh toán:</td>
+                        <td style="color: #e85d1b; font-weight: 800; font-size: 15px;">{$totalAmountFormatted}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Items Table -->
+            <h3 style="font-size: 13px; font-weight: 700; color: #22221f; margin: 0 0 8px 0; text-transform: uppercase;">Sản Phẩm Trong Đơn Hàng</h3>
+            <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #dec9a6;">
+                        <th align="left" style="padding-bottom: 6px; font-size: 12px; color: #7a7a73; font-weight: 600;">Sản phẩm</th>
+                        <th align="center" style="padding-bottom: 6px; font-size: 12px; color: #7a7a73; font-weight: 600; width: 50px;">SL</th>
+                        <th align="right" style="padding-bottom: 6px; font-size: 12px; color: #7a7a73; font-weight: 600; width: 110px;">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {$itemsHtml}
+                </tbody>
+            </table>
+
+            <p style="font-size: 13px; color: #7a7a73; line-height: 1.6; margin: 20px 0 0 0; text-align: center; border-top: 1px solid #f5ede0; padding-top: 15px;">
+                Cần hỗ trợ về hành trình đơn hàng? Vui lòng liên hệ Hotline: <strong style="color: #e85d1b;">1900-8888</strong>.
+            </p>
+HTML;
+
+            $fullHtml = self::wrapTemplate($config['title'] . " #" . $orderCode, $bodyHtml, $config['badge'], $config['color']);
+
+            Mail::html($fullHtml, function ($message) use ($toEmail, $config) {
+                $message->to($toEmail)
+                    ->subject($config['subject']);
+            });
+
+            Log::info("Order status update email ({$newStatus}) sent to {$toEmail} for order #{$orderCode}");
+            return true;
+        } catch (\Throwable $e) {
+            Log::error("Failed to send order status email ({$newStatus}) to {$order->customer_email}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send Welcome Registration Email (Khi khách hàng đăng ký tài khoản thành công)
+     */
+    public static function sendWelcomeRegistration($user): bool
+    {
+        try {
+            $toEmail = $user->email;
+            if (!$toEmail) return false;
+
+            $fullName = htmlspecialchars($user->name ?: 'Bạn');
+            $customerCode = 'CAM-ACC-' . str_pad((string) $user->id, 5, '0', STR_PAD_LEFT);
+            $subject = "[CameraHub] 🎉 Chào mừng " . $fullName . " gia nhập CameraHub - Đăng ký thành công!";
+            $registerTime = now()->format('H:i:s d/m/Y');
+
+            $bodyHtml = <<<HTML
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="display: inline-block; width: 60px; height: 60px; line-height: 60px; border-radius: 30px; background: #fff7ed; border: 2px solid #fed7aa; text-align: center; font-size: 28px; margin-bottom: 10px;">
+                    📷
+                </div>
+                <h2 style="font-size: 20px; font-weight: 800; color: #9a3412; margin: 0 0 6px 0;">CHÀO MỪNG THÀNH VIÊN MỚI!</h2>
+                <p style="font-size: 13px; color: #c2410c; margin: 0;">Tài khoản CameraHub của bạn đã được kích hoạt thành công</p>
+            </div>
+
+            <p style="font-size: 14px; line-height: 1.6; color: #44443d; margin: 0 0 20px 0;">
+                Xin chào <strong>{$fullName}</strong>,<br>
+                Cảm ơn bạn đã đăng ký tài khoản tại <strong>CameraHub</strong> - Hệ thống phân phối máy ảnh, ống kính và phụ kiện nhiếp ảnh chuyên nghiệp hàng đầu tại Việt Nam.
+            </p>
+
+            <!-- Account Info Box -->
+            <div style="background-color: #faf6ee; border-radius: 14px; padding: 20px; margin-bottom: 24px; border: 1px solid #f2e3cd;">
+                <div style="font-size: 12px; font-weight: 700; color: #e85d1b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">THÔNG TIN TÀI KHOẢN CỦA BẠN</div>
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 13px; line-height: 1.9;">
+                    <tr>
+                        <td width="38%" style="color: #7a7a73;">Họ và tên:</td>
+                        <td style="color: #22221f; font-weight: 600;">{$fullName}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Email đăng nhập:</td>
+                        <td style="color: #22221f; font-weight: 600; font-family: monospace;">{$toEmail}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Mã thành viên:</td>
+                        <td style="color: #e85d1b; font-weight: 800; font-family: monospace;">{$customerCode}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Thời gian kích hoạt:</td>
+                        <td style="color: #22221f;">{$registerTime}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Member Privileges Box -->
+            <div style="background-color: #f8fafc; border-radius: 12px; padding: 18px 20px; margin-bottom: 24px; border: 1px solid #e2e8f0; font-size: 13px; line-height: 1.7; color: #334155;">
+                <div style="font-weight: 700; color: #0f172a; margin-bottom: 10px; font-size: 14px;">✨ Đặc Quyền Thành Viên CameraHub:</div>
+                <div style="margin-bottom: 6px;">🎁 <strong>Ưu đãi thành viên:</strong> Tích lũy điểm thưởng và nhận mã voucher giảm giá định kỳ qua email.</div>
+                <div style="margin-bottom: 6px;">🛡️ <strong>Bảo hành chính hãng VIP:</strong> Tra cứu bảo hành điện tử nhanh chóng 24/7 trực tiếp trên website.</div>
+                <div style="margin-bottom: 6px;">🧼 <strong>Dịch vụ miễn phí:</strong> Miễn phí vệ sinh cảm biến và kiểm tra kỹ thuật máy ảnh trọn đời tại showroom.</div>
+                <div>🚚 <strong>Giao hàng hỏa tốc:</strong> Vận chuyển nhanh qua đối tác Giao Hàng Nhanh (GHN) trên toàn quốc.</div>
+            </div>
+
+            <p style="font-size: 13px; color: #7a7a73; line-height: 1.6; margin: 20px 0 0 0; text-align: center;">
+                Nếu bạn có bất kỳ câu hỏi nào về thiết bị hoặc chính sách, hãy liên hệ Hotline hỗ trợ: <strong style="color: #e85d1b;">1900-8888</strong>.
+            </p>
+HTML;
+
+            $fullHtml = self::wrapTemplate("Chào Mừng Thành Viên Mới!", $bodyHtml, "🎉 ĐĂNG KÝ THÀNH CÔNG", "#f17a35");
+
+            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
+                $message->to($toEmail)
+                    ->subject($subject);
+            });
+
+            Log::info("Welcome registration email sent to {$toEmail}");
+            return true;
+        } catch (\Throwable $e) {
+            Log::error("Failed to send welcome registration email to {$user->email}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Helper phân tích thiết bị người dùng đăng nhập
+     */
+    private static function formatDevice(?string $userAgent): string
+    {
+        if (empty($userAgent)) return 'Trình duyệt Web (Thiết bị không xác định)';
+        $os = 'Máy tính / Di động';
+        if (str_contains($userAgent, 'Windows NT 10.0')) $os = 'Windows 10/11';
+        elseif (str_contains($userAgent, 'Windows')) $os = 'Windows PC';
+        elseif (str_contains($userAgent, 'Macintosh') || str_contains($userAgent, 'Mac OS X')) $os = 'macOS (Apple Mac)';
+        elseif (str_contains($userAgent, 'iPhone')) $os = 'Apple iPhone';
+        elseif (str_contains($userAgent, 'iPad')) $os = 'Apple iPad';
+        elseif (str_contains($userAgent, 'Android')) $os = 'Thiết bị Android';
+        elseif (str_contains($userAgent, 'Linux')) $os = 'Linux OS';
+
+        $browser = 'Trình duyệt Web';
+        if (str_contains($userAgent, 'Edg/')) $browser = 'Microsoft Edge';
+        elseif (str_contains($userAgent, 'Chrome/')) $browser = 'Google Chrome';
+        elseif (str_contains($userAgent, 'Safari/') && !str_contains($userAgent, 'Chrome')) $browser = 'Apple Safari';
+        elseif (str_contains($userAgent, 'Firefox/')) $browser = 'Mozilla Firefox';
+
+        return "{$browser} trên {$os}";
+    }
+
+    /**
+     * Send Login Notification Email (Cảnh báo an toàn khi có phiên đăng nhập mới)
+     */
+    public static function sendLoginNotification($user, string $ip, ?string $userAgent = null): bool
+    {
+        try {
+            $toEmail = $user->email;
+            if (!$toEmail) return false;
+
+            $fullName = htmlspecialchars($user->name ?: 'Bạn');
+            $subject = "[CameraHub] 🔐 Cảnh báo bảo mật: Phát hiện đăng nhập tài khoản CameraHub mới";
+            $loginTime = now()->format('H:i:s d/m/Y');
+            $device = htmlspecialchars(self::formatDevice($userAgent));
+            $clientIp = htmlspecialchars($ip ?: 'Không xác định');
+
+            $bodyHtml = <<<HTML
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="display: inline-block; width: 56px; height: 56px; line-height: 56px; border-radius: 28px; background: #eff6ff; border: 2px solid #bfdbfe; text-align: center; font-size: 26px; margin-bottom: 10px;">
+                    🔐
+                </div>
+                <h2 style="font-size: 19px; font-weight: 800; color: #1e40af; margin: 0 0 6px 0;">THÔNG BÁO ĐĂNG NHẬP MỚI</h2>
+                <p style="font-size: 13px; color: #2563eb; margin: 0;">Ghi nhận phiên đăng nhập thành công vào tài khoản</p>
+            </div>
+
+            <p style="font-size: 14px; line-height: 1.6; color: #44443d; margin: 0 0 20px 0;">
+                Xin chào <strong>{$fullName}</strong>,<br>
+                Hệ thống bảo mật CameraHub ghi nhận tài khoản của bạn (<strong>{$toEmail}</strong>) vừa được đăng nhập thành công với thông tin chi tiết dưới đây:
+            </p>
+
+            <!-- Login Details Box -->
+            <div style="background-color: #faf6ee; border-radius: 14px; padding: 20px; margin-bottom: 24px; border: 1px solid #f2e3cd;">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 13px; line-height: 1.9;">
+                    <tr>
+                        <td width="38%" style="color: #7a7a73;">Thời gian đăng nhập:</td>
+                        <td style="color: #22221f; font-weight: 700;">{$loginTime}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Địa chỉ IP:</td>
+                        <td style="color: #2563eb; font-weight: 700; font-family: monospace;">{$clientIp}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Thiết bị & Trình duyệt:</td>
+                        <td style="color: #22221f; font-weight: 600;">{$device}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Security Notice Box -->
+            <div style="background-color: #f8fafc; border-radius: 12px; padding: 16px 18px; margin-bottom: 20px; border: 1px solid #e2e8f0; font-size: 12px; color: #475569; line-height: 1.6;">
+                <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px; font-size: 13px;">🛡️ Đây có phải là bạn không?</div>
+                <div style="margin-bottom: 4px;">• <strong>Nếu là bạn:</strong> Bạn có thể hoàn toàn yên tâm tiếp tục trải nghiệm và bỏ qua email này.</div>
+                <div>• <strong>Nếu KHÔNG PHẢI bạn:</strong> Tài khoản của bạn có thể đã bị lộ mật khẩu. Vui lòng truy cập tính năng <strong>Quên mật khẩu</strong> trên website để đặt lại mật khẩu mới ngay lập tức hoặc liên hệ Hotline: <strong style="color: #e85d1b;">1900-8888</strong>.</div>
+            </div>
+HTML;
+
+            $fullHtml = self::wrapTemplate("Thông Báo Đăng Nhập Tài Khoản", $bodyHtml, "🔐 BẢO MẬT TÀI KHOẢN", "#2563eb");
+
+            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
+                $message->to($toEmail)
+                    ->subject($subject);
+            });
+
+            Log::info("Login security notification email sent to {$toEmail}");
+            return true;
+        } catch (\Throwable $e) {
+            Log::error("Failed to send login notification email to {$user->email}: " . $e->getMessage());
+            return false;
+        }
+    }
 }

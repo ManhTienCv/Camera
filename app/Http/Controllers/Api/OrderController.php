@@ -438,6 +438,14 @@ class OrderController extends Controller
         $order->order_status = $newStatus;
         $order->save();
 
+        if ($oldStatus !== $newStatus) {
+            try {
+                EmailService::sendOrderStatusUpdated($order->fresh(['items.product']), $newStatus, $order->cancel_reason);
+            } catch (\Throwable $e) {
+                Log::warning('Api updateStatus order status email failed: ' . $e->getMessage());
+            }
+        }
+
         return response()->json([
             'message' => 'Cập nhật trạng thái đơn hàng thành công!',
             'order' => $this->formatOrder($order->fresh('items'), true),
@@ -637,6 +645,12 @@ class OrderController extends Controller
                 }
             }
 
+            try {
+                EmailService::sendOrderStatusUpdated($order->fresh(['items.product']), 'cancelled', "Khách yêu cầu hủy đơn và hoàn tiền về STK {$order->bank_account_number} ({$order->bank_name})");
+            } catch (\Throwable $e) {
+                Log::warning('Send cancel order email failed: ' . $e->getMessage());
+            }
+
             return response()->json([
                 'message' => 'Đã tiếp nhận yêu cầu hủy đơn và hoàn tiền! Số lượng sản phẩm đã được hoàn lại kho. Ban quản trị sẽ chuyển khoản hoàn tiền vào số tài khoản của bạn trong 24h.',
                 'order' => $this->formatOrder($order->fresh('items'), true),
@@ -678,6 +692,12 @@ class OrderController extends Controller
             } catch (\Throwable $e) {
                 Log::warning('Cancel order on GHN failed: ' . $e->getMessage());
             }
+        }
+
+        try {
+            EmailService::sendOrderStatusUpdated($order->fresh(['items.product']), 'cancelled', $reason);
+        } catch (\Throwable $e) {
+            Log::warning('Send cancel order email failed: ' . $e->getMessage());
         }
 
         return response()->json([

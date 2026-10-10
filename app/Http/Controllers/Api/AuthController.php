@@ -162,6 +162,13 @@ class AuthController extends Controller
         Cache::forget('reg_otp_' . $email);
         $token = $this->createToken($user);
 
+        // Gửi email chào mừng thành viên mới qua SMTP
+        try {
+            EmailService::sendWelcomeRegistration($user);
+        } catch (\Throwable $e) {
+            Log::warning('Send welcome registration email failed: ' . $e->getMessage());
+        }
+
         return response()->json([
             'message' => 'Xác thực OTP & Đăng ký tài khoản thành công!',
             'token' => $token,
@@ -185,6 +192,13 @@ class AuthController extends Controller
         }
 
         $token = $this->createToken($user);
+
+        // Gửi email cảnh báo bảo mật khi đăng nhập thành công
+        try {
+            EmailService::sendLoginNotification($user, $request->ip(), $request->userAgent());
+        } catch (\Throwable $e) {
+            Log::warning('Send login notification email failed: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message' => 'Đăng nhập thành công!',
