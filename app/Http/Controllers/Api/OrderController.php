@@ -152,8 +152,10 @@ class OrderController extends Controller
             }
         }
 
+        $lowStockProducts = [];
+
         try {
-            $order = DB::transaction(function () use ($request, $sessionId, $orderCode, $userId) {
+            $order = DB::transaction(function () use ($request, $sessionId, $orderCode, $userId, &$lowStockProducts) {
                 $totalAmount = 0;
                 $orderItemsData = [];
                 $inventoryLogs = [];
@@ -186,6 +188,14 @@ class OrderController extends Controller
                         'qty_change' => -$quantity,
                         'qty_after' => $qtyAfter,
                     ];
+
+                    // Lưu danh sách sản phẩm chạm ngưỡng tồn kho thấp (<= 2 chiếc)
+                    if ($qtyAfter <= 2) {
+                        $lowStockProducts[] = [
+                            'product' => $product,
+                            'remaining' => $qtyAfter,
+                        ];
+                    }
 
                     $price = (float) $product->price;
                     $totalAmount += $price * $quantity;
@@ -309,11 +319,27 @@ class OrderController extends Controller
                 }
             }
 
-            // Gửi email xác nhận đơn hàng qua SMTP
+            // 1. Gửi email xác nhận đơn hàng cho khách qua SMTP
             try {
-                EmailService::sendOrderConfirmation($order->fresh('items'));
+                EmailService::sendOrderConfirmation($order->fresh(['items.product']));
             } catch (\Throwable $e) {
                 Log::warning('Send order confirmation email failed: ' . $e->getMessage());
+            }
+
+            // 2. Gửi email cảnh báo đơn hàng mới phát sinh cho Ban Quản Trị
+            try {
+                EmailService::sendAdminNewOrderAlert($order->fresh(['items.product']));
+            } catch (\Throwable $e) {
+                Log::warning('Send admin new order alert email failed: ' . $e->getMessage());
+            }
+
+            // 3. Cảnh báo tồn kho thấp cho Ban Quản Trị nếu có sản phẩm chạm mốc <= 2 chiếc
+            foreach ($lowStockProducts as $lowStock) {
+                try {
+                    EmailService::sendAdminLowStockAlert($lowStock['product'], $lowStock['remaining']);
+                } catch (\Throwable $e) {
+                    Log::warning('Send admin low stock alert email failed: ' . $e->getMessage());
+                }
             }
 
             return response()->json($this->formatOrder($order->fresh('items'), true), 201);
@@ -649,6 +675,13 @@ class OrderController extends Controller
                 EmailService::sendOrderStatusUpdated($order->fresh(['items.product']), 'cancelled', "Khách yêu cầu hủy đơn và hoàn tiền về STK {$order->bank_account_number} ({$order->bank_name})");
             } catch (\Throwable $e) {
                 Log::warning('Send cancel order email failed: ' . $e->getMessage());
+            }
+
+            // Gửi email thông báo cho Ban Quản Trị & Kế toán để đối soát chuyển khoản hoàn tiền
+            try {
+                EmailService::sendAdminRefundRequestAlert($order->fresh(['items.product']), $reason);
+            } catch (\Throwable $e) {
+                Log::warning('Send admin refund request alert email failed: ' . $e->getMessage());
             }
 
             return response()->json([

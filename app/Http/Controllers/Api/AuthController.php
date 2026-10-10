@@ -260,6 +260,13 @@ class AuthController extends Controller
 
         Cache::forget('forgot_pass_otp_' . $email);
 
+        // Gửi email cảnh báo bảo mật đổi mật khẩu thành công
+        try {
+            EmailService::sendPasswordChangedNotification($user, $request->ip(), $request->userAgent());
+        } catch (\Throwable $e) {
+            Log::warning('Send password reset notification email failed: ' . $e->getMessage());
+        }
+
         $token = $this->createToken($user);
 
         return response()->json([
@@ -302,6 +309,7 @@ class AuthController extends Controller
             $user->avatar_url = $request->avatarUrl;
         }
 
+        $passwordChanged = false;
         if ($request->has('newPassword') && !empty($request->newPassword)) {
             if (!empty($user->password)) {
                 if (!$request->has('currentPassword') || !Hash::check($request->currentPassword, $user->password)) {
@@ -309,9 +317,18 @@ class AuthController extends Controller
                 }
             }
             $user->password = Hash::make($request->newPassword);
+            $passwordChanged = true;
         }
 
         $user->save();
+
+        if ($passwordChanged) {
+            try {
+                EmailService::sendPasswordChangedNotification($user, $request->ip(), $request->userAgent());
+            } catch (\Throwable $e) {
+                Log::warning('Send password changed notification email failed: ' . $e->getMessage());
+            }
+        }
 
         return response()->json([
             'message' => 'Cập nhật thông tin thành công!',
@@ -340,6 +357,13 @@ class AuthController extends Controller
 
         $user->password = Hash::make($request->newPassword);
         $user->save();
+
+        // Gửi email cảnh báo bảo mật đổi mật khẩu thành công
+        try {
+            EmailService::sendPasswordChangedNotification($user, $request->ip(), $request->userAgent());
+        } catch (\Throwable $e) {
+            Log::warning('Send password changed notification email failed: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message' => 'Đổi mật khẩu thành công!',

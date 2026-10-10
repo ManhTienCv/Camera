@@ -806,4 +806,594 @@ HTML;
             return false;
         }
     }
+
+    /**
+     * Get Admin Notification Email Address
+     */
+    public static function getAdminEmail(): string
+    {
+        return env('ADMIN_NOTIFICATION_EMAIL') ?: (config('mail.from.address') ?: 'nvmtein@gmail.com');
+    }
+
+    /**
+     * Send Admin New Order Alert (Gửi thông báo có đơn hàng mới phát sinh tới Quản trị viên)
+     */
+    public static function sendAdminNewOrderAlert($order): bool
+    {
+        try {
+            $toEmail = self::getAdminEmail();
+            if (!$toEmail) return false;
+
+            $orderCode = htmlspecialchars($order->order_code ?: ('CAM-' . $order->id));
+            $customerName = htmlspecialchars($order->customer_name ?: 'Khách hàng');
+            $customerEmail = htmlspecialchars($order->customer_email ?: 'Chưa cung cấp');
+            $customerPhone = htmlspecialchars($order->customer_phone ?: 'Chưa cung cấp');
+            $shippingAddress = htmlspecialchars($order->shipping_address . ($order->city ? ', ' . $order->city : ''));
+            $totalAmountFormatted = number_format((float) $order->total_amount, 0, ',', '.') . ' ₫';
+            $orderTime = $order->created_at ? $order->created_at->format('H:i:s d/m/Y') : now()->format('H:i:s d/m/Y');
+
+            $methodMap = [
+                'vietqr' => 'Chuyển khoản VietQR',
+                'bank_transfer' => 'Chuyển khoản ngân hàng',
+                'momo' => 'Ví điện tử MoMo',
+                'vnpay' => 'Cổng VNPAY',
+                'cod' => 'Thanh toán khi nhận hàng (COD)',
+            ];
+            $paymentMethodName = $methodMap[$order->payment_method] ?? strtoupper($order->payment_method ?: 'COD');
+            $paymentStatusName = $order->payment_status === 'paid' || $order->payment_status === 'completed'
+                ? '<span style="color: #059669; font-weight: 700;">ĐÃ THANH TOÁN</span>'
+                : '<span style="color: #d97706; font-weight: 700;">CHỜ THANH TOÁN (COD / PENDING)</span>';
+
+            $subject = "[CameraHub Quản Trị] 🔔 Có đơn hàng mới #{$orderCode} - {$totalAmountFormatted} ({$customerName})";
+
+            // Items table
+            $itemsHtml = '';
+            $items = $order->items ?? [];
+            foreach ($items as $item) {
+                $pName = htmlspecialchars($item->name ?? ($item->product?->name ?? 'Thiết bị máy ảnh'));
+                $price = (float) $item->price;
+                $qty = (int) $item->quantity;
+                $lineTotal = $price * $qty;
+                $pPrice = number_format($price, 0, ',', '.') . ' ₫';
+                $pSubtotal = number_format($lineTotal, 0, ',', '.') . ' ₫';
+
+                $itemsHtml .= <<<HTML
+                <tr>
+                    <td style="padding: 10px 0; border-bottom: 1px solid #f5ede0; font-size: 13px; color: #22221f;">
+                        <strong>{$pName}</strong>
+                        <div style="font-size: 11px; color: #888;">Đơn giá: {$pPrice}</div>
+                    </td>
+                    <td style="padding: 10px 10px; border-bottom: 1px solid #f5ede0; font-size: 13px; color: #5a5a52; text-align: center;">
+                        x{$qty}
+                    </td>
+                    <td style="padding: 10px 0; border-bottom: 1px solid #f5ede0; font-size: 13px; color: #e85d1b; font-weight: 700; text-align: right;">
+                        {$pSubtotal}
+                    </td>
+                </tr>
+HTML;
+            }
+
+            $bodyHtml = <<<HTML
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="display: inline-block; width: 56px; height: 56px; line-height: 56px; border-radius: 28px; background: #fff7ed; border: 2px solid #fed7aa; text-align: center; font-size: 26px; margin-bottom: 10px;">
+                    🔔
+                </div>
+                <h2 style="font-size: 19px; font-weight: 800; color: #9a3412; margin: 0 0 6px 0;">THÔNG BÁO ĐƠN HÀNG MỚI</h2>
+                <p style="font-size: 13px; color: #c2410c; margin: 0;">Khách hàng vừa hoàn tất đặt mua đơn hàng trên hệ thống</p>
+            </div>
+
+            <p style="font-size: 14px; line-height: 1.6; color: #44443d; margin: 0 0 20px 0;">
+                Kính gửi <strong>Ban Quản Trị CameraHub</strong>,<br>
+                Hệ thống ghi nhận đơn hàng mới mã <strong>#{$orderCode}</strong> vừa được tạo thành công với thông tin chi tiết dưới đây:
+            </p>
+
+            <!-- Order Details Box -->
+            <div style="background-color: #faf6ee; border-radius: 14px; padding: 20px; margin-bottom: 24px; border: 1px solid #f2e3cd;">
+                <div style="font-size: 12px; font-weight: 700; color: #e85d1b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">THÔNG TIN ĐƠN HÀNG & KHÁCH HÀNG</div>
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 13px; line-height: 1.9;">
+                    <tr>
+                        <td width="38%" style="color: #7a7a73;">Mã đơn hàng:</td>
+                        <td style="color: #e85d1b; font-weight: 800; font-family: monospace; font-size: 14px;">#{$orderCode}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Thời gian đặt:</td>
+                        <td style="color: #22221f;">{$orderTime}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Khách hàng:</td>
+                        <td style="color: #22221f; font-weight: 600;">{$customerName} ({$customerPhone})</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Email khách:</td>
+                        <td style="color: #2563eb;">{$customerEmail}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Địa chỉ nhận hàng:</td>
+                        <td style="color: #22221f;">{$shippingAddress}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Phương thức thanh toán:</td>
+                        <td style="color: #22221f; font-weight: 600;">{$paymentMethodName}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Trạng thái thanh toán:</td>
+                        <td>{$paymentStatusName}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #7a7a73;">Tổng giá trị đơn:</td>
+                        <td style="color: #e85d1b; font-weight: 800; font-size: 16px;">{$totalAmountFormatted}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Items Table -->
+            <h3 style="font-size: 13px; font-weight: 700; color: #22221f; margin: 0 0 8px 0; text-transform: uppercase;">Chi Tiết Sản Phẩm Đặt Mua</h3>
+            <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 22px;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #dec9a6;">
+                        <th align="left" style="padding-bottom: 6px; font-size: 12px; color: #7a7a73; font-weight: 600;">Sản phẩm</th>
+                        <th align="center" style="padding-bottom: 6px; font-size: 12px; color: #7a7a73; font-weight: 600; width: 50px;">SL</th>
+                        <th align="right" style="padding-bottom: 6px; font-size: 12px; color: #7a7a73; font-weight: 600; width: 110px;">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {$itemsHtml}
+                </tbody>
+            </table>
+
+            <!-- Admin Action Hint -->
+            <div style="background-color: #f8fafc; border-radius: 12px; padding: 16px 18px; margin-top: 20px; border: 1px solid #e2e8f0; font-size: 12px; color: #475569; line-height: 1.6;">
+                <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px; font-size: 13px;">📋 Hành Động Tiếp Theo:</div>
+                <div style="margin-bottom: 4px;">• Vui lòng đăng nhập <strong>Admin Panel</strong> để kiểm tra tồn kho và xác nhận chuẩn bị hàng.</div>
+                <div>• Nếu đơn hàng là COD hoặc trực tuyến đã thanh toán, kiểm tra phiếu vận chuyển GHN đã được kết nối tự động.</div>
+            </div>
+HTML;
+
+            $fullHtml = self::wrapTemplate("Thông Báo Đơn Hàng Mới #" . $orderCode, $bodyHtml, "🔔 ĐƠN HÀNG MỚI (ADMIN)", "#f17a35");
+
+            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
+                $message->to($toEmail)
+                    ->subject($subject);
+            });
+
+            Log::info("Admin new order alert email sent to {$toEmail} for order #{$orderCode}");
+            return true;
+        } catch (\Throwable $e) {
+            Log::error("Failed to send admin new order alert email: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send Admin Low Stock Alert (Cảnh báo tồn kho thấp khi sản phẩm sắp hết hàng)
+     */
+    public static function sendAdminLowStockAlert($product, int $remainingStock): bool
+    {
+        try {
+            $toEmail = self::getAdminEmail();
+            if (!$toEmail) return false;
+
+            $productName = htmlspecialchars($product->name ?? 'Sản phẩm máy ảnh');
+            $sku = htmlspecialchars($product->sku ?? ('SP-' . $product->id));
+            $priceFormatted = number_format((float) ($product->price ?? 0), 0, ',', '.') . ' ₫';
+            $alertTime = now()->format('H:i:s d/m/Y');
+
+            $isOutOfStock = $remainingStock <= 0;
+            $badge = $isOutOfStock ? '🚨 HẾT HÀNG TRONG KHO' : '⚠️ CẢNH BÁO TỒN KHO THẤP';
+            $badgeColor = $isOutOfStock ? '#ef4444' : '#f59e0b';
+            $subject = $isOutOfStock
+                ? "[CameraHub Quản Trị] 🚨 CẢNH BÁO HẾT HÀNG: {$productName} (Tồn kho: 0)"
+                : "[CameraHub Quản Trị] ⚠️ CẢNH BÁO TỒN KHO THẤP: {$productName} (Còn {$remainingStock} sp)";
+
+            $statusText = $isOutOfStock
+                ? '<span style="color: #ef4444; font-weight: 800;">ĐÃ HẾT HÀNG (0 chiếc)</span>'
+                : '<span style="color: #f59e0b; font-weight: 800;">SẮP HẾT HÀNG (Còn ' . $remainingStock . ' chiếc)</span>';
+
+            $alertMsg = $isOutOfStock
+                ? "Sản phẩm <strong>{$productName}</strong> vừa chạm mức <strong>0 chiếc</strong> trong kho sau đơn hàng mới nhất. Sản phẩm sẽ tạm thời ngưng nhận đặt hàng cho đến khi được nhập kho bổ sung."
+                : "Sản phẩm <strong>{$productName}</strong> chỉ còn lại <strong>{$remainingStock} chiếc</strong> trong kho. Vui lòng kiểm tra và lên kế hoạch nhập hàng sớm để tránh gián đoạn kinh doanh.";
+
+            $bodyHtml = <<<HTML
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="display: inline-block; width: 56px; height: 56px; line-height: 56px; border-radius: 28px; background: {$badgeColor}15; border: 2px solid {$badgeColor}; text-align: center; font-size: 26px; margin-bottom: 10px;">
+                    ⚠️
+                </div>
+                <h2 style="font-size: 19px; font-weight: 800; color: #1e293b; margin: 0 0 6px 0;">CẢNH BÁO TỒN KHO SẢN PHẨM</h2>
+                <p style="font-size: 13px; color: #64748b; margin: 0;">Thông báo tự động từ phân hệ quản lý kho CameraHub</p>
+            </div>
+
+            <p style="font-size: 14px; line-height: 1.6; color: #44443d; margin: 0 0 20px 0;">
+                Kính gửi <strong>Bộ phận Quản lý Kho &amp; Bán hàng</strong>,<br>
+                {$alertMsg}
+            </p>
+
+            <!-- Product Stock Info Box -->
+            <div style="background-color: #faf6ee; border-radius: 14px; padding: 20px; margin-bottom: 24px; border: 1px solid #f2e3cd;">
+                <div style="font-size: 12px; font-weight: 700; color: #e85d1b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">CHI TIẾT THIẾT BỊ CẦN NHẬP KHO</div>
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 13px; line-height: 1.9;">
+                    <tr>
+                        <td width="38%" style="color: #7a7a73;">Tên sản phẩm:</td>
+                        <td style="color: #22221f; font-weight: 700;">{$productName}</td>
+                    </tr>
+                    <tr>
+                        <td width="38%" style="color: #7a7a73;">Mã SKU:</td>
+                        <td style="font-family: monospace; font-weight: 700; color: #2563eb;">{$sku}</td>
+                    </tr>
+                    <tr>
+                        <td width="38%" style="color: #7a7a73;">Giá niêm yết:</td>
+                        <td style="color: #22221f; font-weight: 600;">{$priceFormatted}</td>
+                    </tr>
+                    <tr>
+                        <td width="38%" style="color: #7a7a73;">Số lượng còn lại:</td>
+                        <td>{$statusText}</td>
+                    </tr>
+                    <tr>
+                        <td width="38%" style="color: #7a7a73;">Thời điểm cảnh báo:</td>
+                        <td style="color: #22221f;">{$alertTime}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Action Advice -->
+            <div style="background-color: #f8fafc; border-radius: 12px; padding: 16px 18px; margin-top: 20px; border: 1px solid #e2e8f0; font-size: 12px; color: #475569; line-height: 1.6;">
+                <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px; font-size: 13px;">💡 Khuyến Nghị Hành Động:</div>
+                <div style="margin-bottom: 4px;">• Truy cập <strong>Admin Panel &gt; Quản Lý Kho (Inventory Movements)</strong> để kiểm tra lịch sử xuất/nhập.</div>
+                <div>• Liên hệ Nhà phân phối / Hãng sản xuất để đặt hàng bổ sung kịp thời.</div>
+            </div>
+HTML;
+
+            $fullHtml = self::wrapTemplate("Cảnh Báo Tồn Kho: " . $productName, $bodyHtml, $badge, $badgeColor);
+
+            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
+                $message->to($toEmail)
+                    ->subject($subject);
+            });
+
+            Log::info("Admin low stock alert email sent to {$toEmail} for product #{$product->id} (Remaining: {$remainingStock})");
+            return true;
+        } catch (\Throwable $e) {
+            Log::error("Failed to send admin low stock alert email: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send Admin Refund Request Alert (Thông báo cho Admin/Kế toán khi khách hủy đơn và yêu cầu hoàn tiền)
+     */
+    public static function sendAdminRefundRequestAlert($order, ?string $reason = null): bool
+    {
+        try {
+            $toEmail = self::getAdminEmail();
+            if (!$toEmail) return false;
+
+            $orderCode = htmlspecialchars($order->order_code ?: ('CAM-' . $order->id));
+            $customerName = htmlspecialchars($order->customer_name ?: 'Khách hàng');
+            $customerEmail = htmlspecialchars($order->customer_email ?: 'Chưa cung cấp');
+            $customerPhone = htmlspecialchars($order->customer_phone ?: 'Chưa cung cấp');
+            $totalAmountFormatted = number_format((float) $order->total_amount, 0, ',', '.') . ' ₫';
+            $cancelReason = htmlspecialchars($reason ?: ($order->cancel_reason ?: 'Khách yêu cầu hủy đơn'));
+            $bankName = htmlspecialchars($order->bank_name ?: 'Chưa cung cấp');
+            $accountNumber = htmlspecialchars($order->bank_account_number ?: 'Chưa cung cấp');
+            $accountHolder = htmlspecialchars($order->bank_account_holder ?: 'Chưa cung cấp');
+            $requestTime = now()->format('H:i:s d/m/Y');
+
+            $subject = "[CameraHub Quản Trị] 💸 YÊU CẦU HOÀN TIỀN đơn hàng #{$orderCode} - {$totalAmountFormatted} ({$customerName})";
+
+            $bodyHtml = <<<HTML
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="display: inline-block; width: 56px; height: 56px; line-height: 56px; border-radius: 28px; background: #fef2f2; border: 2px solid #fecaca; text-align: center; font-size: 26px; margin-bottom: 10px;">
+                    💸
+                </div>
+                <h2 style="font-size: 19px; font-weight: 800; color: #991b1b; margin: 0 0 6px 0;">YÊU CẦU HOÀN TIỀN TỪ KHÁCH HÀNG</h2>
+                <p style="font-size: 13px; color: #b91c1c; margin: 0;">Đơn hàng trực tuyến đã thanh toán được yêu cầu hủy &amp; hoàn tiền</p>
+            </div>
+
+            <p style="font-size: 14px; line-height: 1.6; color: #44443d; margin: 0 0 20px 0;">
+                Kính gửi <strong>Bộ phận Kế toán &amp; Ban Quản trị</strong>,<br>
+                Khách hàng <strong>{$customerName}</strong> vừa thực hiện yêu cầu hủy đơn hàng đã thanh toán <strong>#{$orderCode}</strong> và đề nghị hoàn tiền về tài khoản ngân hàng.
+            </p>
+
+            <!-- Refund Request Box -->
+            <div style="background-color: #faf6ee; border-radius: 14px; padding: 20px; margin-bottom: 24px; border: 1px solid #f2e3cd;">
+                <div style="font-size: 12px; font-weight: 700; color: #dc2626; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">THÔNG TIN YÊU CẦU HOÀN TIỀN</div>
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 13px; line-height: 1.9;">
+                    <tr>
+                        <td width="38%" style="color: #7a7a73;">Mã đơn hàng:</td>
+                        <td style="color: #dc2626; font-weight: 800; font-family: monospace; font-size: 14px;">#{$orderCode}</td>
+                    </tr>
+                    <tr>
+                        <td width="38%" style="color: #7a7a73;">Số tiền cần hoàn:</td>
+                        <td style="color: #dc2626; font-weight: 800; font-size: 16px;">{$totalAmountFormatted}</td>
+                    </tr>
+                    <tr>
+                        <td width="38%" style="color: #7a7a73;">Khách hàng:</td>
+                        <td style="color: #22221f; font-weight: 600;">{$customerName} ({$customerPhone})</td>
+                    </tr>
+                    <tr>
+                        <td width="38%" style="color: #7a7a73;">Email khách:</td>
+                        <td style="color: #2563eb;">{$customerEmail}</td>
+                    </tr>
+                    <tr>
+                        <td width="38%" style="color: #7a7a73;">Lý do hủy đơn:</td>
+                        <td style="color: #b91c1c; font-style: italic;">{$cancelReason}</td>
+                    </tr>
+                    <tr>
+                        <td width="38%" style="color: #7a7a73;">Thời gian yêu cầu:</td>
+                        <td style="color: #22221f;">{$requestTime}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Customer Bank Details Box -->
+            <div style="background-color: #f0fdf4; border-radius: 14px; padding: 20px; margin-bottom: 24px; border: 1px solid #bbf7d0;">
+                <div style="font-size: 12px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">STK NGÂN HÀNG NHẬN HOÀN TIỀN CỦA KHÁCH</div>
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 13px; line-height: 1.9;">
+                    <tr>
+                        <td width="38%" style="color: #166534;">Ngân hàng thụ hưởng:</td>
+                        <td style="color: #0f172a; font-weight: 700;">{$bankName}</td>
+                    </tr>
+                    <tr>
+                        <td width="38%" style="color: #166534;">Số tài khoản:</td>
+                        <td style="color: #15803d; font-weight: 800; font-family: monospace; font-size: 15px;">{$accountNumber}</td>
+                    </tr>
+                    <tr>
+                        <td width="38%" style="color: #166534;">Tên chủ tài khoản:</td>
+                        <td style="color: #0f172a; font-weight: 700; text-transform: uppercase;">{$accountHolder}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Accountant Instructions -->
+            <div style="background-color: #f8fafc; border-radius: 12px; padding: 16px 18px; margin-top: 20px; border: 1px solid #e2e8f0; font-size: 12px; color: #475569; line-height: 1.6;">
+                <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px; font-size: 13px;">📌 Quy Trình Xử Lý Hoàn Tiền:</div>
+                <div style="margin-bottom: 4px;">1. Kế toán đối soát sao kê tài khoản ngân hàng để xác nhận đơn đã nhận tiền thực tế.</div>
+                <div style="margin-bottom: 4px;">2. Thực hiện chuyển khoản số tiền <strong>{$totalAmountFormatted}</strong> vào STK nêu trên.</div>
+                <div>3. Truy cập <strong>Admin Panel &gt; Chi tiết đơn #{$orderCode}</strong> &gt; Nhập <strong>Mã giao dịch ngân hàng</strong> và bấm <strong>Xác nhận hoàn tiền</strong> để hệ thống tự động gửi email xác nhận cho khách.</div>
+            </div>
+HTML;
+
+            $fullHtml = self::wrapTemplate("Yêu Cầu Hoàn Tiền Đơn #" . $orderCode, $bodyHtml, "💸 YÊU CẦU HOÀN TIỀN (ADMIN)", "#dc2626");
+
+            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
+                $message->to($toEmail)
+                    ->subject($subject);
+            });
+
+            Log::info("Admin refund request alert email sent to {$toEmail} for order #{$orderCode}");
+            return true;
+        } catch (\Throwable $e) {
+            Log::error("Failed to send admin refund request alert email: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send Refund Confirmation Email (Xác nhận đã hoàn tiền thành công gửi cho Khách hàng)
+     */
+    public static function sendRefundConfirmation($order, ?string $refundTxnCode = null): bool
+    {
+        try {
+            $toEmail = $order->customer_email;
+            if (!$toEmail) return false;
+
+            $orderCode = htmlspecialchars($order->order_code ?: ('CAM-' . $order->id));
+            $customerName = htmlspecialchars($order->customer_name ?: 'Quý khách');
+            $totalAmountFormatted = number_format((float) $order->total_amount, 0, ',', '.') . ' ₫';
+            $refCode = htmlspecialchars($refundTxnCode ?: ($order->refund_ref_code ?: 'CAM-REF-' . time()));
+            $bankName = htmlspecialchars($order->bank_name ?: 'Tài khoản ngân hàng của bạn');
+            $accountNumber = htmlspecialchars($order->bank_account_number ? (substr($order->bank_account_number, 0, 3) . '****' . substr($order->bank_account_number, -3)) : 'Tài khoản đã đăng ký');
+            $accountHolder = htmlspecialchars($order->bank_account_holder ?: $customerName);
+            $refundedTime = now()->format('H:i:s d/m/Y');
+
+            $subject = "[CameraHub] 💸 Xác nhận đã hoàn tiền thành công đơn hàng #{$orderCode}";
+
+            $bodyHtml = <<<HTML
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="display: inline-block; width: 56px; height: 56px; line-height: 56px; border-radius: 28px; background: #ecfdf5; border: 2px solid #a7f3d0; text-align: center; font-size: 26px; margin-bottom: 10px;">
+                    💸
+                </div>
+                <h2 style="font-size: 20px; font-weight: 800; color: #065f46; margin: 0 0 6px 0;">HOÀN TIỀN THÀNH CÔNG</h2>
+                <p style="font-size: 13px; color: #047857; margin: 0;">Giao dịch hoàn tiền cho đơn hàng #{$orderCode} đã hoàn tất</p>
+            </div>
+
+            <p style="font-size: 14px; line-height: 1.6; color: #44443d; margin: 0 0 20px 0;">
+                Xin chào <strong>{$customerName}</strong>,<br>
+                Bộ phận kế toán CameraHub thông báo đã thực hiện lệnh hoàn trả số tiền <strong>{$totalAmountFormatted}</strong> vào tài khoản ngân hàng của bạn theo yêu cầu hủy đơn hàng <strong>#{$orderCode}</strong>.
+            </p>
+
+            <!-- Refund Receipt Box -->
+            <div style="background-color: #faf6ee; border-radius: 14px; padding: 20px; margin-bottom: 24px; border: 1px solid #f2e3cd;">
+                <div style="font-size: 12px; font-weight: 700; color: #059669; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">CHI TIẾT GIAO DỊCH HOÀN TIỀN</div>
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 13px; line-height: 1.9;">
+                    <tr>
+                        <td width="40%" style="color: #7a7a73;">Mã đơn hàng:</td>
+                        <td style="color: #e85d1b; font-weight: 800; font-family: monospace; font-size: 14px;">#{$orderCode}</td>
+                    </tr>
+                    <tr>
+                        <td width="40%" style="color: #7a7a73;">Số tiền hoàn trả:</td>
+                        <td style="color: #059669; font-weight: 800; font-size: 16px;">{$totalAmountFormatted}</td>
+                    </tr>
+                    <tr>
+                        <td width="40%" style="color: #7a7a73;">Mã GD ngân hàng:</td>
+                        <td style="color: #2563eb; font-weight: 700; font-family: monospace;">{$refCode}</td>
+                    </tr>
+                    <tr>
+                        <td width="40%" style="color: #7a7a73;">Thời gian xử lý:</td>
+                        <td style="color: #22221f;">{$refundedTime}</td>
+                    </tr>
+                    <tr>
+                        <td width="40%" style="color: #7a7a73;">Ngân hàng nhận:</td>
+                        <td style="color: #22221f; font-weight: 600;">{$bankName}</td>
+                    </tr>
+                    <tr>
+                        <td width="40%" style="color: #7a7a73;">Tài khoản nhận:</td>
+                        <td style="color: #22221f; font-weight: 600; font-family: monospace;">{$accountNumber} ({$accountHolder})</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Bank Processing Timing Advice -->
+            <div style="background-color: #f8fafc; border-radius: 12px; padding: 16px 18px; margin-top: 20px; border: 1px solid #e2e8f0; font-size: 12px; color: #475569; line-height: 1.6;">
+                <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px; font-size: 13px;">⏱️ Thời Gian Nhận Tiền Thực Tế:</div>
+                <div style="margin-bottom: 4px;">• Với các ngân hàng hỗ trợ Napas 24/7: Tiền thường vào tài khoản trong vòng <strong>5 - 30 phút</strong>.</div>
+                <div>• Với một số ngân hàng ngoài giờ hành chính: Có thể mất từ <strong>1 - 24 giờ làm việc</strong>. Nếu sau 24h bạn vẫn chưa nhận được biến động số dư, xin vui lòng gọi ngay Hotline: <strong style="color: #e85d1b;">1900-8888</strong> để được hỗ trợ kiểm tra trực tiếp.</div>
+            </div>
+HTML;
+
+            $fullHtml = self::wrapTemplate("Xác Nhận Hoàn Tiền #" . $orderCode, $bodyHtml, "💸 HOÀN TIỀN THÀNH CÔNG", "#10b981");
+
+            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
+                $message->to($toEmail)
+                    ->subject($subject);
+            });
+
+            Log::info("Refund confirmation email sent to {$toEmail} for order #{$orderCode}");
+            return true;
+        } catch (\Throwable $e) {
+            Log::error("Failed to send refund confirmation email: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send Password Changed Notification Email (Cảnh báo an toàn khi mật khẩu vừa được thay đổi)
+     */
+    public static function sendPasswordChangedNotification($user, ?string $ip = null, ?string $userAgent = null): bool
+    {
+        try {
+            $toEmail = $user->email;
+            if (!$toEmail) return false;
+
+            $fullName = htmlspecialchars($user->name ?: 'Bạn');
+            $changedTime = now()->format('H:i:s d/m/Y');
+            $device = htmlspecialchars(self::formatDevice($userAgent));
+            $clientIp = htmlspecialchars($ip ?: 'Không xác định');
+
+            $subject = "[CameraHub] 🔒 Cảnh báo bảo mật: Mật khẩu tài khoản CameraHub của bạn đã được thay đổi";
+
+            $bodyHtml = <<<HTML
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="display: inline-block; width: 56px; height: 56px; line-height: 56px; border-radius: 28px; background: #eff6ff; border: 2px solid #bfdbfe; text-align: center; font-size: 26px; margin-bottom: 10px;">
+                    🔒
+                </div>
+                <h2 style="font-size: 19px; font-weight: 800; color: #1e40af; margin: 0 0 6px 0;">ĐỔI MẬT KHẨU THÀNH CÔNG</h2>
+                <p style="font-size: 13px; color: #2563eb; margin: 0;">Mật khẩu tài khoản CameraHub vừa được cập nhật mới</p>
+            </div>
+
+            <p style="font-size: 14px; line-height: 1.6; color: #44443d; margin: 0 0 20px 0;">
+                Xin chào <strong>{$fullName}</strong>,<br>
+                Hệ thống bảo mật CameraHub thông báo mật khẩu của tài khoản <strong>{$toEmail}</strong> vừa được thay đổi thành công vào lúc <strong>{$changedTime}</strong>.
+            </p>
+
+            <!-- Audit Box -->
+            <div style="background-color: #faf6ee; border-radius: 14px; padding: 20px; margin-bottom: 24px; border: 1px solid #f2e3cd;">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-size: 13px; line-height: 1.9;">
+                    <tr>
+                        <td width="38%" style="color: #7a7a73;">Thời gian thực hiện:</td>
+                        <td style="color: #22221f; font-weight: 700;">{$changedTime}</td>
+                    </tr>
+                    <tr>
+                        <td width="38%" style="color: #7a7a73;">Địa chỉ IP:</td>
+                        <td style="color: #2563eb; font-weight: 700; font-family: monospace;">{$clientIp}</td>
+                    </tr>
+                    <tr>
+                        <td width="38%" style="color: #7a7a73;">Thiết bị &amp; Trình duyệt:</td>
+                        <td style="color: #22221f; font-weight: 600;">{$device}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Security Warnings -->
+            <div style="background-color: #fff1f2; border-radius: 12px; padding: 16px 18px; margin-bottom: 20px; border: 1px solid #fecdd3; font-size: 12px; color: #881337; line-height: 1.6;">
+                <div style="font-weight: 700; color: #9f1239; margin-bottom: 6px; font-size: 13px;">🛡️ Đây có phải là thao tác của bạn không?</div>
+                <div style="margin-bottom: 4px;">• <strong>Nếu là bạn thực hiện:</strong> Bạn có thể hoàn toàn yên tâm và bỏ qua email này.</div>
+                <div>• <strong>Nếu bạn KHÔNG đổi mật khẩu:</strong> Tài khoản của bạn có thể đã bị chiếm quyền truy cập trái phép! Hãy lập tức sử dụng tính năng <strong>Quên Mật Khẩu</strong> để thiết lập lại mật khẩu mới hoặc liên hệ ngay Hotline khẩn cấp: <strong style="color: #e11d48;">1900-8888</strong>.</div>
+            </div>
+HTML;
+
+            $fullHtml = self::wrapTemplate("Thông Báo Đổi Mật Khẩu Thành Công", $bodyHtml, "🔒 BẢO MẬT TÀI KHOẢN", "#2563eb");
+
+            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
+                $message->to($toEmail)
+                    ->subject($subject);
+            });
+
+            Log::info("Password change security notification email sent to {$toEmail}");
+            return true;
+        } catch (\Throwable $e) {
+            Log::error("Failed to send password changed notification email: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send Review Reply Notification Email (Thông báo cho khách khi Admin phản hồi đánh giá sản phẩm)
+     */
+    public static function sendReviewReplyNotification($review, string $replyContent): bool
+    {
+        try {
+            $toEmail = $review->user?->email ?: ($review->order?->customer_email ?: null);
+            if (!$toEmail) return false;
+
+            $customerName = htmlspecialchars($review->customer_name ?: ($review->user?->name ?: 'Quý khách'));
+            $productName = htmlspecialchars($review->product?->name ?? 'Sản phẩm tại CameraHub');
+            $stars = str_repeat('⭐', max(1, min(5, (int) $review->rating)));
+            $ratingDisplay = $stars . " (" . ((int) $review->rating) . "/5 sao)";
+            $customerComment = htmlspecialchars($review->comment ?: 'Đánh giá sản phẩm');
+            $replyHtml = nl2br(htmlspecialchars($replyContent));
+            $replyTime = now()->format('H:i:s d/m/Y');
+
+            $subject = "[CameraHub] 💬 Phản hồi từ CameraHub cho đánh giá của bạn về: " . $productName;
+
+            $bodyHtml = <<<HTML
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="display: inline-block; width: 56px; height: 56px; line-height: 56px; border-radius: 28px; background: #fff7ed; border: 2px solid #fed7aa; text-align: center; font-size: 26px; margin-bottom: 10px;">
+                    💬
+                </div>
+                <h2 style="font-size: 19px; font-weight: 800; color: #9a3412; margin: 0 0 6px 0;">PHẢN HỒI ĐÁNH GIÁ SẢN PHẨM</h2>
+                <p style="font-size: 13px; color: #c2410c; margin: 0;">Đội ngũ hỗ trợ CameraHub vừa phản hồi đánh giá của bạn</p>
+            </div>
+
+            <p style="font-size: 14px; line-height: 1.6; color: #44443d; margin: 0 0 20px 0;">
+                Xin chào <strong>{$customerName}</strong>,<br>
+                Cảm ơn bạn đã dành thời gian đánh giá trải nghiệm sản phẩm <strong>{$productName}</strong> tại CameraHub. Ban Quản trị &amp; Đội ngũ Chăm sóc khách hàng vừa gửi phản hồi chính thức cho nhận xét của bạn:
+            </p>
+
+            <!-- Customer Review Snippet -->
+            <div style="background-color: #faf6ee; border-radius: 12px; padding: 16px 18px; margin-bottom: 20px; border: 1px solid #f2e3cd;">
+                <div style="font-size: 11px; font-weight: 700; color: #7a7a73; text-transform: uppercase; margin-bottom: 6px;">ĐÁNH GIÁ CỦA BẠN:</div>
+                <div style="margin-bottom: 6px; font-size: 14px;">{$ratingDisplay}</div>
+                <div style="font-size: 13px; color: #44443d; font-style: italic; line-height: 1.5;">“{$customerComment}”</div>
+            </div>
+
+            <!-- Admin Official Reply Box -->
+            <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 18px 20px; margin-bottom: 24px;">
+                <div style="font-size: 12px; font-weight: 700; color: #1e40af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                    📷 PHẢN HỒI TỪ ĐỘI NGŨ CAMERAHUB ({$replyTime}):
+                </div>
+                <div style="font-size: 14px; color: #1e293b; line-height: 1.7; font-weight: 500;">
+                    {$replyHtml}
+                </div>
+            </div>
+
+            <p style="font-size: 13px; color: #7a7a73; line-height: 1.6; margin: 20px 0 0 0; text-align: center;">
+                Sự đóng góp của bạn giúp cộng đồng nhiếp ảnh có thêm góc nhìn khách quan và giúp CameraHub ngày càng hoàn thiện dịch vụ!
+            </p>
+HTML;
+
+            $fullHtml = self::wrapTemplate("Phản Hồi Đánh Giá: " . $productName, $bodyHtml, "💬 PHẢN HỒI ĐÁNH GIÁ", "#f17a35");
+
+            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
+                $message->to($toEmail)
+                    ->subject($subject);
+            });
+
+            Log::info("Review reply notification email sent to {$toEmail} for review #{$review->id}");
+            return true;
+        } catch (\Throwable $e) {
+            Log::error("Failed to send review reply notification email: " . $e->getMessage());
+            return false;
+        }
+    }
 }
+

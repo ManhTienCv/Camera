@@ -10,6 +10,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use App\Services\GHNService;
+use App\Services\EmailService;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -295,6 +297,13 @@ class OrderController extends Controller
             'message' => "Admin xác nhận hoàn tiền thành công. Mã giao dịch ngân hàng: {$refCode}",
             'paid_at' => Carbon::now(),
         ]);
+
+        // Gửi email xác nhận hoàn tiền thành công cho khách hàng
+        try {
+            EmailService::sendRefundConfirmation($order->fresh(['items.product']), $refCode);
+        } catch (\Throwable $e) {
+            Log::warning('Send refund confirmation email failed: ' . $e->getMessage());
+        }
 
         Cache::forget('admin_reports_index_data');
         Cache::forget('admin_reports_charts_data');

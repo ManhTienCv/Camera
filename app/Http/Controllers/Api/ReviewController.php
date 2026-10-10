@@ -11,7 +11,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Services\EmailService;
 
 class ReviewController extends Controller
 {
@@ -473,11 +475,19 @@ class ReviewController extends Controller
             'reply' => 'required|string|min:2|max:2000',
         ]);
 
-        $review = Review::findOrFail($id);
+        $review = Review::with(['product', 'user', 'order'])->findOrFail($id);
+        $replyContent = trim($request->reply);
         $review->update([
-            'admin_reply' => trim($request->reply),
+            'admin_reply' => $replyContent,
             'replied_at' => now(),
         ]);
+
+        // Gửi email thông báo cho khách hàng có phản hồi từ Admin
+        try {
+            EmailService::sendReviewReplyNotification($review, $replyContent);
+        } catch (\Throwable $e) {
+            Log::warning('Send review reply notification email failed: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message' => 'Đã gửi phản hồi đánh giá thành công!',
