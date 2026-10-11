@@ -619,11 +619,25 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                   )}
 
                   {ord.status === 'delivered' && (
-                    <div className="p-3.5 bg-accent-50/70 dark:bg-accent-950/30 border border-accent-200/80 dark:border-accent-800/60 rounded-xl text-xs text-ink-900 dark:text-cream-100 flex items-start gap-2.5">
-                      <CheckCircle2 size={16} className="text-accent-600 shrink-0 mt-0.5" />
-                      <div>
-                        <strong>Đã nhận hàng thành công:</strong> Kiện hàng {ord.order_code} đã được giao đến tay bạn. Bạn có thể bấm "Đánh giá sản phẩm" bên dưới để chia sẻ cảm nhận!
+                    <div className="p-4 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 rounded-2xl text-xs text-amber-950 dark:text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                      <div className="flex items-start gap-2.5">
+                        <RotateCcw size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <div className="font-bold text-amber-900 dark:text-amber-100 text-sm">
+                            Đã giao hàng thành công (Chính sách đổi trả trong 7 ngày)
+                          </div>
+                          <div className="text-amber-800 dark:text-amber-300 text-xs mt-0.5">
+                            Nếu sản phẩm bị lỗi kỹ thuật hoặc hư hỏng, bạn có thể bấm nút bên phải để mở <strong>Form Trả hàng & Hoàn tiền</strong>.
+                          </div>
+                        </div>
                       </div>
+                      <button
+                        onClick={() => setReturningOrder(ord)}
+                        className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-xs flex items-center justify-center gap-1.5 shrink-0"
+                      >
+                        <RotateCcw size={13} />
+                        <span>Mở Form Trả Hàng</span>
+                      </button>
                     </div>
                   )}
 
@@ -724,7 +738,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                       <>
                         <button
                           onClick={() => setReturningOrder(ord)}
-                          className="px-4 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-300 dark:border-amber-800 text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-2xs flex items-center gap-1.5"
+                          className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-xs flex items-center gap-1.5"
                           title="Yêu cầu trả hàng & hoàn tiền nếu sản phẩm gặp sự cố hoặc hư hỏng"
                         >
                           <RotateCcw size={13} />
