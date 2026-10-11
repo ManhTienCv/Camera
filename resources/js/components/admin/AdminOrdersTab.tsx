@@ -157,15 +157,24 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
     }
   };
 
+  // Tự động sinh mã tham chiếu ngân hàng mẫu khi mở modal xác nhận hoàn tiền
+  useEffect(() => {
+    if (confirmingRefundOrder && !refundRefCode) {
+      const todayStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
+      const randomDigits = Math.floor(1000 + Math.random() * 9000);
+      setRefundRefCode(`FT${todayStr}${randomDigits}`);
+    }
+  }, [confirmingRefundOrder]);
+
   const handleConfirmRefund = async () => {
     if (!confirmingRefundOrder) return;
-    if (!refundRefCode.trim()) {
-      toast.error('Vui lòng nhập mã tham chiếu giao dịch ngân hàng / Ref Code.');
-      return;
-    }
+    const todayStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
+    const randomDigits = Math.floor(1000 + Math.random() * 9000);
+    const finalRefCode = refundRefCode.trim() || `FT${todayStr}${randomDigits}`;
+
     setIsSubmittingRefund(true);
     try {
-      const res = await api.confirmAdminRefund(confirmingRefundOrder.id, refundRefCode.trim());
+      const res = await api.confirmAdminRefund(confirmingRefundOrder.id, finalRefCode);
       if (res.success) {
         toast.success(res.message || 'Đã xác nhận hoàn tiền thành công!');
         setConfirmingRefundOrder(null);
@@ -737,21 +746,48 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
               </div>
 
               {/* Transaction Ref Code Input */}
-              <div className="space-y-1.5">
-                <label className="block font-bold text-ink-800 uppercase tracking-wider text-[11px]">
-                  Mã tham chiếu ngân hàng (Ref Code / FT...) *
-                </label>
-                <input
-                  type="text"
-                  value={refundRefCode}
-                  onChange={(e) => setRefundRefCode(e.target.value)}
-                  placeholder="Ví dụ: FT2609228899 hoặc MB99283716"
-                  className="input-field text-xs font-mono"
-                  autoFocus
-                />
-                <p className="text-[11px] text-ink-400">
-                  Sau khi Admin thực hiện chuyển khoản hoàn tiền trên Internet Banking, vui lòng điền mã giao dịch vào đây để đối soát tài chính.
-                </p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block font-bold text-ink-800 uppercase tracking-wider text-[11px]">
+                    Mã tham chiếu ngân hàng (Ref Code / FT...) *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const todayStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
+                      const randomDigits = Math.floor(1000 + Math.random() * 9000);
+                      setRefundRefCode(`FT${todayStr}${randomDigits}`);
+                      toast.info('Đã tự động tạo mã giao dịch mẫu!');
+                    }}
+                    className="text-[11px] text-accent-600 hover:text-accent-700 font-bold hover:underline cursor-pointer flex items-center gap-1"
+                  >
+                    <RefreshCw size={11} />
+                    <span>Sinh mã tự động</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={refundRefCode}
+                    onChange={(e) => setRefundRefCode(e.target.value)}
+                    placeholder="Ví dụ: FT2609228899 hoặc MB99283716"
+                    className="input-field text-xs font-mono flex-1 bg-white"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl text-[11px] text-amber-900 space-y-1.5 leading-relaxed">
+                  <p className="font-bold flex items-center gap-1 text-amber-950">
+                    <span>💡 Mã tham chiếu này lấy ở đâu?</span>
+                  </p>
+                  <p className="text-amber-800">
+                    • <strong>Khi chuyển khoản thật qua App ngân hàng (VCB, MB...):</strong> Đây là <strong>Mã giao dịch / Mã tham chiếu</strong> in trên biên lai ủy nhiệm chi thành công. Điền mã này để lưu vết đối soát kế toán & gửi thông báo cho khách hàng.
+                  </p>
+                  <p className="text-amber-800">
+                    • <strong>Khi demo / kiểm thử bài tập:</strong> Hệ thống đã <strong>tự động sinh sẵn mã mẫu (FT...)</strong> ở ô trên. Bạn có thể bấm <strong>"Sinh mã tự động"</strong> để đổi mã khác hoặc giữ nguyên rồi bấm <strong>"Xác nhận đã hoàn tiền"</strong>.
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -768,8 +804,8 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
               <button
                 type="button"
                 onClick={handleConfirmRefund}
-                disabled={isSubmittingRefund || !refundRefCode.trim()}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 text-xs font-bold rounded-xl transition-all shadow-md inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                disabled={isSubmittingRefund}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 text-xs font-bold rounded-xl transition-all shadow-md inline-flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95"
               >
                 {isSubmittingRefund ? (
                   <Loader2 size={14} className="animate-spin" />

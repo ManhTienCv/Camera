@@ -562,15 +562,6 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                     {ord.status === 'delivered' && (
                       <div className="flex items-center gap-2 flex-wrap">
                         <button
-                          onClick={() => setReturningOrder(ord)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-2xs active:scale-95"
-                          title="Yêu cầu trả hàng & hoàn tiền nếu máy có sự cố"
-                        >
-                          <RotateCcw size={13} />
-                          <span>Yêu cầu trả hàng</span>
-                        </button>
-
-                        <button
                           onClick={() => setTrackingOrder(ord)}
                           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer active:scale-95"
                         >
@@ -626,28 +617,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                     </div>
                   )}
 
-                  {ord.status === 'delivered' && (
-                    <div className="p-4 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 rounded-2xl text-xs text-amber-950 dark:text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-                      <div className="flex items-start gap-2.5">
-                        <RotateCcw size={18} className="text-amber-600 shrink-0 mt-0.5" />
-                        <div>
-                          <div className="font-bold text-amber-900 dark:text-amber-100 text-sm">
-                            Đã giao hàng thành công (Chính sách đổi trả trong 7 ngày)
-                          </div>
-                          <div className="text-amber-800 dark:text-amber-300 text-xs mt-0.5">
-                            Nếu sản phẩm bị lỗi kỹ thuật hoặc hư hỏng, bạn có thể bấm nút bên phải để mở <strong>Form Trả hàng & Hoàn tiền</strong>.
-                          </div>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setReturningOrder(ord)}
-                        className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-xs flex items-center justify-center gap-1.5 shrink-0"
-                      >
-                        <RotateCcw size={13} />
-                        <span>Mở Form Trả Hàng</span>
-                      </button>
-                    </div>
-                  )}
+
 
                   {ord.status === 'refund_pending' && (
                     <div
