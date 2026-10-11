@@ -33,7 +33,7 @@ interface OrdersPageProps {
   onNavigate: (page: Page) => void;
 }
 
-type OrderStatusTab = 'pending' | 'unpaid' | 'shipping' | 'delivered' | 'cancelled';
+type OrderStatusTab = 'pending' | 'unpaid' | 'shipping' | 'delivered' | 'refund_pending' | 'cancelled';
 
 export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
   const { user, openAuthModal } = useAuth();
@@ -83,12 +83,21 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
               } else if (rawStatus === 'delivered' || rawStatus === 'completed') {
                 statusType = 'delivered';
                 statusLabel = 'Đã Giao Thành Công';
-              } else if (rawStatus === 'refund_pending' || payStatus === 'refund_pending') {
+              } else if (
+                rawStatus === 'refund_pending' ||
+                payStatus === 'refund_pending' ||
+                rawStatus === 'refunded' ||
+                payStatus === 'refunded' ||
+                (o.cancel_reason && o.cancel_reason.includes('Trả hàng'))
+              ) {
                 statusType = 'refund_pending';
-                statusLabel = 'Chờ Hoàn Tiền';
+                statusLabel =
+                  rawStatus === 'refunded' || payStatus === 'refunded'
+                    ? 'Đã Hoàn Tiền'
+                    : 'Chờ Hoàn Tiền (Trả Hàng)';
               } else if (rawStatus === 'cancelled') {
                 statusType = 'cancelled';
-                statusLabel = payStatus === 'refunded' ? 'Đã Hủy & Đã Hoàn Tiền' : 'Đã Hủy Đơn';
+                statusLabel = 'Đã Hủy Đơn';
               } else if (
                 (payStatus === 'pending' || payStatus === 'unpaid' || !payStatus) &&
                 o.payment_method !== 'cod'
@@ -189,7 +198,8 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
   const unpaidOrdersCount = orders.filter((o) => o.status === 'unpaid').length;
   const shippingOrdersCount = orders.filter((o) => o.status === 'shipping').length;
   const deliveredOrdersCount = orders.filter((o) => o.status === 'delivered').length;
-  const cancelledOrdersCount = orders.filter((o) => o.status === 'cancelled' || o.status === 'refund_pending').length;
+  const refundOrdersCount = orders.filter((o) => o.status === 'refund_pending').length;
+  const cancelledOrdersCount = orders.filter((o) => o.status === 'cancelled').length;
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
@@ -200,9 +210,6 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
   }, [orderStatusTab]);
 
   const filteredOrders = useMemo(() => {
-    if (orderStatusTab === 'cancelled') {
-      return orders.filter((o) => o.status === 'cancelled' || o.status === 'refund_pending');
-    }
     return orders.filter((o) => o.status === orderStatusTab);
   }, [orders, orderStatusTab]);
 
@@ -309,6 +316,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
           { id: 'unpaid', label: `Chờ thanh toán (${unpaidOrdersCount})` },
           { id: 'shipping', label: `Đang giao hàng (${shippingOrdersCount})` },
           { id: 'delivered', label: `Đã nhận hàng (${deliveredOrdersCount})` },
+          { id: 'refund_pending', label: `Trả hàng / Hoàn tiền (${refundOrdersCount})` },
           { id: 'cancelled', label: `Đã hủy (${cancelledOrdersCount})` },
         ].map((tab) => {
           const isActive = orderStatusTab === tab.id;
@@ -642,12 +650,62 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                   )}
 
                   {ord.status === 'refund_pending' && (
-                    <div className="p-3.5 bg-amber-50/90 dark:bg-amber-950/30 border border-amber-300/80 dark:border-amber-800/60 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
-                      <RotateCcw size={16} className="text-amber-600 shrink-0 mt-0.5" />
-                      <div>
-                        <strong>Yêu cầu hoàn tiền đang được xử lý:</strong> Đơn hàng {ord.order_code} đã được tiếp nhận yêu cầu hủy và toàn bộ tồn kho đã được hoàn lại. Cửa hàng đang xử lý chuyển khoản hoàn tiền vào số tài khoản <strong>{ord.bankAccountNumber} ({ord.bankName} - {ord.bankAccountHolder})</strong> trong vòng 24h làm việc.
-                        {ord.cancelReason && (
-                          <div className="mt-1 text-amber-800 dark:text-amber-300 font-medium">Lý do hủy: {ord.cancelReason}</div>
+                    <div
+                      className={`p-3.5 rounded-xl text-xs flex items-start gap-2.5 border ${
+                        ord.refundRefCode || ord.paymentStatus === 'refunded'
+                          ? 'bg-emerald-50/90 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200'
+                          : 'bg-amber-50/90 dark:bg-amber-950/30 border-amber-300/80 dark:border-amber-800/60 text-amber-900 dark:text-amber-200'
+                      }`}
+                    >
+                      <RotateCcw
+                        size={16}
+                        className={`shrink-0 mt-0.5 ${
+                          ord.refundRefCode || ord.paymentStatus === 'refunded'
+                            ? 'text-emerald-600'
+                            : 'text-amber-600'
+                        }`}
+                      />
+                      <div className="space-y-1">
+                        {ord.refundRefCode || ord.paymentStatus === 'refunded' ? (
+                          <>
+                            <div>
+                              <strong className="text-emerald-900 dark:text-emerald-100">
+                                Đã hoàn tiền thành công:
+                              </strong>{' '}
+                              Cửa hàng đã thực hiện chuyển khoản hoàn tiền vào số tài khoản{' '}
+                              <strong>
+                                {ord.bankAccountNumber} ({ord.bankName} - {ord.bankAccountHolder})
+                              </strong>
+                              .
+                            </div>
+                            {ord.refundRefCode && (
+                              <div className="font-bold text-emerald-800 dark:text-emerald-300">
+                                Mã tham chiếu ngân hàng: <span className="font-mono">{ord.refundRefCode}</span>
+                              </div>
+                            )}
+                            {ord.refundedAt && (
+                              <div className="text-[11px] text-emerald-700 dark:text-emerald-400">
+                                Thời gian hoàn tất: {new Date(ord.refundedAt).toLocaleString('vi-VN')}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <div>
+                              <strong>Yêu cầu trả hàng & hoàn tiền đang được xử lý:</strong> Đơn hàng{' '}
+                              {ord.order_code} đã được tiếp nhận yêu cầu. Cửa hàng đang đối soát và sẽ chuyển
+                              khoản hoàn tiền vào số tài khoản{' '}
+                              <strong>
+                                {ord.bankAccountNumber} ({ord.bankName} - {ord.bankAccountHolder})
+                              </strong>{' '}
+                              trong vòng 24h làm việc.
+                            </div>
+                            {ord.cancelReason && (
+                              <div className="text-amber-800 dark:text-amber-300 font-medium">
+                                Lý do: {ord.cancelReason}
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
