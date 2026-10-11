@@ -67,11 +67,29 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
     return orders || [];
   }, [orders]);
 
+  const isReturnOrder = (o: Order) => {
+    if (['return', 'returning', 'returned'].includes(o.status)) return true;
+    const reason = (o.cancel_reason || '').toLowerCase();
+    const notes = (o.notes || '').toLowerCase();
+    return reason.includes('hoàn hàng') || reason.includes('trả hàng') || notes.includes('hoàn hàng') || notes.includes('trả hàng');
+  };
+
   // Compute counts for all status tabs
   const tabCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     TABS.forEach((tab) => {
-      counts[tab.key] = activeOrders.filter((o) => tab.statuses.includes(o.status as any)).length;
+      if (tab.key === 'return') {
+        counts[tab.key] = activeOrders.filter((o) => {
+          if (tab.statuses.includes(o.status as any)) return true;
+          return (o.status === 'cancelled' || o.payment_status === 'refunded') && isReturnOrder(o);
+        }).length;
+      } else if (tab.key === 'cancelled') {
+        counts[tab.key] = activeOrders.filter((o) => {
+          return tab.statuses.includes(o.status as any) && !isReturnOrder(o);
+        }).length;
+      } else {
+        counts[tab.key] = activeOrders.filter((o) => tab.statuses.includes(o.status as any)).length;
+      }
     });
     return counts;
   }, [activeOrders]);
@@ -81,8 +99,18 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
     return activeOrders.filter((o) => {
       // 1. Tab filter
       const tabDef = TABS.find((t) => t.key === activeTab);
-      if (tabDef && !tabDef.statuses.includes(o.status as any)) {
-        return false;
+      if (tabDef) {
+        if (activeTab === 'return') {
+          const matchReturn =
+            tabDef.statuses.includes(o.status as any) ||
+            ((o.status === 'cancelled' || o.payment_status === 'refunded') && isReturnOrder(o));
+          if (!matchReturn) return false;
+        } else if (activeTab === 'cancelled') {
+          const matchCancelled = tabDef.statuses.includes(o.status as any) && !isReturnOrder(o);
+          if (!matchCancelled) return false;
+        } else if (!tabDef.statuses.includes(o.status as any)) {
+          return false;
+        }
       }
 
       // 2. Search query
@@ -470,11 +498,11 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                               </span>
                             );
                           }
-                          if (['return', 'returning', 'returned'].includes(status)) {
+                          if (['return', 'returning', 'returned'].includes(status) || isReturnOrder(o)) {
                             return (
                               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-50 text-orange-800 border border-orange-200">
                                 <span className="w-2 h-2 rounded-full bg-orange-500"></span>
-                                <span>Hoàn hàng</span>
+                                <span>{status === 'returning' ? 'Đang hoàn hàng' : 'Đã hoàn hàng'}</span>
                               </span>
                             );
                           }
@@ -583,9 +611,9 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                           )}
 
                           {/* 6. Trạng thái: Hoàn hàng -> Xác nhận nhập lại kho */}
-                          {['return', 'returning', 'returned'].includes(o.status) && (
+                          {['return', 'returning'].includes(o.status) && (
                             <button
-                              onClick={() => onUpdateStatus(o.id, 'cancelled')}
+                              onClick={() => onUpdateStatus(o.id, 'returned')}
                               className="h-8 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 rounded-xl transition-all inline-flex items-center gap-1 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 whitespace-nowrap shrink-0"
                               title="Xác nhận đã nhận lại kiện hàng từ shipper"
                             >

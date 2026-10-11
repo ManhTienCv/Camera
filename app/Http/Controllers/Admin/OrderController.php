@@ -48,8 +48,25 @@ class OrderController extends Controller
         // Lọc theo Tab trạng thái Lab 08 nếu có truyền tham số tab (nếu không truyền hoặc truyền 'all' thì trả về tất cả để React Admin tự phân tab và đếm số lượng)
         $activeTab = $request->input('tab');
         if ($activeTab && $activeTab !== 'all' && isset(self::TABS[$activeTab])) {
-            $statuses = self::TABS[$activeTab]['statuses'];
-            $query->whereIn('order_status', $statuses);
+            if ($activeTab === 'return') {
+                $query->where(function ($q) {
+                    $q->whereIn('order_status', ['return', 'returning', 'returned'])
+                      ->orWhere(function ($sub) {
+                          $sub->whereIn('order_status', ['cancelled', 'returned'])
+                              ->where(function ($r) {
+                                  $r->where('cancel_reason', 'like', '%hoàn hàng%')
+                                    ->orWhere('cancel_reason', 'like', '%trả hàng%');
+                              });
+                      });
+                });
+            } elseif ($activeTab === 'cancelled') {
+                $query->where('order_status', 'cancelled')
+                      ->where('cancel_reason', 'not like', '%hoàn hàng%')
+                      ->where('cancel_reason', 'not like', '%trả hàng%');
+            } else {
+                $statuses = self::TABS[$activeTab]['statuses'];
+                $query->whereIn('order_status', $statuses);
+            }
         }
 
         // Lọc theo phương thức thanh toán
@@ -106,7 +123,21 @@ class OrderController extends Controller
         $tabCounts = [];
         $allOrders = Order::all();
         foreach (self::TABS as $key => $tabInfo) {
-            $tabCounts[$key] = $allOrders->whereIn('order_status', $tabInfo['statuses'])->count();
+            if ($key === 'return') {
+                $tabCounts[$key] = $allOrders->filter(function ($o) use ($tabInfo) {
+                    if (in_array($o->order_status, $tabInfo['statuses'], true)) return true;
+                    $r = mb_strtolower($o->cancel_reason ?? '');
+                    return ($o->payment_status === 'refunded' || $o->order_status === 'cancelled') && (str_contains($r, 'hoàn hàng') || str_contains($r, 'trả hàng'));
+                })->count();
+            } elseif ($key === 'cancelled') {
+                $tabCounts[$key] = $allOrders->filter(function ($o) use ($tabInfo) {
+                    if (!in_array($o->order_status, $tabInfo['statuses'], true)) return false;
+                    $r = mb_strtolower($o->cancel_reason ?? '');
+                    return !(str_contains($r, 'hoàn hàng') || str_contains($r, 'trả hàng'));
+                })->count();
+            } else {
+                $tabCounts[$key] = $allOrders->whereIn('order_status', $tabInfo['statuses'])->count();
+            }
         }
 
         $response = [
@@ -275,6 +306,12 @@ class OrderController extends Controller
 
         // Nếu đơn hàng đã hoàn tiền trước đó, trả về thành công luôn
         if ($order->payment_status === 'refunded') {
+            $reason = mb_strtolower($order->cancel_reason ?? '');
+            $isReturnRequest = str_contains($reason, 'hoàn hàng') || str_contains($reason, 'trả hàng') || str_contains($reason, 'return');
+            if ($isReturnRequest && $order->order_status !== 'returned') {
+                $order->order_status = 'returned';
+                $order->save();
+            }
             return response()->json([
                 'success' => true,
                 'message' => 'Đã xác nhận hoàn tiền thành công!',
@@ -290,11 +327,13 @@ class OrderController extends Controller
         }
 
         $refCode = trim($request->refund_ref_code);
-        $order->order_status = 'cancelled';
+        $reason = mb_strtolower($order->cancel_reason ?? '');
+        $isReturnRequest = str_contains($reason, 'hoàn hàng') || str_contains($reason, 'trả hàng') || str_contains($reason, 'return');
+        $order->order_status = $isReturnRequest ? 'returned' : 'cancelled';
         $order->payment_status = 'refunded';
         $order->refund_ref_code = $refCode;
         $order->refunded_at = Carbon::now();
-        $order->notes = ($order->notes ? $order->notes . ' | ' : '') . "Đã hoàn tiền cho khách, Mã GD: {$refCode}";
+        $order->notes = ($order->notes ? $order->notes . ' | ' : '') . ($isReturnRequest ? "Đã hoàn hàng & hoàn tiền cho khách, Mã GD: {$refCode}" : "Đã hoàn tiền cho khách, Mã GD: {$refCode}");
         $order->save();
 
         // Ghi nhận nhật ký PaymentTransaction
