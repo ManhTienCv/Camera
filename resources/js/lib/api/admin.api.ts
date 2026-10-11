@@ -128,7 +128,7 @@ export const adminApi = {
     }),
 
   confirmAdminRefund: (orderId: string, refundRefCode: string) =>
-    request<{ message: string; order: Order }>(`/admin/orders/${orderId}/confirm-refund`, {
+    request<{ success?: boolean; message: string; order: Order }>(`/admin/orders/${orderId}/confirm-refund`, {
       method: 'POST',
       body: JSON.stringify({ refund_ref_code: refundRefCode }),
     }),

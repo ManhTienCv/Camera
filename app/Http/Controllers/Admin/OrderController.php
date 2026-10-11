@@ -273,8 +273,18 @@ class OrderController extends Controller
 
         $order = Order::where('id', $id)->orWhere('order_code', $id)->firstOrFail();
 
+        // Nếu đơn hàng đã hoàn tiền trước đó, trả về thành công luôn
+        if ($order->payment_status === 'refunded') {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã xác nhận hoàn tiền thành công!',
+                'order' => $order->fresh('items'),
+            ]);
+        }
+
         if ($order->order_status !== 'refund_pending' && $order->payment_status !== 'refund_pending') {
             return response()->json([
+                'success' => false,
                 'message' => 'Đơn hàng này không ở trạng thái chờ hoàn tiền.',
             ], 400);
         }
@@ -310,7 +320,8 @@ class OrderController extends Controller
         Cache::forget('admin_finance_summary_default');
 
         return response()->json([
-            'message' => "Đã xác nhận hoàn tiền " . number_format($order->total_amount, 0, ',', '.') . "đ cho khách thành công! Đơn hàng đã chuyển sang Đã hủy & Đã hoàn tiền.",
+            'success' => true,
+            'message' => 'Đã xác nhận hoàn tiền thành công!',
             'order' => $order->fresh('items'),
         ]);
     }

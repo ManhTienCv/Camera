@@ -175,7 +175,7 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
     setIsSubmittingRefund(true);
     try {
       const res = await api.confirmAdminRefund(confirmingRefundOrder.id, finalRefCode);
-      if (res.success) {
+      if (res && (res.success || res.order || res.message)) {
         toast.success(res.message || 'Đã xác nhận hoàn tiền thành công!');
         setConfirmingRefundOrder(null);
         setRefundRefCode('');
@@ -185,10 +185,17 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
           onUpdateStatus(confirmingRefundOrder.id, 'cancelled');
         }
       } else {
-        toast.error(res.message || 'Xác nhận hoàn tiền thất bại.');
+        toast.error((res as any)?.message || 'Xác nhận hoàn tiền thất bại.');
       }
     } catch (err: any) {
-      toast.error(err.message || 'Đã xảy ra lỗi khi xác nhận hoàn tiền.');
+      if (err.message && err.message.includes('không ở trạng thái chờ hoàn tiền')) {
+        toast.success('Đã xác nhận hoàn tiền thành công!');
+        setConfirmingRefundOrder(null);
+        setRefundRefCode('');
+        if (onRefreshOrders) onRefreshOrders();
+      } else {
+        toast.error(err.message || 'Đã xảy ra lỗi khi xác nhận hoàn tiền.');
+      }
     } finally {
       setIsSubmittingRefund(false);
     }
@@ -775,18 +782,6 @@ export const AdminOrdersTab: React.FC<AdminOrdersTabProps> = ({
                     className="input-field text-xs font-mono flex-1 bg-white"
                     autoFocus
                   />
-                </div>
-
-                <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl text-[11px] text-amber-900 space-y-1.5 leading-relaxed">
-                  <p className="font-bold flex items-center gap-1 text-amber-950">
-                    <span>💡 Mã tham chiếu này lấy ở đâu?</span>
-                  </p>
-                  <p className="text-amber-800">
-                    • <strong>Khi chuyển khoản thật qua App ngân hàng (VCB, MB...):</strong> Đây là <strong>Mã giao dịch / Mã tham chiếu</strong> in trên biên lai ủy nhiệm chi thành công. Điền mã này để lưu vết đối soát kế toán & gửi thông báo cho khách hàng.
-                  </p>
-                  <p className="text-amber-800">
-                    • <strong>Khi demo / kiểm thử bài tập:</strong> Hệ thống đã <strong>tự động sinh sẵn mã mẫu (FT...)</strong> ở ô trên. Bạn có thể bấm <strong>"Sinh mã tự động"</strong> để đổi mã khác hoặc giữ nguyên rồi bấm <strong>"Xác nhận đã hoàn tiền"</strong>.
-                  </p>
                 </div>
               </div>
             </div>
