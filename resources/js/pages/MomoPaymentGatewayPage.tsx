@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ShieldCheck,
   Lock,
@@ -96,6 +97,17 @@ export const MomoPaymentGatewayPage: React.FC<Props> = ({ orderId, onNavigate })
 
     return () => clearInterval(timer);
   }, [orderId]);
+
+  // Lock body scroll when processing or success modal is open
+  useEffect(() => {
+    if (isProcessing || isSuccessModal) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isProcessing, isSuccessModal]);
 
   // Load Order Details
   useEffect(() => {
@@ -821,61 +833,125 @@ export const MomoPaymentGatewayPage: React.FC<Props> = ({ orderId, onNavigate })
         </div>
       </div>
 
-      {/* 3. Simulated Processing Modal / Overlay */}
-      {isProcessing && (
-        <div className="fixed inset-0 bg-ink-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-ink-900 rounded-3xl p-8 max-w-sm w-full text-center space-y-4 shadow-2xl border border-pink-200/50 dark:border-ink-800">
-            {/* MoMo pulsating animation */}
-            <div className="relative w-20 h-20 mx-auto">
-              <div className="absolute inset-0 bg-[#D82D8B]/20 rounded-full animate-ping" />
-              <div className="relative w-20 h-20 bg-gradient-to-tr from-[#A50064] to-[#D82D8B] rounded-3xl flex items-center justify-center shadow-lg">
-                <svg viewBox="0 0 100 100" className="w-12 h-12">
-                  <circle cx="34" cy="46" r="8" fill="#ffffff" />
-                  <circle cx="66" cy="46" r="8" fill="#ffffff" />
-                  <path
-                    d="M 32 64 Q 50 78 68 64"
-                    stroke="#ffffff"
-                    strokeWidth="6"
-                    strokeLinecap="round"
-                    fill="none"
-                  />
-                </svg>
+      {/* 3. Simulated Processing Modal / Overlay via Portal */}
+      {isProcessing &&
+        createPortal(
+          <div className="fixed inset-0 w-screen h-screen min-h-[100dvh] bg-black/80 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-white dark:bg-ink-900 rounded-3xl p-8 max-w-sm w-full text-center space-y-5 shadow-2xl border border-pink-200/50 dark:border-ink-800 animate-scale-in relative overflow-hidden">
+              <div className="h-1.5 w-full absolute top-0 left-0 bg-gradient-to-r from-[#A50064] via-[#D82D8B] to-pink-400" />
+              {/* MoMo pulsating animation */}
+              <div className="relative w-20 h-20 mx-auto mt-2">
+                <div className="absolute inset-0 bg-[#D82D8B]/20 rounded-full animate-ping" />
+                <div className="relative w-20 h-20 bg-gradient-to-tr from-[#A50064] to-[#D82D8B] rounded-3xl flex items-center justify-center shadow-lg">
+                  <svg viewBox="0 0 100 100" className="w-12 h-12">
+                    <circle cx="34" cy="46" r="8" fill="#ffffff" />
+                    <circle cx="66" cy="46" r="8" fill="#ffffff" />
+                    <path
+                      d="M 32 64 Q 50 78 68 64"
+                      stroke="#ffffff"
+                      strokeWidth="6"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <h4 className="font-display font-bold text-lg text-ink-900 dark:text-cream-100">
+                  Đang xử lý giao dịch MoMo
+                </h4>
+                <p className="text-xs text-pink-600 dark:text-pink-400 font-semibold animate-pulse">
+                  {processStep || 'Vui lòng không đóng trình duyệt...'}
+                </p>
+              </div>
+
+              <div className="w-full bg-cream-100 dark:bg-ink-800 h-2 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-[#A50064] to-[#D82D8B] animate-pulse w-3/4 rounded-full" />
               </div>
             </div>
+          </div>,
+          document.body
+        )}
 
-            <h4 className="font-display font-bold text-lg text-ink-900 dark:text-cream-100">
-              Đang xử lý giao dịch MoMo
-            </h4>
+      {/* 4. Thành Công & Chuyển Hướng Modal via Portal (Cover 100% Viewport) */}
+      {isSuccessModal &&
+        createPortal(
+          <div className="fixed inset-0 w-screen h-screen min-h-[100dvh] bg-black/85 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-white dark:bg-ink-900 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center space-y-5 shadow-2xl border border-emerald-300/50 dark:border-ink-700 animate-scale-in relative overflow-hidden">
+              {/* Top Accent Strip */}
+              <div className="h-1.5 w-full absolute top-0 left-0 bg-gradient-to-r from-[#A50064] via-[#D82D8B] to-emerald-500" />
 
-            <p className="text-xs text-pink-600 dark:text-pink-400 font-semibold animate-pulse">
-              {processStep || 'Vui lòng không đóng trình duyệt...'}
-            </p>
+              {/* Glowing animated checkmark */}
+              <div className="relative w-20 h-20 mx-auto mt-2">
+                <div className="absolute inset-0 bg-emerald-500/20 rounded-full animate-ping" />
+                <div className="relative w-20 h-20 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-500 rounded-full flex items-center justify-center border-2 border-emerald-400/80 shadow-md">
+                  <CheckCircle2 size={44} className="text-emerald-500" />
+                </div>
+              </div>
 
-            <div className="w-full bg-cream-100 dark:bg-ink-800 h-2 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-[#A50064] to-[#D82D8B] animate-pulse w-3/4 rounded-full" />
+              <div className="space-y-1.5">
+                <div className="inline-block px-3 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-full text-[11px] font-bold">
+                  Khớp lệnh MoMo tức thì
+                </div>
+                <h4 className="font-display font-bold text-2xl text-ink-900 dark:text-cream-100">
+                  Thanh toán thành công!
+                </h4>
+                <p className="text-xs text-ink-500 dark:text-cream-400 leading-relaxed max-w-xs mx-auto">
+                  Giao dịch qua Cổng MoMo đã được xác nhận. Hóa đơn điện tử đã gửi về email của bạn.
+                </p>
+              </div>
+
+              {/* Order quick summary card */}
+              {order && (
+                <div className="p-4 bg-cream-50/80 dark:bg-ink-800/60 rounded-2xl border border-cream-200 dark:border-ink-700 text-xs space-y-2 text-left">
+                  <div className="flex justify-between items-center">
+                    <span className="text-ink-500 dark:text-cream-400">Mã đơn hàng:</span>
+                    <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400 text-sm">
+                      #{order.order_code || order.id}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-ink-500 dark:text-cream-400">Số tiền thanh toán:</span>
+                    <span className="font-display font-bold text-base text-pink-600 dark:text-pink-400">
+                      {formatCurrency(order.total_amount)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-ink-500 dark:text-cream-400">Hình thức:</span>
+                    <span className="px-2 py-0.5 bg-pink-50 dark:bg-pink-950/50 text-[#D82D8B] rounded-md font-semibold text-[11px]">
+                      MoMo AIO Hosted Gateway
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Countdown Progress Bar */}
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between text-[11px] text-ink-500 dark:text-cream-400">
+                  <span className="flex items-center gap-1.5">
+                    <Loader2 size={13} className="animate-spin text-pink-600" />
+                    <span>Đang tự động chuyển hướng đến biên nhận đơn hàng...</span>
+                  </span>
+                </div>
+                <div className="w-full bg-cream-200 dark:bg-ink-800 h-2 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-[#A50064] via-[#D82D8B] to-emerald-500 animate-[pulse_1s_infinite] w-full rounded-full transition-all duration-1000" />
+                </div>
+              </div>
+
+              {/* Direct Skip Button */}
+              <button
+                type="button"
+                onClick={() => onNavigate({ name: 'order-success', orderId: order?.id || orderId })}
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95"
+              >
+                <span>Chuyển tiếp ngay</span>
+                <ExternalLink size={14} />
+              </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* 4. Thành Công Modal */}
-      {isSuccessModal && (
-        <div className="fixed inset-0 bg-ink-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-ink-900 rounded-3xl p-8 max-w-sm w-full text-center space-y-4 shadow-2xl border border-emerald-200 dark:border-ink-800 animate-scale-in">
-            <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-md border border-emerald-200">
-              <CheckCircle2 size={46} />
-            </div>
-
-            <h4 className="font-display font-bold text-xl text-ink-900 dark:text-cream-100">
-              Thanh toán thành công!
-            </h4>
-
-            <p className="text-xs text-ink-500 dark:text-cream-400 leading-relaxed">
-              Giao dịch qua Cổng MoMo đã được xác nhận. Hóa đơn điện tử đã gửi về email của bạn. Đang chuyển hướng...
-            </p>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

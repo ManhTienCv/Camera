@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   CheckCircle2,
   ArrowRight,
@@ -8,16 +9,18 @@ import {
   Copy,
   Check,
   Mail,
-  Zap,
   Truck,
   Download,
   Clock,
-  Send,
   Loader2,
-  Flame,
-  AlertTriangle,
   ExternalLink,
-  Info,
+  ShieldCheck,
+  Receipt,
+  ShoppingBag,
+  Printer,
+  X,
+  Phone,
+  Calendar,
 } from 'lucide-react';
 import type { Page, Order } from '../types';
 import { api } from '../lib/api';
@@ -40,8 +43,13 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
   const [confirmingPayment, setConfirmingPayment] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [openingMomo, setOpeningMomo] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
 
-  // 15-minute Session Countdown Timer (Synced with Checkout Session)
+  // View state: 'momo' (Ảnh 1 - Giao Dịch MoMo Đã Hoàn Tất) vs 'order' (Ảnh 2 - Đặt Hàng Thành Công / GHN Express)
+  const [viewMode, setViewMode] = useState<'momo' | 'order'>('order');
+  const [momoCountdown, setMomoCountdown] = useState<number>(3);
+
+  // 15-minute Session Countdown Timer (For VietQR Pending)
   const [timeLeft, setTimeLeft] = useState<number>(CHECKOUT_DURATION_SECONDS);
   const [isExpired, setIsExpired] = useState<boolean>(false);
 
@@ -67,13 +75,40 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
     return () => clearInterval(timer);
   }, []);
 
+  // Lock body scroll when receipt modal is open
+  useEffect(() => {
+    if (showReceiptModal) {
+      const original = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = original;
+      };
+    }
+  }, [showReceiptModal]);
+
+  // Load Order Details
   useEffect(() => {
     (async () => {
       try {
         const data = await api.getOrder(orderId);
         setOrder(data);
-        if (data && (data.status === 'shipping' || data.status === 'completed')) {
+
+        const isPaid =
+          data?.payment_status === 'paid' ||
+          data?.payment_status === 'completed' ||
+          data?.status === 'shipping' ||
+          data?.status === 'completed';
+
+        if (isPaid) {
           setPaymentConfirmed(true);
+        }
+
+        // If order was paid via MoMo, display MoMo result screen first (Ảnh 1)
+        if (data?.payment_method === 'momo' && (isPaid || data.status === 'processing')) {
+          setViewMode('momo');
+          setMomoCountdown(3);
+        } else {
+          setViewMode('order');
         }
       } catch (err) {
         console.error('Failed to load order:', err);
@@ -82,6 +117,22 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
       }
     })();
   }, [orderId]);
+
+  // MoMo screen auto-countdown to redirect into Ảnh 2 (Order Success)
+  useEffect(() => {
+    if (viewMode !== 'momo') return;
+
+    if (momoCountdown <= 0) {
+      setViewMode('order');
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setMomoCountdown((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [viewMode, momoCountdown]);
 
   const handleCopy = async (field: string, text: string) => {
     const success = await vietqrService.copyText(text);
@@ -95,16 +146,16 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
     if (!order) return;
     setConfirmingPayment(true);
     try {
-      // Call backend API to confirm payment and auto-approve
       const res = await api.confirmPayment(order.id);
       if (res && res.order) {
         setOrder(res.order);
       }
       setPaymentConfirmed(true);
-      toast.success(`Xác nhận thanh toán thành công! Thông báo đơn hàng đã gửi về email ${order.customer_email || ''}`);
+      toast.success(
+        `Xác nhận thanh toán thành công! Thông báo đơn hàng đã gửi về email ${order.customer_email || ''}`
+      );
     } catch (e) {
       console.error('Failed to auto-confirm payment:', e);
-      // Still set local success for smooth simulation
       setPaymentConfirmed(true);
       toast.success('Xác nhận thanh toán thành công!');
     } finally {
@@ -132,545 +183,557 @@ export function OrderSuccessPage({ orderId, onNavigate }: Props) {
 
   if (loading) {
     return (
-      <div className="w-full max-w-2xl mx-auto px-4 py-20 text-center animate-pulse">
-        <div className="w-16 h-16 bg-cream-200 rounded-full mx-auto mb-4" />
-        <div className="h-6 bg-cream-200 rounded w-1/2 mx-auto mb-2" />
-        <div className="h-4 bg-cream-200 rounded w-1/3 mx-auto" />
+      <div className="w-full max-w-2xl mx-auto px-4 py-24 text-center animate-pulse">
+        <div className="w-16 h-16 bg-cream-200 dark:bg-ink-800 rounded-full mx-auto mb-4" />
+        <div className="h-6 bg-cream-200 dark:bg-ink-800 rounded w-1/2 mx-auto mb-2" />
+        <div className="h-4 bg-cream-200 dark:bg-ink-800 rounded w-1/3 mx-auto" />
       </div>
     );
   }
 
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
-  const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
   const isVietQR = order?.payment_method === 'vietqr' || order?.payment_method === 'bank_transfer';
   const qrUrl = order
     ? vietqrService.generateQRUrl({
-      amount: order.total_amount,
-      orderCode: order.order_code || order.id,
-      template: 'compact2',
-    })
+        amount: order.total_amount,
+        orderCode: order.order_code || order.id,
+        template: 'compact2',
+      })
     : '';
 
-  return (
-    <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fade-in space-y-8">
-      {/* 1. Header Banner */}
-      <div className="text-center">
-        <div className="w-20 h-20 bg-accent-50 text-accent-500 border border-accent-200/80 rounded-full flex items-center justify-center mx-auto mb-4 animate-scale-in shadow-xs">
-          <CheckCircle2 size={44} />
-        </div>
-        <h1 className="font-display font-bold text-3xl text-ink-900 mb-2">
-          Đặt hàng thành công!
-        </h1>
-        <p className="text-sm text-ink-500 max-w-md mx-auto">
-          Cảm ơn bạn đã mua sắm tại CameraHub. Đơn hàng của bạn đã được tiếp nhận và xử lý tự động vào hệ thống.
-        </p>
-        {order?.order_code && (
-          <div className="inline-block mt-3 px-4 py-1.5 bg-ink-900 dark:bg-ink-800 text-white rounded-full text-xs font-bold font-mono tracking-wider shadow-2xs border border-transparent dark:border-ink-700">
-            MÃ ĐƠN: #{order.order_code}
-          </div>
-        )}
-      </div>
+  // Generate authentic MoMo transaction ID for receipt display
+  const momoTxnId =
+    order?.transactions?.[0]?.transaction_id ||
+    `MOMO_${order?.created_at ? new Date(order.created_at).getTime() : '1791697712606'}`;
 
-      {/* 2. Email Confirmation Notice Box */}
-      {order && (
-        <div className="bg-blue-50/80 border border-blue-200/90 rounded-2xl p-4 flex items-start gap-3 text-xs text-blue-900 shadow-2xs">
-          <Mail size={18} className="text-blue-600 shrink-0 mt-0.5" />
-          <div className="space-y-0.5">
-            <p className="font-bold text-blue-950">Email xác nhận & hóa đơn đã được gửi tự động</p>
-            <p className="text-blue-800 leading-relaxed">
-              Chi tiết đơn hàng kèm mã VietQR đã được gửi đến hòm thư: <strong className="font-semibold text-blue-950">{order.customer_email}</strong>. Quý khách vui lòng kiểm tra hộp thư đến (hoặc thư rác/spam).
+  // ==========================================
+  // RENDER 1: ẢNH 1 - GIAO DỊCH MOMO ĐÃ HOÀN TẤT
+  // ==========================================
+  if (viewMode === 'momo' && order) {
+    return (
+      <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 py-12 animate-fade-in space-y-6">
+        {/* Top Checkmark Circle Icon */}
+        <div className="text-center space-y-2">
+          <div className="w-16 h-16 bg-[#e6f7ef] dark:bg-emerald-950/60 text-[#00a86b] dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto shadow-xs border border-[#b2e7cf] dark:border-emerald-800 animate-scale-in">
+            <Check size={36} strokeWidth={3} />
+          </div>
+
+          <div className="inline-block px-3.5 py-1 bg-[#e6f7ef] dark:bg-emerald-950/50 text-[#00875a] dark:text-emerald-400 border border-[#b2e7cf] dark:border-emerald-800 rounded-full text-xs font-bold">
+            Thanh Toán Thành Công
+          </div>
+
+          <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-ink-900 dark:text-cream-100">
+            Giao Dịch MoMo Đã Hoàn Tất!
+          </h1>
+
+          <p className="text-xs sm:text-sm text-ink-500 dark:text-cream-400 max-w-md mx-auto">
+            Cảm ơn bạn. Đơn hàng của bạn đã được thanh toán thành công qua Cổng MoMo AIO Gateway.
+          </p>
+        </div>
+
+        {/* Transaction Details Box */}
+        <div className="bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3.5 text-xs sm:text-sm">
+          <div className="flex justify-between items-center py-1 border-b border-cream-100 dark:border-ink-800/80">
+            <span className="text-ink-500 dark:text-cream-400">Mã đơn hàng:</span>
+            <span className="font-mono font-bold text-[#00875a] dark:text-emerald-400">
+              #{order.order_code || order.id}
+            </span>
+          </div>
+
+          <div className="flex justify-between items-center py-1 border-b border-cream-100 dark:border-ink-800/80">
+            <span className="text-ink-500 dark:text-cream-400">Mã giao dịch MoMo:</span>
+            <span className="font-mono font-bold text-ink-800 dark:text-cream-200">
+              {momoTxnId}
+            </span>
+          </div>
+
+          <div className="flex justify-between items-center py-1 border-b border-cream-100 dark:border-ink-800/80">
+            <span className="text-ink-500 dark:text-cream-400">Số tiền thanh toán:</span>
+            <span className="font-display font-bold text-base sm:text-lg text-[#00a86b] dark:text-emerald-400">
+              {formatCurrency(order.total_amount)}
+            </span>
+          </div>
+
+          <div className="flex justify-between items-center py-1">
+            <span className="text-ink-500 dark:text-cream-400">Hình thức:</span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-pink-50 dark:bg-pink-950/40 text-[#D82D8B] dark:text-pink-400 border border-pink-200 dark:border-pink-900/60 rounded-lg text-xs font-semibold">
+              <ExternalLink size={12} />
+              <span>MoMo AIO Hosted Gateway</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Callout 1: GHN Express Auto Transfer Notification with Countdown */}
+        <div className="bg-[#e6f7ef]/80 dark:bg-emerald-950/40 border border-[#b2e7cf] dark:border-emerald-800/80 text-[#006644] dark:text-emerald-300 rounded-2xl p-4 flex items-start gap-3 text-xs shadow-2xs">
+          <ShieldCheck size={18} className="text-[#00875a] dark:text-emerald-400 shrink-0 mt-0.5" />
+          <div className="flex-1 space-y-0.5">
+            <p className="font-semibold leading-relaxed">
+              Đơn hàng đang được tự động chuyển sang bộ phận đóng gói và giao cho GHN Express. Tự động chuyển hướng sau{' '}
+              <strong className="font-bold underline text-[#004d34] dark:text-emerald-200">
+                {momoCountdown}s
+              </strong>
+              .
             </p>
           </div>
         </div>
-      )}
 
-      {/* MoMo Payment Card */}
-      {order?.payment_method === 'momo' && (
-        <div className="bg-white rounded-3xl border-2 border-pink-500/30 p-6 sm:p-8 shadow-lg space-y-6 animate-scale-up">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-cream-100 pb-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center border border-pink-200 shadow-2xs font-bold text-xs">
-                MoMo
-              </div>
-              <div>
-                <h3 className="font-display font-bold text-lg text-ink-900">
-                  Thanh toán qua Ví điện tử MoMo
-                </h3>
-                <p className="text-xs text-ink-500">
-                  Cổng thanh toán MoMo Sandbox bảo mật & xác nhận tự động
-                </p>
-              </div>
-            </div>
-
-            {paymentConfirmed ? (
-              <span className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-bold flex items-center gap-1">
-                <CheckCircle2 size={14} className="text-emerald-600" />
-                <span>Đã xác nhận thanh toán MoMo</span>
-              </span>
-            ) : (
-              <span className="px-3 py-1 bg-pink-50 text-pink-700 border border-pink-200 rounded-full text-xs font-bold flex items-center gap-1">
-                <Clock size={14} className="text-pink-500 animate-pulse" />
-                <span>Chờ xác nhận MoMo</span>
-              </span>
-            )}
+        {/* Callout 2: Email E-Invoice Confirmation */}
+        <div className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/90 dark:border-blue-900/60 text-blue-900 dark:text-blue-300 rounded-2xl p-4 flex items-start gap-3 text-xs shadow-2xs">
+          <Mail size={18} className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+          <div className="flex-1 space-y-0.5">
+            <p className="text-blue-900 dark:text-blue-200 leading-relaxed">
+              📧 <strong>Hóa đơn & Xác nhận thanh toán</strong> đã được gửi tới email của bạn (
+              <span className="font-semibold text-blue-950 dark:text-blue-100">{order.customer_email}</span>
+              ). Vui lòng kiểm tra hộp thư đến để lưu trữ biên lai.
+            </p>
           </div>
-
-          <div className="p-4 bg-pink-50/60 rounded-2xl border border-pink-200 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold text-pink-900">Tổng tiền đơn hàng:</p>
-              <p className="font-display font-bold text-xl text-pink-600 mt-0.5">
-                {formatCurrency(order.total_amount)}
-              </p>
-            </div>
-
-            {!paymentConfirmed && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={() => onNavigate({ name: 'momo-gateway', orderId: order.id })}
-                  className="px-5 py-2.5 bg-gradient-to-r from-[#A50064] via-[#D82D8B] to-[#AE2070] hover:brightness-110 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer hover:scale-105 active:scale-95"
-                >
-                  <ExternalLink size={14} />
-                  <span>Mở Cổng MoMo CameraHub (Khuyên dùng - Không lo lỗi 504)</span>
-                </button>
-
-                <button
-                  onClick={handleOpenMomoGateway}
-                  disabled={openingMomo}
-                  className="px-4 py-2.5 bg-white hover:bg-pink-50 border border-pink-300 text-pink-700 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95"
-                  title="Thử mở cổng MoMo Sandbox bên ngoài"
-                >
-                  {openingMomo ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <ExternalLink size={14} />
-                  )}
-                  <span>Mở Cổng Sandbox Ngoài (test-payment.momo.vn)</span>
-                </button>
-
-                <button
-                  onClick={handleConfirmPaid}
-                  disabled={confirmingPayment}
-                  className="px-4 py-2.5 bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-700 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95"
-                  title="Xác nhận nhanh nếu đã hoàn tất thanh toán hoặc cần duyệt ngay"
-                >
-                  {confirmingPayment ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <CheckCircle2 size={14} />
-                  )}
-                  <span>Xác nhận đã quét mã MoMo xong</span>
-                </button>
-              </div>
-            )}
-          </div>
-
-          {paymentConfirmed && (
-            <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-2.5 text-xs text-emerald-900 mt-2">
-              <CheckCircle2 size={18} className="text-emerald-600 shrink-0" />
-              <div>
-                <strong className="block text-emerald-800">Đã xác nhận thanh toán MoMo thành công!</strong>
-                <span>Đơn hàng đã được duyệt và chuyển sang bộ phận đóng gói. Email xác nhận thanh toán đã được gửi tới <strong>{order.customer_email || 'hòm thư của bạn'}</strong>.</span>
-              </div>
-            </div>
-          )}
-
-          {!paymentConfirmed && (
-            <div className="bg-pink-50/40 border border-pink-200 rounded-2xl p-4 text-xs text-ink-700 space-y-3">
-              <div className="font-bold text-pink-700 flex items-center gap-1.5 text-sm">
-                <Info size={16} />
-                <span>Thông tin tài khoản MoMo Sandbox (Dùng để nhập thanh toán & chụp ảnh nộp bài Lab):</span>
-              </div>
-              <p className="text-[11px] text-ink-500">
-                Bấm nút <strong className="text-pink-600 font-bold">"Mở Cổng Thanh Toán MoMo Sandbox"</strong> ở trên, trang MoMo chính thức sẽ mở ra. Bạn chọn 1 trong 2 cách sau để thanh toán:
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
-                <div className="bg-white border border-pink-200 p-3.5 rounded-xl space-y-1.5 shadow-2xs">
-                  <p className="font-bold text-pink-950 mb-1 flex items-center justify-between">
-                    <span>💳 Cách 1: Thẻ ATM Nội Địa Napas (Khuyên dùng)</span>
-                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded-full">Thành công 100%</span>
-                  </p>
-                  <p className="text-[10px] text-pink-800">
-                    * Trên cổng MoMo, bấm chọn tab <strong>"Thẻ ATM nội địa"</strong> (chọn ngân hàng bất kỳ như NCB/Vietcombank) và điền:
-                  </p>
-                  <p>• Số thẻ: <strong className="font-mono font-bold text-pink-700">9704 0000 0000 0018</strong></p>
-                  <p>• Tên chủ thẻ: <strong className="font-mono font-bold text-pink-700">NGUYEN VAN A</strong></p>
-                  <p>• Ngày phát hành: <strong className="font-mono font-bold text-pink-700">03/07</strong></p>
-                  <p>• Mã OTP xác thực: <strong className="font-mono font-bold text-pink-700">000000</strong> (hoặc 123456)</p>
-                  <p className="text-[10px] text-amber-700 pt-1 border-t border-cream-100">
-                    ⚠️ <em>Lưu ý: Tránh tab Thẻ quốc tế (Visa/Mastercard) vì máy chủ thanh toán thẻ quốc tế MoMo Sandbox thường bị lỗi 504 Gateway Time-out.</em>
-                  </p>
-                </div>
-                <div className="bg-white border border-pink-200 p-3.5 rounded-xl space-y-1.5 shadow-2xs">
-                  <p className="font-bold text-pink-950 mb-1 flex items-center justify-between">
-                    <span>📱 Cách 2: App MoMo Test / Quét mã QR</span>
-                    <span className="text-[10px] bg-pink-100 text-pink-800 font-semibold px-2 py-0.5 rounded-full">Ví MoMo</span>
-                  </p>
-                  <p>• Mở ứng dụng MoMo Developer / MoMo Test</p>
-                  <p>• Quét mã QR hiển thị trên màn hình cổng MoMo</p>
-                  <p>• SĐT test: <strong className="font-mono font-bold text-pink-700">0968202605</strong></p>
-                  <p>• Mật khẩu / OTP: <strong className="font-mono font-bold text-pink-700">000000</strong></p>
-                  <p className="text-[10px] text-pink-700 pt-1 border-t border-cream-100">
-                    💡 <em>Nếu đã quét hoặc không muốn mở cổng MoMo, bạn có thể bấm nút <strong>"Xác nhận đã quét mã MoMo xong"</strong> ở trên để hoàn tất ngay.</em>
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
-      )}
 
-      {/* 3. VietQR Payment Card (If VietQR Payment Selected) */}
-      {isVietQR && order && (
-        <div className="bg-white rounded-3xl border-2 border-accent-500/30 p-6 sm:p-8 shadow-lg space-y-6 animate-scale-up">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-cream-100 pb-4">
+        {/* Actions Button Row */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+          <button
+            type="button"
+            onClick={() => setViewMode('order')}
+            className="w-full sm:flex-1 py-3.5 px-6 bg-[#00875a] hover:bg-[#00704a] text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95"
+          >
+            <span>Xem Chi Tiết Đơn Hàng Ngay</span>
+            <ArrowRight size={16} />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onNavigate({ name: 'catalog' })}
+            className="w-full sm:w-auto py-3.5 px-6 bg-white dark:bg-ink-800 border border-cream-200 dark:border-ink-700 hover:bg-cream-50 dark:hover:bg-ink-700 text-ink-800 dark:text-cream-200 font-bold text-sm rounded-xl transition-all cursor-pointer"
+          >
+            <span>Tiếp Tục Mua Sắm</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // RENDER 2: ẢNH 2 - ĐẶT HÀNG THÀNH CÔNG (GHN EXPRESS & DETAILS)
+  // ==========================================
+  return (
+    <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 py-12 animate-fade-in space-y-6">
+      {/* 1. Header Banner */}
+      <div className="text-center space-y-2">
+        <div className="w-16 h-16 bg-[#e6f7ef] dark:bg-emerald-950/60 text-[#00a86b] dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto shadow-xs border border-[#b2e7cf] dark:border-emerald-800 animate-scale-in">
+          <Check size={36} strokeWidth={3} />
+        </div>
+
+        <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-ink-900 dark:text-cream-100">
+          Đặt Hàng Thành Công!
+        </h1>
+
+        <p className="text-xs sm:text-sm text-ink-500 dark:text-cream-400 max-w-lg mx-auto">
+          Cảm ơn bạn đã tin tưởng dịch vụ của CameraHub. Mã đơn hàng của bạn là{' '}
+          <strong className="font-mono text-[#00875a] dark:text-emerald-400 font-bold">
+            #{order?.order_code || order?.id || orderId}
+          </strong>
+        </p>
+      </div>
+
+      {/* VietQR Pending Card (Chỉ hiển thị nếu là VietQR và chưa thanh toán) */}
+      {isVietQR && !paymentConfirmed && order && (
+        <div className="bg-white dark:bg-ink-900 rounded-3xl border-2 border-accent-500/40 p-5 sm:p-7 shadow-lg space-y-5 animate-scale-up">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-cream-100 dark:border-ink-800 pb-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-accent-50 text-accent-600 flex items-center justify-center border border-accent-200 shadow-2xs">
+              <div className="w-10 h-10 rounded-2xl bg-accent-50 dark:bg-accent-950/60 text-accent-600 flex items-center justify-center border border-accent-200 dark:border-accent-800">
                 <QrCode size={22} />
               </div>
               <div>
-                <h3 className="font-display font-bold text-lg text-ink-900">
+                <h3 className="font-display font-bold text-base text-ink-900 dark:text-cream-100">
                   Thanh toán Chuyển khoản VietQR
                 </h3>
-                <p className="text-xs text-ink-500">
+                <p className="text-[11px] text-ink-500 dark:text-cream-400">
                   Quét mã bằng App ngân hàng bất kỳ để chuyển tiền nhanh Napas 24/7
                 </p>
               </div>
             </div>
 
-            {paymentConfirmed ? (
-              <span className="px-3 py-1 bg-accent-50 text-accent-700 border border-accent-200 rounded-full text-xs font-bold flex items-center gap-1">
-                <CheckCircle2 size={14} className="text-accent-600" />
-                <span>Đã xác nhận thanh toán</span>
-              </span>
-            ) : (
-              <span className="px-3 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-full text-xs font-bold flex items-center gap-1">
-                <Clock size={14} className="text-amber-500 animate-pulse" />
-                <span>Chờ thanh toán</span>
-              </span>
-            )}
+            <span className="px-3 py-1 bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded-full text-xs font-bold flex items-center gap-1">
+              <Clock size={13} className="text-amber-500 animate-pulse" />
+              <span>Chờ thanh toán</span>
+            </span>
           </div>
 
-          {/* 15-Minute Countdown "Thời Gian Giữ Hàng" Banner */}
-          {!paymentConfirmed && (
-            <div
-              className={`p-4 rounded-2xl border transition-all flex flex-wrap items-center justify-between gap-3 ${isExpired
-                  ? 'bg-rose-50 border-rose-200 text-rose-900'
-                  : timeLeft < 180
-                    ? 'bg-rose-50/70 border-rose-200 text-rose-900 animate-pulse'
-                    : 'bg-amber-50/80 border-amber-200/90 text-amber-900'
-                }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <div
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${isExpired ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'
-                    }`}
-                >
-                  {isExpired ? (
-                    <AlertTriangle size={18} />
-                  ) : (
-                    <Flame size={18} className="animate-pulse" />
-                  )}
-                </div>
-                <div>
-                  <div className="text-[11px] font-bold uppercase tracking-wider">
-                    {isExpired ? 'Đã hết thời gian giữ hàng' : 'Thời gian giữ hàng thanh toán'}
-                  </div>
-                  <p className="text-xs text-ink-600 mt-0.5">
-                    {isExpired
-                      ? 'Đơn hàng trực tuyến đã quá thời gian 15 phút. Vui lòng quay lại giỏ hàng.'
-                      : 'Đơn hàng được bảo lưu trong 15 phút. Vui lòng quét mã QR trước khi hết giờ.'}
-                  </p>
-                </div>
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
+            {/* QR Image */}
+            <div className="sm:col-span-5 flex flex-col items-center justify-center text-center space-y-2 bg-cream-50/70 dark:bg-ink-800/60 p-4 rounded-2xl border border-cream-200 dark:border-ink-700">
+              <div className="bg-white p-2 rounded-xl shadow-xs border border-cream-200">
+                <img src={qrUrl} alt="VietQR" className="w-44 h-44 object-contain rounded-lg" />
               </div>
-
-              <div className="flex items-center gap-2">
-                {!isExpired ? (
-                  <div className="flex items-center gap-1.5 font-display font-bold text-base text-accent-600 bg-white px-3.5 py-1.5 rounded-xl border border-amber-200 shadow-2xs">
-                    <Clock size={15} className="text-accent-500" />
-                    <span>{formattedTime}</span>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => onNavigate({ name: 'cart' })}
-                    className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
-                  >
-                    Quay lại Giỏ hàng
-                  </button>
-                )}
-              </div>
+              <a
+                href={qrUrl}
+                target="_blank"
+                rel="noreferrer"
+                download={`VietQR-${order.order_code}.png`}
+                className="inline-flex items-center gap-1 text-[11px] text-accent-600 hover:underline font-bold"
+              >
+                <Download size={13} />
+                <span>Tải ảnh QR</span>
+              </a>
             </div>
-          )}
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-            {/* Left: Dynamic QR Code */}
-            <div className="md:col-span-5 flex flex-col items-center justify-center text-center space-y-3 bg-cream-50/70 p-4 rounded-2xl border border-cream-200">
-              <div className="bg-white p-2.5 rounded-2xl shadow-xs border border-cream-200">
-                <img
-                  src={qrUrl}
-                  alt="VietQR Vietcombank"
-                  className="w-48 h-48 object-contain rounded-xl"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <span className="text-[11px] font-bold text-ink-600 block">
-                  Tự động điền đúng số tiền & mã đơn
+            {/* Bank Info */}
+            <div className="sm:col-span-7 space-y-2.5 text-xs">
+              <div className="p-2.5 bg-cream-50/60 dark:bg-ink-800/50 rounded-xl border border-cream-200 dark:border-ink-700">
+                <span className="text-ink-400 text-[10px] block">Ngân hàng thụ hưởng:</span>
+                <span className="font-bold text-ink-900 dark:text-cream-100 text-xs">
+                  {VIETQR_CONFIG.bankFullName}
                 </span>
-                <a
-                  href={qrUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  download={`VietQR-${order.order_code}.png`}
-                  className="inline-flex items-center gap-1 text-xs text-accent-600 hover:text-accent-700 font-bold"
-                >
-                  <Download size={13} />
-                  <span>Tải ảnh QR</span>
-                </a>
               </div>
+
+              <div className="p-2.5 bg-cream-50/60 dark:bg-ink-800/50 rounded-xl border border-cream-200 dark:border-ink-700 flex items-center justify-between">
+                <div>
+                  <span className="text-ink-400 text-[10px] block">Số tài khoản:</span>
+                  <span className="font-mono font-bold text-sm text-accent-600">
+                    {VIETQR_CONFIG.accountNo}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleCopy('stk', VIETQR_CONFIG.accountNo)}
+                  className="px-2.5 py-1 bg-white dark:bg-ink-700 text-accent-700 dark:text-accent-300 rounded-lg border border-cream-200 dark:border-ink-600 text-[11px] font-bold cursor-pointer"
+                >
+                  {copiedField === 'stk' ? 'Đã chép' : 'Sao chép'}
+                </button>
+              </div>
+
+              <div className="p-2.5 bg-accent-50/70 dark:bg-accent-950/40 rounded-xl border border-accent-200/80 dark:border-accent-800 flex items-center justify-between">
+                <div>
+                  <span className="text-accent-700 dark:text-accent-400 text-[10px] font-bold block">
+                    Nội dung chuyển khoản (bắt buộc):
+                  </span>
+                  <span className="font-mono font-bold text-xs text-accent-700 dark:text-accent-300">
+                    {order.order_code || order.id}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleCopy('memo', order.order_code || order.id)}
+                  className="px-2.5 py-1 bg-white dark:bg-ink-700 text-accent-700 dark:text-accent-300 rounded-lg border border-accent-200 dark:border-ink-600 text-[11px] font-bold cursor-pointer"
+                >
+                  {copiedField === 'memo' ? 'Đã chép' : 'Sao chép'}
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleConfirmPaid}
+                disabled={confirmingPayment}
+                className="w-full mt-2 py-3 bg-[#00875a] hover:bg-[#00704a] text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
+              >
+                {confirmingPayment ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" />
+                    <span>Đang xác thực giao dịch...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={16} />
+                    <span>Tôi đã chuyển khoản thành công</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Main Shipping & Order Card (Chuẩn 100% Ảnh 2) */}
+      {order && (
+        <div className="bg-white dark:bg-ink-900 border border-cream-200 dark:border-ink-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+          {/* Card Header: Vận chuyển GHN Express & Badge GHN Tiêu Chuẩn */}
+          <div className="flex items-center justify-between pb-3.5 border-b border-cream-100 dark:border-ink-800">
+            <div className="flex items-center gap-2 font-bold text-ink-900 dark:text-cream-100 text-sm sm:text-base">
+              <Truck size={20} className="text-[#00a86b] dark:text-emerald-400" />
+              <span>Vận Chuyển Qua GHN Express</span>
             </div>
 
-            {/* Right: Bank Account Details with 1-Click Copy */}
-            <div className="md:col-span-7 space-y-3">
-              <div className="space-y-2 text-xs">
-                {/* Bank */}
-                <div className="p-3 bg-cream-50/60 rounded-xl border border-cream-200">
-                  <span className="text-ink-400 text-[11px] block">Ngân hàng thụ hưởng:</span>
-                  <span className="font-bold text-ink-900 text-sm">{VIETQR_CONFIG.bankFullName}</span>
+            <span className="px-3 py-0.5 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800 rounded-full text-xs font-bold">
+              GHN Tiêu Chuẩn
+            </span>
+          </div>
+
+          {/* Row 1: Phương thức thanh toán */}
+          <div className="flex justify-between items-center py-1 text-xs sm:text-sm">
+            <span className="text-ink-500 dark:text-cream-400">Phương thức thanh toán:</span>
+            <span className="font-bold text-ink-900 dark:text-cream-100 text-right">
+              {order.payment_method === 'momo'
+                ? 'Cổng thanh toán Trực tuyến (MoMo / VietQR Hosted)'
+                : isVietQR
+                  ? 'Cổng thanh toán Trực tuyến (VietQR Hosted / MBBank)'
+                  : 'Thanh toán khi nhận hàng (COD)'}
+            </span>
+          </div>
+
+          {/* Row 2: Trạng thái đơn hàng */}
+          <div className="flex justify-between items-center py-1 text-xs sm:text-sm">
+            <span className="text-ink-500 dark:text-cream-400">Trạng thái đơn hàng:</span>
+            <span className="px-3 py-1 bg-amber-100/80 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 rounded-full text-xs font-bold">
+              Đang chuẩn bị hàng
+            </span>
+          </div>
+
+          {/* Callout 1 (green): Thông báo hệ thống vận chuyển GHN */}
+          <div className="bg-[#e6f7ef]/80 dark:bg-emerald-950/40 border border-[#b2e7cf] dark:border-emerald-800/80 text-[#006644] dark:text-emerald-300 rounded-2xl p-4 flex items-start gap-3 text-xs shadow-2xs">
+            <ShieldCheck size={18} className="text-[#00875a] dark:text-emerald-400 shrink-0 mt-0.5" />
+            <p className="leading-relaxed">
+              Đơn hàng đã được ghi nhận trên hệ thống vận chuyển GHN. Bạn có thể tra cứu hành trình theo
+              thời gian thực bất cứ lúc nào trong mục <strong>Đơn hàng của tôi</strong>.
+            </p>
+          </div>
+
+          {/* Callout 2 (blue): Thông báo email hóa đơn điện tử */}
+          <div className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/90 dark:border-blue-900/60 text-blue-900 dark:text-blue-300 rounded-2xl p-4 flex items-start gap-3 text-xs shadow-2xs">
+            <Mail size={18} className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+            <p className="leading-relaxed">
+              📧 Hóa đơn điện tử và thông báo xác nhận đơn hàng đã được gửi tới email của bạn (
+              <strong>{order.customer_email}</strong>). Vui lòng kiểm tra hòm thư để lưu trữ chi tiết giao
+              dịch.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Action Buttons (Chuẩn Ảnh 2: 2 nút trên + 1 nút dưới) */}
+      <div className="space-y-3 pt-2">
+        {/* Row 1: Xem & In Biên Nhận + Quản lý đơn hàng của tôi */}
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowReceiptModal(true)}
+            className="w-full sm:flex-1 py-3 px-5 border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs active:scale-95"
+          >
+            <Receipt size={16} />
+            <span>Xem & In Biên Nhận</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onNavigate({ name: 'orders' })}
+            className="w-full sm:flex-1 py-3 px-5 border border-cream-200 dark:border-ink-700 bg-white dark:bg-ink-800 hover:bg-cream-50 dark:hover:bg-ink-700 text-ink-700 dark:text-cream-200 font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs active:scale-95"
+          >
+            <Package size={16} />
+            <span>Quản lý đơn hàng của tôi</span>
+          </button>
+        </div>
+
+        {/* Row 2: Tiếp tục mua sắm */}
+        <div className="text-center pt-1">
+          <button
+            type="button"
+            onClick={() => onNavigate({ name: 'catalog' })}
+            className="w-full sm:w-auto min-w-[240px] py-3.5 px-8 bg-[#00875a] hover:bg-[#00704a] text-white font-bold text-xs sm:text-sm rounded-full shadow-md flex items-center justify-center gap-2 mx-auto transition-all cursor-pointer active:scale-95"
+          >
+            <ShoppingBag size={16} />
+            <span>Tiếp tục mua sắm</span>
+          </button>
+        </div>
+
+        {/* Optional Toggle back to MoMo Gateway Result Screen if paid via MoMo */}
+        {order?.payment_method === 'momo' && (
+          <div className="text-center pt-2">
+            <button
+              type="button"
+              onClick={() => setViewMode('momo')}
+              className="text-xs text-pink-600 dark:text-pink-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+            >
+              <ExternalLink size={12} />
+              <span>Xem lại biên lai kết quả Cổng MoMo AIO Gateway</span>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* 4. MODAL XEM & IN BIÊN NHẬN (Receipt Modal via Portal) */}
+      {showReceiptModal &&
+        order &&
+        createPortal(
+          <div className="fixed inset-0 w-screen h-screen min-h-[100dvh] bg-black/80 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-white dark:bg-ink-900 rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-cream-200 dark:border-ink-700 overflow-hidden animate-scale-in">
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-cream-100 dark:border-ink-800 flex items-center justify-between bg-cream-50/60 dark:bg-ink-800/40">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
+                    <Receipt size={18} />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-base text-ink-900 dark:text-cream-100">
+                      Biên Nhận Đơn Hàng
+                    </h3>
+                    <p className="text-[11px] text-ink-400">
+                      Hóa đơn điện tử chính thức từ CameraHub
+                    </p>
+                  </div>
                 </div>
 
-                {/* Account Number */}
-                <div className="p-3 bg-cream-50/60 rounded-xl border border-cream-200 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setShowReceiptModal(false)}
+                  className="w-8 h-8 rounded-full bg-cream-100 dark:bg-ink-800 hover:bg-cream-200 dark:hover:bg-ink-700 text-ink-500 flex items-center justify-center cursor-pointer transition-all"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Printable Body Content */}
+              <div id="printable-receipt" className="flex-1 overflow-y-auto p-6 space-y-5 text-xs">
+                {/* Store & Order Code */}
+                <div className="flex justify-between items-start border-b border-cream-100 dark:border-ink-800 pb-4">
                   <div>
-                    <span className="text-ink-400 text-[11px] block">Số tài khoản (STK):</span>
-                    <span className="font-mono font-bold text-base text-accent-600">
-                      {VIETQR_CONFIG.accountNo}
+                    <h4 className="font-display font-black text-lg text-ink-900 dark:text-cream-100 tracking-tight">
+                      CameraHub Vietnam
+                    </h4>
+                    <p className="text-[11px] text-ink-500 dark:text-cream-400">
+                      Hệ thống máy ảnh, ống kính & phụ kiện chính hãng
+                    </p>
+                    <p className="text-[11px] text-ink-400">Hotline: 1900 6868 • support@camerahub.vn</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-mono font-bold text-sm text-[#00875a] dark:text-emerald-400 block">
+                      #{order.order_code || order.id}
+                    </span>
+                    <span className="text-[11px] text-ink-400 flex items-center justify-end gap-1 mt-0.5">
+                      <Calendar size={11} />
+                      {order.created_at
+                        ? new Date(order.created_at).toLocaleString('vi-VN')
+                        : new Date().toLocaleDateString('vi-VN')}
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy('stk', VIETQR_CONFIG.accountNo)}
-                    className="px-3 py-1.5 bg-white hover:bg-cream-100 text-accent-700 rounded-lg border border-cream-200 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
-                  >
-                    {copiedField === 'stk' ? (
-                      <>
-                        <Check size={13} className="text-emerald-600" />
-                        <span className="text-emerald-700">Đã chép</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy size={13} />
-                        <span>Sao chép</span>
-                      </>
-                    )}
-                  </button>
                 </div>
 
-                {/* Account Name */}
-                <div className="p-3 bg-cream-50/60 rounded-xl border border-cream-200">
-                  <span className="text-ink-400 text-[11px] block">Chủ tài khoản:</span>
-                  <span className="font-bold text-ink-900">{VIETQR_CONFIG.accountName}</span>
+                {/* Customer Info & Shipping Carrier */}
+                <div className="grid grid-cols-2 gap-4 p-3.5 bg-cream-50/60 dark:bg-ink-800/50 rounded-2xl border border-cream-200 dark:border-ink-700">
+                  <div className="space-y-1">
+                    <span className="text-ink-400 text-[10px] uppercase font-bold block">
+                      Người nhận hàng
+                    </span>
+                    <p className="font-bold text-ink-900 dark:text-cream-100 text-xs">
+                      {order.customer_name}
+                    </p>
+                    <p className="text-ink-500 dark:text-cream-400 flex items-center gap-1 text-[11px]">
+                      <Phone size={11} /> {order.customer_phone}
+                    </p>
+                    <p className="text-ink-500 dark:text-cream-400 flex items-center gap-1 text-[11px]">
+                      <Mail size={11} /> {order.customer_email}
+                    </p>
+                    <p className="text-ink-600 dark:text-cream-300 text-[11px] mt-1">
+                      {order.shipping_address}, {order.city}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1 text-right">
+                    <span className="text-ink-400 text-[10px] uppercase font-bold block">
+                      Đơn vị giao vận
+                    </span>
+                    <p className="font-bold text-ink-900 dark:text-cream-100 text-xs flex items-center justify-end gap-1">
+                      <Truck size={13} className="text-[#00a86b]" />
+                      GHN Express
+                    </p>
+                    <p className="text-amber-700 dark:text-amber-400 text-[11px]">
+                      Gói: GHN Tiêu Chuẩn
+                    </p>
+                    <span className="inline-block mt-1 px-2.5 py-0.5 bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 rounded-full text-[10px] font-bold">
+                      Đang chuẩn bị hàng
+                    </span>
+                  </div>
                 </div>
 
-                {/* Amount */}
-                <div className="p-3 bg-cream-50/60 rounded-xl border border-cream-200 flex items-center justify-between">
-                  <div>
-                    <span className="text-ink-400 text-[11px] block">Số tiền thanh toán:</span>
-                    <span className="font-display font-bold text-base text-accent-600">
+                {/* Items List */}
+                <div className="space-y-2">
+                  <span className="text-ink-400 text-[10px] uppercase font-bold block">
+                    Danh sách sản phẩm ({order.items?.length || 0})
+                  </span>
+                  <div className="border border-cream-200 dark:border-ink-800 rounded-xl overflow-hidden divide-y divide-cream-100 dark:divide-ink-800">
+                    {order.items?.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="p-3 flex items-center justify-between gap-3 bg-white dark:bg-ink-900"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {item.image_url && (
+                            <img
+                              src={item.image_url}
+                              alt=""
+                              className="w-10 h-10 object-cover rounded-lg bg-cream-100 dark:bg-ink-800 border border-cream-200 dark:border-ink-700 shrink-0"
+                            />
+                          )}
+                          <div className="min-w-0">
+                            <p className="font-semibold text-ink-900 dark:text-cream-100 truncate text-xs">
+                              {item.name}
+                            </p>
+                            <p className="text-[11px] text-ink-400">
+                              {formatCurrency(item.price)} × {item.quantity}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="font-display font-bold text-ink-900 dark:text-cream-100 shrink-0 text-xs">
+                          {formatCurrency(item.price * item.quantity)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Totals Summary */}
+                <div className="p-3.5 bg-cream-50/70 dark:bg-ink-800/60 rounded-xl space-y-1.5 text-xs">
+                  <div className="flex justify-between text-ink-500 dark:text-cream-400">
+                    <span>Hình thức thanh toán:</span>
+                    <span className="font-semibold text-ink-800 dark:text-cream-200">
+                      {order.payment_method === 'momo'
+                        ? 'MoMo AIO Hosted Gateway'
+                        : isVietQR
+                          ? 'VietQR Napas 24/7'
+                          : 'COD (Thanh toán khi nhận)'}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between text-ink-500 dark:text-cream-400">
+                    <span>Trạng thái thanh toán:</span>
+                    <span className="font-bold text-[#00875a] dark:text-emerald-400">
+                      {order.payment_status === 'paid' || paymentConfirmed
+                        ? 'Đã thanh toán đủ'
+                        : 'Chờ thu tiền'}
+                    </span>
+                  </div>
+
+                  <div className="border-t border-cream-200 dark:border-ink-700 pt-2 flex justify-between items-center">
+                    <span className="font-bold text-ink-900 dark:text-cream-100">
+                      Tổng tiền thanh toán:
+                    </span>
+                    <span className="font-display font-black text-base text-[#00875a] dark:text-emerald-400">
                       {formatCurrency(order.total_amount)}
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy('amount', String(order.total_amount))}
-                    className="px-3 py-1.5 bg-white hover:bg-cream-100 text-accent-700 rounded-lg border border-cream-200 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
-                  >
-                    {copiedField === 'amount' ? (
-                      <>
-                        <Check size={13} className="text-emerald-600" />
-                        <span className="text-emerald-700">Đã chép</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy size={13} />
-                        <span>Sao chép</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {/* Transfer Content */}
-                <div className="p-3 bg-accent-50/70 rounded-xl border border-accent-200/80 flex items-center justify-between">
-                  <div>
-                    <span className="text-accent-700 text-[11px] font-bold block">Nội dung chuyển khoản (bắt buộc):</span>
-                    <span className="font-mono font-bold text-sm text-accent-700">
-                      {order.order_code || order.id}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy('memo', order.order_code || order.id)}
-                    className="px-3 py-1.5 bg-white hover:bg-accent-100 text-accent-700 rounded-lg border border-accent-200 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
-                  >
-                    {copiedField === 'memo' ? (
-                      <>
-                        <Check size={13} className="text-emerald-600" />
-                        <span className="text-emerald-700">Đã chép</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy size={13} />
-                        <span>Sao chép</span>
-                      </>
-                    )}
-                  </button>
                 </div>
               </div>
 
-              {/* Shopee-style Auto-Approval Simulation Action */}
-              <div className="pt-2">
-                {paymentConfirmed ? (
-                  <div className="p-3.5 bg-accent-50 border border-accent-200 rounded-2xl flex items-center gap-2.5 text-xs text-accent-900">
-                    <CheckCircle2 size={18} className="text-accent-600 shrink-0" />
-                    <div>
-                      <strong className="block text-accent-700">Đã tự động duyệt đơn hàng trực tuyến!</strong>
-                      <span>Đơn hàng đã được chuyển sang bộ phận đóng gói và bàn giao Shipper. Email xác nhận thanh toán đã được gửi tới <strong>{order.customer_email || 'hòm thư của bạn'}</strong>.</span>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleConfirmPaid}
-                    disabled={confirmingPayment}
-                    className="w-full btn-accent py-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer"
-                  >
-                    {confirmingPayment ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        <span>Đang đối soát giao dịch VietQR 24/7...</span>
-                      </>
-                    ) : (
-                      <>
-
-                        <span>Tôi đã chuyển khoản thành công</span>
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 4. Order Details Card */}
-      {order && (
-        <div className="card p-6 md:p-8 space-y-6 bg-white border border-cream-200 rounded-3xl shadow-xs">
-          <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-cream-100">
-            <div>
-              <span className="text-xs text-ink-400 block mb-1">Mã đơn hàng</span>
-              <span className="font-display font-bold text-lg text-ink-900">
-                #{order.order_code || order.id}
-              </span>
-            </div>
-            <div>
-              <span className="text-xs text-ink-400 block mb-1">Tổng thanh toán</span>
-              <span className="font-display font-bold text-xl text-accent-600">
-                {formatCurrency(order.total_amount)}
-              </span>
-            </div>
-          </div>
-
-          <div className="grid sm:grid-cols-2 gap-6 text-xs">
-            <div className="space-y-1">
-              <h3 className="font-bold text-sm text-ink-900 mb-2 flex items-center gap-2">
-                <MapPin size={16} className="text-accent-500" /> Thông tin giao hàng
-              </h3>
-              <p className="font-semibold text-ink-900 text-sm">{order.customer_name}</p>
-              <p className="text-ink-500">{order.customer_email}</p>
-              <p className="text-ink-500">{order.customer_phone}</p>
-              <p className="text-ink-700 mt-1 font-medium">{order.shipping_address}, {order.city}</p>
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-bold text-sm text-ink-900 mb-2 flex items-center gap-2">
-                <Truck size={16} className="text-accent-500" /> Trạng thái & Phương thức
-              </h3>
-              <div>
-                <span className="text-ink-400 block">Trạng thái đơn hàng:</span>
-                <span className="inline-block mt-0.5 px-3 py-1 bg-accent-50 text-accent-700 border border-accent-200 text-xs font-bold rounded-full">
-                  {paymentConfirmed || order.status === 'shipping'
-                    ? 'Đã duyệt • Đang chuẩn bị hàng'
-                    : 'Đang xử lý'}
-                </span>
-              </div>
-              <div>
-                <span className="text-ink-400 block">Hình thức thanh toán:</span>
-                <span className="font-semibold text-ink-800">
-                  {isVietQR
-                    ? 'Chuyển khoản VietQR (Vietcombank)'
-                    : order.payment_method === 'vnpay'
-                      ? 'Cổng VNPAY'
-                      : order.payment_method === 'momo'
-                        ? 'Ví MoMo'
-                        : 'Thanh toán khi nhận hàng (COD)'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-sm text-ink-900 mb-3 flex items-center gap-2">
-              <Package size={16} className="text-accent-500" /> Sản phẩm đã đặt
-            </h3>
-            <div className="space-y-3">
-              {order.items.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="flex justify-between items-center text-sm py-2 border-b border-cream-100 last:border-none"
+              {/* Modal Footer Actions */}
+              <div className="p-4 border-t border-cream-100 dark:border-ink-800 flex items-center justify-end gap-2.5 bg-cream-50/60 dark:bg-ink-800/40">
+                <button
+                  type="button"
+                  onClick={() => setShowReceiptModal(false)}
+                  className="px-4 py-2 bg-white dark:bg-ink-800 border border-cream-200 dark:border-ink-700 hover:bg-cream-100 dark:hover:bg-ink-700 text-ink-700 dark:text-cream-300 rounded-xl font-bold text-xs cursor-pointer transition-all"
                 >
-                  <div className="flex items-center gap-3">
-                    {item.image_url && (
-                      <img
-                        src={item.image_url}
-                        alt=""
-                        className="w-11 h-11 object-cover rounded-xl bg-cream-100 border border-cream-200 shrink-0"
-                      />
-                    )}
-                    <div>
-                      <p className="font-semibold text-ink-900">{item.name}</p>
-                      <p className="text-xs text-ink-400">Số lượng: x{item.quantity}</p>
-                    </div>
-                  </div>
-                  <span className="font-display font-bold text-ink-900">
-                    {formatCurrency(item.price * item.quantity)}
-                  </span>
-                </div>
-              ))}
+                  Đóng
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-5 py-2 bg-[#00875a] hover:bg-[#00704a] text-white rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm transition-all active:scale-95"
+                >
+                  <Printer size={14} />
+                  <span>In Biên Nhận</span>
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* 5. Navigation Action Buttons */}
-      <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-        <button
-          onClick={() => onNavigate({ name: 'orders' })}
-          className="btn-secondary px-6 py-3 rounded-2xl font-bold text-xs flex items-center gap-2 cursor-pointer shadow-2xs"
-        >
-          <Package size={16} />
-          <span>Theo dõi đơn hàng & hành trình</span>
-        </button>
-
-        <button
-          onClick={() => onNavigate({ name: 'catalog' })}
-          className="btn-accent px-6 py-3 rounded-2xl font-bold text-xs flex items-center gap-2 cursor-pointer shadow-md"
-        >
-          <span>Tiếp tục mua sắm</span>
-          <ArrowRight size={16} />
-        </button>
-      </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
