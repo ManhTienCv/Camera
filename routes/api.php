@@ -79,6 +79,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/orders', [OrderController::class, 'store']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);
     Route::post('/orders/{id}/cancel', [OrderController::class, 'cancelOrder']);
+    Route::post('/orders/{id}/return', [OrderController::class, 'requestReturn']);
     Route::post('/orders/{id}/confirm-payment', [OrderController::class, 'confirmPayment']);
 
     // 7. Payment Gateways (MoMo & VietQR Bank Webhook)

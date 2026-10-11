@@ -11,6 +11,7 @@ import {
   XCircle,
   AlertCircle,
   CheckCircle2,
+  CreditCard,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -22,6 +23,7 @@ import {
   OrderEditAddressModal,
   OrderCancelModal,
   OrderTrackingModal,
+  OrderReturnModal,
 } from '../components/orders';
 import type { EnhancedOrder, OrderJourneyStep } from '../components/orders';
 
@@ -31,7 +33,7 @@ interface OrdersPageProps {
   onNavigate: (page: Page) => void;
 }
 
-type OrderStatusTab = 'pending' | 'shipping' | 'delivered' | 'refund_pending' | 'cancelled';
+type OrderStatusTab = 'pending' | 'unpaid' | 'shipping' | 'delivered' | 'cancelled';
 
 export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
   const { user, openAuthModal } = useAuth();
@@ -43,6 +45,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
   const [ratingOrder, setRatingOrder] = useState<EnhancedOrder | null>(null);
   const [editingOrderAddress, setEditingOrderAddress] = useState<EnhancedOrder | null>(null);
   const [cancellingOrder, setCancellingOrder] = useState<EnhancedOrder | null>(null);
+  const [returningOrder, setReturningOrder] = useState<EnhancedOrder | null>(null);
 
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -69,7 +72,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
         .then((realOrders) => {
           if (realOrders && realOrders.length > 0) {
             const mappedReal: EnhancedOrder[] = realOrders.map((o) => {
-              let statusType: 'pending' | 'shipping' | 'delivered' | 'refund_pending' | 'cancelled' = 'pending';
+              let statusType: EnhancedOrder['status'] = 'pending';
               let statusLabel = 'Chờ Duyệt & Đóng Gói';
               const rawStatus = (o as any).order_status || o.status;
               const payStatus = o.payment_status;
@@ -86,6 +89,15 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
               } else if (rawStatus === 'cancelled') {
                 statusType = 'cancelled';
                 statusLabel = payStatus === 'refunded' ? 'Đã Hủy & Đã Hoàn Tiền' : 'Đã Hủy Đơn';
+              } else if (
+                (payStatus === 'pending' || payStatus === 'unpaid' || !payStatus) &&
+                o.payment_method !== 'cod'
+              ) {
+                statusType = 'unpaid';
+                statusLabel = 'Chờ Thanh Toán';
+              } else {
+                statusType = 'pending';
+                statusLabel = 'Chờ Duyệt & Đóng Gói';
               }
 
               return {
@@ -128,11 +140,11 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                 journey: [
                   { time: 'Mới đây', title: 'Đặt hàng thành công', desc: 'Đơn hàng đã được tiếp nhận trên hệ thống.', done: true },
                   {
-                    time: statusType === 'pending' ? 'Đang xử lý' : 'Hoàn tất',
-                    title: 'Chờ duyệt và đóng gói',
-                    desc: 'Nhân viên kho đang chuẩn bị sản phẩm.',
-                    done: statusType !== 'pending',
-                    current: statusType === 'pending',
+                    time: statusType === 'unpaid' ? 'Chưa thanh toán' : statusType === 'pending' ? 'Đang xử lý' : 'Hoàn tất',
+                    title: statusType === 'unpaid' ? 'Chờ thanh toán qua MoMo/Ngân hàng' : 'Chờ duyệt và đóng gói',
+                    desc: statusType === 'unpaid' ? 'Vui lòng hoàn tất thanh toán để kho xử lý đơn.' : 'Nhân viên kho đang chuẩn bị sản phẩm.',
+                    done: statusType !== 'pending' && statusType !== 'unpaid',
+                    current: statusType === 'pending' || statusType === 'unpaid',
                   },
                 ],
               };
@@ -157,7 +169,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
 
   // Lock body scroll when any modal is open
   useEffect(() => {
-    if (trackingOrder || editingOrderAddress || cancellingOrder) {
+    if (trackingOrder || editingOrderAddress || cancellingOrder || returningOrder) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -165,7 +177,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [trackingOrder, editingOrderAddress, cancellingOrder]);
+  }, [trackingOrder, editingOrderAddress, cancellingOrder, returningOrder]);
 
   useEffect(() => {
     const handleSync = () => setRefreshKey((k) => k + 1);
@@ -174,10 +186,10 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
   }, []);
 
   const pendingOrdersCount = orders.filter((o) => o.status === 'pending').length;
+  const unpaidOrdersCount = orders.filter((o) => o.status === 'unpaid').length;
   const shippingOrdersCount = orders.filter((o) => o.status === 'shipping').length;
   const deliveredOrdersCount = orders.filter((o) => o.status === 'delivered').length;
-  const refundOrdersCount = orders.filter((o) => o.status === 'refund_pending').length;
-  const cancelledOrdersCount = orders.filter((o) => o.status === 'cancelled').length;
+  const cancelledOrdersCount = orders.filter((o) => o.status === 'cancelled' || o.status === 'refund_pending').length;
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
@@ -188,6 +200,9 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
   }, [orderStatusTab]);
 
   const filteredOrders = useMemo(() => {
+    if (orderStatusTab === 'cancelled') {
+      return orders.filter((o) => o.status === 'cancelled' || o.status === 'refund_pending');
+    }
     return orders.filter((o) => o.status === orderStatusTab);
   }, [orders, orderStatusTab]);
 
@@ -291,9 +306,9 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
       <div className="flex flex-wrap items-center gap-2 pb-1 relative">
         {[
           { id: 'pending', label: `Chờ đóng gói (${pendingOrdersCount})` },
+          { id: 'unpaid', label: `Chờ thanh toán (${unpaidOrdersCount})` },
           { id: 'shipping', label: `Đang giao hàng (${shippingOrdersCount})` },
           { id: 'delivered', label: `Đã nhận hàng (${deliveredOrdersCount})` },
-          { id: 'refund_pending', label: `Chờ hoàn tiền (${refundOrdersCount})` },
           { id: 'cancelled', label: `Đã hủy (${cancelledOrdersCount})` },
         ].map((tab) => {
           const isActive = orderStatusTab === tab.id;
@@ -357,6 +372,13 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                   </div>
 
                   <div className="flex items-center gap-3">
+                    {ord.status === 'unpaid' && (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-300 px-3.5 py-1 rounded-full shadow-2xs">
+                        <CreditCard size={14} className="text-amber-600" />
+                        <span>{ord.statusLabel}</span>
+                      </span>
+                    )}
+
                     {ord.status === 'pending' && (
                       <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-50/80 border border-amber-200/80 px-3.5 py-1 rounded-full">
                         <Clock size={14} className="text-amber-500" />
@@ -442,7 +464,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                       <span>Thông tin vận chuyển & Nhận hàng</span>
                     </div>
 
-                    {ord.status === 'pending' && (
+                    {ord.status === 'unpaid' && (
                       <div className="flex items-center gap-2 flex-wrap">
                         {ord.paymentMethod === 'VÍ ĐIỆN TỬ MOMO' && (
                           <>
@@ -487,6 +509,27 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                       </div>
                     )}
 
+                    {ord.status === 'pending' && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          onClick={() => handleOpenEditOrderAddress(ord)}
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-white dark:bg-ink-800 hover:bg-cream-100 dark:hover:bg-ink-700 border border-cream-200 dark:border-ink-700 text-ink-700 dark:text-cream-200 hover:text-accent-600 text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-2xs"
+                        >
+                          <Edit3 size={13} />
+                          <span>Sửa Địa Chỉ</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleOpenCancelModal(ord)}
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-2xs active:scale-95"
+                          title="Hủy đơn hàng này"
+                        >
+                          <XCircle size={13} />
+                          <span>Hủy đơn hàng</span>
+                        </button>
+                      </div>
+                    )}
+
                     {ord.status === 'shipping' && (
                       <div className="flex items-center gap-2 flex-wrap">
                         <button
@@ -509,13 +552,24 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                     )}
 
                     {ord.status === 'delivered' && (
-                      <button
-                        onClick={() => setTrackingOrder(ord)}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer active:scale-95"
-                      >
-                        <Send size={13} />
-                        <span>Tra Cứu Hành Trình</span>
-                      </button>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          onClick={() => setReturningOrder(ord)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-2xs active:scale-95"
+                          title="Yêu cầu trả hàng & hoàn tiền nếu máy có sự cố"
+                        >
+                          <RotateCcw size={13} />
+                          <span>Yêu cầu trả hàng</span>
+                        </button>
+
+                        <button
+                          onClick={() => setTrackingOrder(ord)}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer active:scale-95"
+                        >
+                          <Send size={13} />
+                          <span>Tra Cứu Hành Trình</span>
+                        </button>
+                      </div>
                     )}
                   </div>
 
@@ -537,6 +591,15 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                   </div>
 
                   {/* Status Notice Callout Box */}
+                  {ord.status === 'unpaid' && (
+                    <div className="p-3.5 bg-amber-50/90 dark:bg-amber-950/30 border border-amber-300/80 dark:border-amber-800/60 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
+                      <CreditCard size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <strong>Đơn hàng đang chờ thanh toán:</strong> Đơn hàng {ord.order_code} chưa hoàn tất thanh toán qua {ord.paymentMethod}. Vui lòng bấm <strong>"Thanh toán lại MoMo"</strong> hoặc <strong>"Xác nhận đã thanh toán"</strong> để nhân viên tiến hành đóng gói hàng.
+                      </div>
+                    </div>
+                  )}
+
                   {ord.status === 'pending' && (
                     <div className="p-3.5 bg-amber-50/90 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
                       <Clock size={16} className="text-amber-600 shrink-0 mt-0.5" />
@@ -615,6 +678,38 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
 
                   {/* Hàng 2: Thanh nút thao tác (Action Bar) căn phải đều đặn */}
                   <div className="flex flex-wrap items-center justify-end gap-2.5 pt-1 border-t border-cream-100/60 dark:border-ink-800/60">
+                    {ord.status === 'unpaid' && (
+                      <>
+                        {ord.paymentMethod === 'VÍ ĐIỆN TỬ MOMO' && (
+                          <>
+                            <button
+                              onClick={() => handlePayAgain(ord.id)}
+                              disabled={payingAgainOrderId === ord.id}
+                              className="px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-xs flex items-center gap-1.5 disabled:opacity-50"
+                            >
+                              <RotateCcw size={13} className={payingAgainOrderId === ord.id ? 'animate-spin' : ''} />
+                              <span>Thanh toán lại MoMo</span>
+                            </button>
+                            <button
+                              onClick={() => handleConfirmPaidOrder(ord.id)}
+                              disabled={confirmingOrderId === ord.id}
+                              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-xs flex items-center gap-1.5 disabled:opacity-50"
+                            >
+                              <CheckCircle2 size={13} />
+                              <span>Xác nhận đã thanh toán</span>
+                            </button>
+                          </>
+                        )}
+                        <button
+                          onClick={() => handleOpenCancelModal(ord)}
+                          className="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800 text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-2xs flex items-center gap-1.5"
+                        >
+                          <XCircle size={14} />
+                          <span>Hủy đơn hàng</span>
+                        </button>
+                      </>
+                    )}
+
                     {ord.status === 'pending' && (
                       <button
                         onClick={() => handleOpenCancelModal(ord)}
@@ -627,6 +722,15 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
 
                     {ord.status === 'delivered' && (
                       <>
+                        <button
+                          onClick={() => setReturningOrder(ord)}
+                          className="px-4 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-300 dark:border-amber-800 text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-2xs flex items-center gap-1.5"
+                          title="Yêu cầu trả hàng & hoàn tiền nếu sản phẩm gặp sự cố hoặc hư hỏng"
+                        >
+                          <RotateCcw size={13} />
+                          <span>Trả hàng / Hoàn tiền</span>
+                        </button>
+
                         {ord.isReviewed ? (
                           <button
                             onClick={() => setRatingOrder(ord)}
@@ -804,7 +908,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
                 `Đã gửi yêu cầu hủy và hoàn tiền cho đơn ${order.order_code}! Cửa hàng sẽ hoàn tiền về tài khoản của bạn.`
               );
               setCancellingOrder(null);
-              setOrderStatusTab('refund_pending');
+              setOrderStatusTab('cancelled');
             } else {
               setOrders((prev) =>
                 prev.map((o) =>
@@ -849,6 +953,32 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ onNavigate }) => {
           }}
         />
       )}
+
+      {/* 8. DIALOG: YÊU CẦU TRẢ HÀNG & HOÀN TIỀN (RETURN GOODS & REFUND) */}
+      <OrderReturnModal
+        order={returningOrder}
+        defaultAccountHolder={user?.fullName || ''}
+        onClose={() => setReturningOrder(null)}
+        onConfirm={async ({ order, reason, bankName, accountNumber, accountHolder }) => {
+          try {
+            await api.requestReturnOrder(order.id, {
+              reason,
+              bank_name: bankName,
+              bank_account_number: accountNumber,
+              bank_account_holder: accountHolder,
+            });
+
+            toast.success(
+              `Đã gửi yêu cầu trả hàng & hoàn tiền cho đơn ${order.order_code}! Cửa hàng sẽ liên hệ xác nhận và xử lý cho bạn.`
+            );
+            setReturningOrder(null);
+            setRefreshKey((k) => k + 1);
+            setOrderStatusTab('cancelled');
+          } catch (err: any) {
+            toast.error(err.message || 'Lỗi khi gửi yêu cầu trả hàng.');
+          }
+        }}
+      />
     </div>
   );
 };

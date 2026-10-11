@@ -175,7 +175,7 @@ export function AddressModal({ isOpen, onClose, onSave, initialAddress }: Props)
 
                 <div>
                   <h4 className="text-sm text-ink-900 dark:text-cream-50">
-                    Chọn vị trí trực tiếp qua Bản đồ OpenStreetMap / Google Maps
+                    Chọn vị trí trực tiếp qua Bản đồ
                   </h4>
 
                 </div>

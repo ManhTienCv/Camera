@@ -101,6 +101,15 @@ export const ordersApi = {
     });
   },
 
+  requestReturnOrder: (
+    id: string,
+    data: { reason: string; bank_name: string; bank_account_number: string; bank_account_holder: string }
+  ) =>
+    request<{ message: string; order: Order }>(`/orders/${id}/return`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
   // MoMo Payment Gateway
   createMomoPayment: (orderId: string, redirectUrl?: string) =>
     request<{ success: boolean; payUrl: string; qrCodeUrl?: string; deeplink?: string; order: Order }>('/payment/momo/create', {

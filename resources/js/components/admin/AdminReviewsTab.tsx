@@ -76,7 +76,9 @@ export const AdminReviewsTab: React.FC = () => {
         rating: ratingFilter,
         refresh: forceRefresh || undefined,
       });
-      const list = Array.isArray(res?.reviews) ? res.reviews : Object.values(res?.reviews || {});
+      const list: AdminReviewItem[] = Array.isArray(res?.reviews)
+        ? res.reviews
+        : (Object.values(res?.reviews || {}) as AdminReviewItem[]);
       setReviews(list);
       if (res?.stats) {
         setStats(res.stats);
@@ -172,7 +174,7 @@ export const AdminReviewsTab: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-display font-bold text-ink-900">
-            Quản Lý Đánh Giá & Bình Luận
+            Quản Lý Đánh Giá 
           </h2>
           <p className="text-sm text-ink-500 mt-0.5">
             Theo dõi trải nghiệm khách hàng, kiểm duyệt hình ảnh và phản hồi đánh giá sản phẩm

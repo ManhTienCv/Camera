@@ -738,4 +738,89 @@ class OrderController extends Controller
             'order' => $this->formatOrder($order->fresh('items'), true),
         ]);
     }
+
+    /**
+     * KHÁCH HÀNG YÊU CẦU TRẢ HÀNG & HOÀN TIỀN (RETURN GOODS & REFUND) KHI ĐƠN ĐÃ GIAO
+     */
+    public function requestReturn(Request $request, $id)
+    {
+        $order = Order::where('id', $id)->orWhere('order_code', $id)->firstOrFail();
+
+        $currentUser = $this->resolveCurrentUser($request);
+        $isAuthorized = false;
+
+        if ($currentUser) {
+            $isAuthorized = ($currentUser->role === 'admin') || ((int) $currentUser->id === (int) $order->user_id);
+        }
+
+        if (!$isAuthorized && empty($order->user_id)) {
+            $sessionId = $request->header('X-Session-ID') ?: $request->input('session_id');
+            if ($sessionId && $sessionId === $order->session_id) {
+                $isAuthorized = true;
+            }
+        }
+
+        if (!$isAuthorized) {
+            return response()->json([
+                'message' => 'Bạn không có quyền thực hiện thao tác trên đơn hàng này.',
+            ], 403);
+        }
+
+        if (!in_array($order->order_status, ['delivered', 'completed'])) {
+            return response()->json([
+                'message' => 'Chỉ có thể yêu cầu trả hàng cho đơn đã nhận hàng thành công.',
+            ], 400);
+        }
+
+        $request->validate([
+            'reason' => 'required|string|max:500',
+            'bank_name' => 'required|string|max:100',
+            'bank_account_number' => 'required|string|max:50',
+            'bank_account_holder' => 'required|string|max:100',
+        ], [
+            'reason.required' => 'Vui lòng cung cấp lý do yêu cầu trả hàng/hoàn tiền.',
+            'bank_name.required' => 'Vui lòng cung cấp tên ngân hàng nhận tiền hoàn.',
+            'bank_account_number.required' => 'Vui lòng cung cấp số tài khoản nhận tiền hoàn.',
+            'bank_account_holder.required' => 'Vui lòng cung cấp tên chủ tài khoản nhận tiền hoàn.',
+        ]);
+
+        $reason = trim($request->input('reason'));
+
+        DB::transaction(function () use ($order, $request, $reason, $currentUser) {
+            $order->order_status = 'refund_pending';
+            $order->payment_status = 'refund_pending';
+            $order->bank_name = trim($request->bank_name);
+            $order->bank_account_number = trim($request->bank_account_number);
+            $order->bank_account_holder = trim($request->bank_account_holder);
+            $order->cancel_reason = '[Yêu cầu hoàn hàng] ' . $reason;
+            $order->notes = ($order->notes ? $order->notes . ' | ' : '') . 'Khách yêu cầu hoàn hàng & hoàn tiền về STK: ' . $order->bank_account_number . ' (' . $order->bank_name . ' - ' . $order->bank_account_holder . '). Lý do: ' . $reason;
+            $order->save();
+
+            PaymentTransaction::create([
+                'order_id' => $order->id,
+                'gateway' => $order->payment_method ?: 'return_refund',
+                'amount' => $order->total_amount,
+                'status' => 'refund_pending',
+                'message' => "Khách yêu cầu hoàn hàng & hoàn tiền về STK {$order->bank_account_number} ({$order->bank_name}) - {$order->bank_account_holder}. Lý do: {$reason}",
+            ]);
+        });
+
+        // Gửi email cảnh báo cho Ban Quản Trị & Kế toán để đối soát
+        try {
+            EmailService::sendAdminRefundRequestAlert($order->fresh(['items.product']), $reason);
+        } catch (\Throwable $e) {
+            Log::warning('Send admin return refund alert email failed: ' . $e->getMessage());
+        }
+
+        try {
+            EmailService::sendOrderStatusUpdated($order->fresh(['items.product']), 'refund_pending', "Khách yêu cầu trả hàng & hoàn tiền: {$reason}");
+        } catch (\Throwable $e) {
+            Log::warning('Send return request status email failed: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'message' => 'Đã tiếp nhận yêu cầu trả hàng & hoàn tiền! Cửa hàng sẽ liên hệ xác nhận thu hồi và hoàn tiền vào tài khoản ngân hàng của bạn.',
+            'order' => $this->formatOrder($order->fresh('items'), true),
+        ]);
+    }
 }

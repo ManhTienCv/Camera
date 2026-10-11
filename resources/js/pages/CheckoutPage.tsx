@@ -284,9 +284,9 @@ export function CheckoutPage({ onNavigate }: Props) {
 
       sessionStorage.removeItem('camerahub_checkout_deadline');
       onNavigate({ name: 'order-success', orderId: order.id });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to create order:', err);
-      toast.error('Không thể tạo đơn hàng. Vui lòng kiểm tra lại thông tin.');
+      toast.error(err.message || 'Không thể tạo đơn hàng. Vui lòng kiểm tra lại thông tin.');
     } finally {
       setSubmitting(false);
     }
@@ -473,7 +473,7 @@ export function CheckoutPage({ onNavigate }: Props) {
 
                 <div>
                   <h4 className="text-sm text-ink-900 dark:text-cream-50">
-                    Chọn vị trí trực tiếp qua Bản đồ OpenStreetMap / Google Maps
+                    Chọn vị trí trực tiếp qua Bản đồ 
                   </h4>
 
                 </div>

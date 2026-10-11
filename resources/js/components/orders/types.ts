@@ -10,7 +10,7 @@ export interface EnhancedOrder {
   id: string;
   order_code: string;
   date: string;
-  status: 'pending' | 'shipping' | 'delivered' | 'refund_pending' | 'cancelled';
+  status: 'pending' | 'unpaid' | 'shipping' | 'delivered' | 'refund_pending' | 'cancelled';
   statusLabel: string;
   paymentStatus?: string;
   paymentMethodCode?: string;
