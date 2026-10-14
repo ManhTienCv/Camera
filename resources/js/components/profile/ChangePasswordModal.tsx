@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, X, AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { api } from '../../lib/api';
@@ -30,6 +31,18 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
   const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [savingPassword, setSavingPassword] = useState(false);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   const resetForm = () => {
     setCurrentPassword('');
@@ -85,18 +98,20 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     }
   };
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 w-screen h-screen min-h-[100dvh] z-[99999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in"
+          className="fixed inset-0 w-screen h-screen min-h-[100dvh] z-[99999] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto cursor-pointer animate-fade-in"
           onClick={handleClose}
         >
           <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            className="w-full max-w-md bg-white dark:bg-ink-900 rounded-3xl p-6 sm:p-8 shadow-2xl border border-cream-200 dark:border-ink-800 space-y-6 relative text-ink-900 dark:text-cream-50"
+            initial={{ scale: 0.95, opacity: 0, y: 10 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 10 }}
+            className="w-full max-w-md bg-white dark:bg-ink-900 rounded-3xl p-6 sm:p-8 shadow-2xl border border-cream-200 dark:border-ink-800 space-y-6 relative text-ink-900 dark:text-cream-50 cursor-default my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -238,6 +253,8 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
+
