@@ -4,9 +4,66 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class EmailService
 {
+    /**
+     * Centralized Email Sender:
+     * - Hỗ trợ Brevo REST API (HTTPS cổng 443 - hoạt động 100% trên Render không bao giờ bị chặn)
+     * - Tự động fallback sang Laravel Mailer (SMTP / Log) nếu không có cấu hình Brevo
+     */
+    public static function sendMail(string $toEmail, string $subject, string $fullHtml): bool
+    {
+        $brevoApiKey = env('BREVO_API_KEY');
+        $mailer = env('MAIL_MAILER');
+
+        // 1. Gửi qua Brevo REST API nếu có BREVO_API_KEY hoặc MAIL_MAILER=brevo
+        if (!empty($brevoApiKey) || $mailer === 'brevo') {
+            try {
+                $fromEmail = config('mail.from.address', env('MAIL_FROM_ADDRESS', 'nvmtein@gmail.com'));
+                $fromName = config('mail.from.name', env('MAIL_FROM_NAME', 'CameraHub Store'));
+
+                $response = Http::withHeaders([
+                    'api-key' => $brevoApiKey,
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ])->timeout(12)->post('https://api.brevo.com/v3/smtp/email', [
+                    'sender' => [
+                        'name' => $fromName,
+                        'email' => $fromEmail,
+                    ],
+                    'to' => [
+                        ['email' => $toEmail],
+                    ],
+                    'subject' => $subject,
+                    'htmlContent' => $fullHtml,
+                ]);
+
+                if ($response->successful()) {
+                    Log::info("Email sent via Brevo API to {$toEmail} successfully. MessageId: " . ($response->json('messageId') ?? 'N/A'));
+                    return true;
+                }
+
+                Log::error("Brevo API send error ({$response->status()}): " . $response->body());
+            } catch (\Throwable $e) {
+                Log::error("Brevo API Exception when sending to {$toEmail}: " . $e->getMessage());
+            }
+        }
+
+        // 2. Gửi qua Laravel Mailer chuẩn (SMTP, Log...)
+        try {
+            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
+                $message->to($toEmail)
+                    ->subject($subject);
+            });
+            return true;
+        } catch (\Throwable $e) {
+            Log::error("Laravel Mailer send failed to {$toEmail}: " . $e->getMessage());
+            return false;
+        }
+    }
+
     /**
      * Common Email HTML Shell Wrapper
      */
@@ -91,12 +148,7 @@ HTML;
 
             $fullHtml = self::wrapTemplate("Xác Thực Đăng Ký Tài Khoản", $bodyHtml);
 
-            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
-                $message->to($toEmail)
-                    ->subject($subject);
-            });
-
-            return true;
+            return self::sendMail($toEmail, $subject, $fullHtml);
         } catch (\Throwable $e) {
             Log::error("Failed to send register OTP email to {$toEmail}: " . $e->getMessage());
             return false;
@@ -132,12 +184,7 @@ HTML;
 
             $fullHtml = self::wrapTemplate("Xác Nhận Thay Đổi Email", $bodyHtml);
 
-            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
-                $message->to($toEmail)
-                    ->subject($subject);
-            });
-
-            return true;
+            return self::sendMail($toEmail, $subject, $fullHtml);
         } catch (\Throwable $e) {
             Log::error("Failed to send change email OTP to {$toEmail}: " . $e->getMessage());
             return false;
@@ -173,12 +220,7 @@ HTML;
 
             $fullHtml = self::wrapTemplate("Khôi Phục Mật Khẩu Tài Khoản", $bodyHtml);
 
-            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
-                $message->to($toEmail)
-                    ->subject($subject);
-            });
-
-            return true;
+            return self::sendMail($toEmail, $subject, $fullHtml);
         } catch (\Throwable $e) {
             Log::error("Failed to send forgot password OTP to {$toEmail}: " . $e->getMessage());
             return false;
@@ -297,12 +339,7 @@ HTML;
 
             $fullHtml = self::wrapTemplate("Xác Nhận Đơn Hàng #" . $orderCode, $bodyHtml);
 
-            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
-                $message->to($toEmail)
-                    ->subject($subject);
-            });
-
-            return true;
+            return self::sendMail($toEmail, $subject, $fullHtml);
         } catch (\Throwable $e) {
             Log::error("Failed to send order confirmation email to {$order->customer_email}: " . $e->getMessage());
             return false;
@@ -449,13 +486,7 @@ HTML;
 
             $fullHtml = self::wrapTemplate("Xác Nhận Thanh Toán Thành Công #" . $orderCode, $bodyHtml, "✅ THANH TOÁN THÀNH CÔNG", "#10b981");
 
-            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
-                $message->to($toEmail)
-                    ->subject($subject);
-            });
-
-            Log::info("Payment success email sent to {$toEmail} for order #{$orderCode}");
-            return true;
+            return self::sendMail($toEmail, $subject, $fullHtml);
         } catch (\Throwable $e) {
             Log::error("Failed to send payment success email to {$order->customer_email}: " . $e->getMessage());
             return false;
@@ -620,13 +651,7 @@ HTML;
 
             $fullHtml = self::wrapTemplate($config['title'] . " #" . $orderCode, $bodyHtml, $config['badge'], $config['color']);
 
-            Mail::html($fullHtml, function ($message) use ($toEmail, $config) {
-                $message->to($toEmail)
-                    ->subject($config['subject']);
-            });
-
-            Log::info("Order status update email ({$newStatus}) sent to {$toEmail} for order #{$orderCode}");
-            return true;
+            return self::sendMail($toEmail, $config['subject'], $fullHtml);
         } catch (\Throwable $e) {
             Log::error("Failed to send order status email ({$newStatus}) to {$order->customer_email}: " . $e->getMessage());
             return false;
@@ -700,13 +725,7 @@ HTML;
 
             $fullHtml = self::wrapTemplate("Chào Mừng Thành Viên Mới!", $bodyHtml, "🎉 ĐĂNG KÝ THÀNH CÔNG", "#f17a35");
 
-            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
-                $message->to($toEmail)
-                    ->subject($subject);
-            });
-
-            Log::info("Welcome registration email sent to {$toEmail}");
-            return true;
+            return self::sendMail($toEmail, $subject, $fullHtml);
         } catch (\Throwable $e) {
             Log::error("Failed to send welcome registration email to {$user->email}: " . $e->getMessage());
             return false;
@@ -794,13 +813,7 @@ HTML;
 
             $fullHtml = self::wrapTemplate("Thông Báo Đăng Nhập Tài Khoản", $bodyHtml, "🔐 BẢO MẬT TÀI KHOẢN", "#2563eb");
 
-            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
-                $message->to($toEmail)
-                    ->subject($subject);
-            });
-
-            Log::info("Login security notification email sent to {$toEmail}");
-            return true;
+            return self::sendMail($toEmail, $subject, $fullHtml);
         } catch (\Throwable $e) {
             Log::error("Failed to send login notification email to {$user->email}: " . $e->getMessage());
             return false;
@@ -951,13 +964,7 @@ HTML;
 
             $fullHtml = self::wrapTemplate("Thông Báo Đơn Hàng Mới #" . $orderCode, $bodyHtml, "🔔 ĐƠN HÀNG MỚI (ADMIN)", "#f17a35");
 
-            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
-                $message->to($toEmail)
-                    ->subject($subject);
-            });
-
-            Log::info("Admin new order alert email sent to {$toEmail} for order #{$orderCode}");
-            return true;
+            return self::sendMail($toEmail, $subject, $fullHtml);
         } catch (\Throwable $e) {
             Log::error("Failed to send admin new order alert email: " . $e->getMessage());
             return false;
@@ -1044,13 +1051,7 @@ HTML;
 
             $fullHtml = self::wrapTemplate("Cảnh Báo Tồn Kho: " . $productName, $bodyHtml, $badge, $badgeColor);
 
-            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
-                $message->to($toEmail)
-                    ->subject($subject);
-            });
-
-            Log::info("Admin low stock alert email sent to {$toEmail} for product #{$product->id} (Remaining: {$remainingStock})");
-            return true;
+            return self::sendMail($toEmail, $subject, $fullHtml);
         } catch (\Throwable $e) {
             Log::error("Failed to send admin low stock alert email: " . $e->getMessage());
             return false;
@@ -1154,13 +1155,7 @@ HTML;
 
             $fullHtml = self::wrapTemplate("Yêu Cầu Hoàn Tiền Đơn #" . $orderCode, $bodyHtml, "💸 YÊU CẦU HOÀN TIỀN (ADMIN)", "#dc2626");
 
-            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
-                $message->to($toEmail)
-                    ->subject($subject);
-            });
-
-            Log::info("Admin refund request alert email sent to {$toEmail} for order #{$orderCode}");
-            return true;
+            return self::sendMail($toEmail, $subject, $fullHtml);
         } catch (\Throwable $e) {
             Log::error("Failed to send admin refund request alert email: " . $e->getMessage());
             return false;
@@ -1242,13 +1237,7 @@ HTML;
 
             $fullHtml = self::wrapTemplate("Xác Nhận Hoàn Tiền #" . $orderCode, $bodyHtml, "💸 HOÀN TIỀN THÀNH CÔNG", "#10b981");
 
-            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
-                $message->to($toEmail)
-                    ->subject($subject);
-            });
-
-            Log::info("Refund confirmation email sent to {$toEmail} for order #{$orderCode}");
-            return true;
+            return self::sendMail($toEmail, $subject, $fullHtml);
         } catch (\Throwable $e) {
             Log::error("Failed to send refund confirmation email: " . $e->getMessage());
             return false;
@@ -1313,13 +1302,7 @@ HTML;
 
             $fullHtml = self::wrapTemplate("Thông Báo Đổi Mật Khẩu Thành Công", $bodyHtml, "🔒 BẢO MẬT TÀI KHOẢN", "#2563eb");
 
-            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
-                $message->to($toEmail)
-                    ->subject($subject);
-            });
-
-            Log::info("Password change security notification email sent to {$toEmail}");
-            return true;
+            return self::sendMail($toEmail, $subject, $fullHtml);
         } catch (\Throwable $e) {
             Log::error("Failed to send password changed notification email: " . $e->getMessage());
             return false;
@@ -1383,17 +1366,12 @@ HTML;
 
             $fullHtml = self::wrapTemplate("Phản Hồi Đánh Giá: " . $productName, $bodyHtml, "💬 PHẢN HỒI ĐÁNH GIÁ", "#f17a35");
 
-            Mail::html($fullHtml, function ($message) use ($toEmail, $subject) {
-                $message->to($toEmail)
-                    ->subject($subject);
-            });
-
-            Log::info("Review reply notification email sent to {$toEmail} for review #{$review->id}");
-            return true;
+            return self::sendMail($toEmail, $subject, $fullHtml);
         } catch (\Throwable $e) {
             Log::error("Failed to send review reply notification email: " . $e->getMessage());
             return false;
         }
     }
 }
+
 
