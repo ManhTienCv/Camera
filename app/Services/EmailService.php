@@ -953,13 +953,6 @@ HTML;
                     {$itemsHtml}
                 </tbody>
             </table>
-
-            <!-- Admin Action Hint -->
-            <div style="background-color: #f8fafc; border-radius: 12px; padding: 16px 18px; margin-top: 20px; border: 1px solid #e2e8f0; font-size: 12px; color: #475569; line-height: 1.6;">
-                <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px; font-size: 13px;">📋 Hành Động Tiếp Theo:</div>
-                <div style="margin-bottom: 4px;">• Vui lòng đăng nhập <strong>Admin Panel</strong> để kiểm tra tồn kho và xác nhận chuẩn bị hàng.</div>
-                <div>• Nếu đơn hàng là COD hoặc trực tuyến đã thanh toán, kiểm tra phiếu vận chuyển GHN đã được kết nối tự động.</div>
-            </div>
 HTML;
 
             $fullHtml = self::wrapTemplate("Thông Báo Đơn Hàng Mới #" . $orderCode, $bodyHtml, "🔔 ĐƠN HÀNG MỚI (ADMIN)", "#f17a35");
