@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { QrCode } from 'lucide-react';
 import { getStoreSettings } from '../../lib/settings';
 
@@ -18,9 +18,19 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
       label: `Chuyển khoản VietQR (${storeSettings.bankName} 24/7)`,
     },
     storeSettings.isCodEnabled && { id: 'cod', label: 'Thanh toán khi nhận hàng (COD)' },
-    { id: 'vnpay', label: 'Cổng VNPAY (ATM / Visa / QR Code)' },
     storeSettings.isMomoEnabled && { id: 'momo', label: 'Ví điện tử MoMo' },
   ].filter(Boolean) as Array<{ id: string; label: string }>;
+
+  // Tự động chuyển về phương thức hợp lệ nếu phương thức đang chọn không còn hỗ trợ (ví dụ vnpay)
+  useEffect(() => {
+    if (availablePaymentMethods.length > 0) {
+      const isCurrentAvailable = availablePaymentMethods.some((m) => m.id === selectedMethod);
+      if (!isCurrentAvailable) {
+        onSelectMethod(availablePaymentMethods[0].id);
+      }
+    }
+  }, [availablePaymentMethods, selectedMethod, onSelectMethod]);
+
 
   return (
     <div className="card p-6 space-y-4">
