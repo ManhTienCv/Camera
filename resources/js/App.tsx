@@ -128,9 +128,17 @@ const GoogleAuthHandler: React.FC = () => {
   return null;
 };
 
+const DEFAULT_CATEGORIES: Category[] = [
+  { id: 1, name: 'Máy ảnh Mirrorless', slug: 'may-anh-mirrorless', description: '', icon: 'Camera' },
+  { id: 2, name: 'Máy ảnh DSLR', slug: 'may-anh-dslr', description: '', icon: 'Camera' },
+  { id: 3, name: 'Ống kính (Lens)', slug: 'ong-kinh-lens', description: '', icon: 'Disc' },
+  { id: 4, name: 'Flycam & Drone', slug: 'flycam-drone', description: '', icon: 'Navigation' },
+  { id: 5, name: 'Phụ kiện Camera', slug: 'phu-kien-camera', description: '', icon: 'Briefcase' },
+];
+
 export default function App() {
   const [page, setPage] = useState<Page>(() => parseLocation());
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [selectorModalOpen, setSelectorModalOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
 
@@ -140,15 +148,15 @@ export default function App() {
     return () => window.removeEventListener('camerahub_open_selector', handleOpenSelector);
   }, []);
 
-
   useEffect(() => {
     (async () => {
       try {
         const data = await api.getCategories();
-        setCategories(Array.isArray(data) ? data : []);
+        if (Array.isArray(data) && data.length > 0) {
+          setCategories(data);
+        }
       } catch (e) {
         console.error('Failed to fetch categories:', e);
-        setCategories([]);
       }
     })();
   }, []);

@@ -8,6 +8,14 @@ interface Props {
   categories: Category[];
 }
 
+const DEFAULT_CATEGORIES: Category[] = [
+  { id: 1, name: 'Máy ảnh Mirrorless', slug: 'may-anh-mirrorless', description: '', icon: 'Camera' },
+  { id: 2, name: 'Máy ảnh DSLR', slug: 'may-anh-dslr', description: '', icon: 'Camera' },
+  { id: 3, name: 'Ống kính (Lens)', slug: 'ong-kinh-lens', description: '', icon: 'Disc' },
+  { id: 4, name: 'Flycam & Drone', slug: 'flycam-drone', description: '', icon: 'Navigation' },
+  { id: 5, name: 'Phụ kiện Camera', slug: 'phu-kien-camera', description: '', icon: 'Briefcase' },
+];
+
 export function Footer({ onNavigate, categories }: Props) {
   const [settings, setSettings] = useState<StoreSettings>(getStoreSettings());
 
@@ -18,6 +26,10 @@ export function Footer({ onNavigate, categories }: Props) {
     window.addEventListener('store_settings_updated', handleUpdate);
     return () => window.removeEventListener('store_settings_updated', handleUpdate);
   }, []);
+
+  const displayCategories = (Array.isArray(categories) && categories.length > 0)
+    ? categories
+    : DEFAULT_CATEGORIES;
 
   return (
     <footer className="bg-ink-900 text-cream-200 mt-20">
@@ -57,16 +69,26 @@ export function Footer({ onNavigate, categories }: Props) {
           <div>
             <h4 className="font-display font-semibold text-cream-50 text-sm mb-4">Danh mục sản phẩm</h4>
             <ul className="space-y-2.5 text-sm text-ink-300">
-              {(Array.isArray(categories) ? categories : []).slice(0, 5).map((cat) => (
-                <li key={cat.id}>
+              {displayCategories.slice(0, 5).map((cat) => (
+                <li key={cat.id || cat.slug}>
                   <button
+                    type="button"
                     onClick={() => onNavigate({ name: 'catalog', categorySlug: cat.slug })}
-                    className="hover:text-accent-400 transition-colors"
+                    className="hover:text-accent-400 transition-colors text-left cursor-pointer flex items-center gap-1.5"
                   >
-                    {cat.name}
+                    <span>{cat.name}</span>
                   </button>
                 </li>
               ))}
+              <li className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => onNavigate({ name: 'catalog' })}
+                  className="text-xs font-semibold text-accent-400 hover:text-accent-300 transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <span>Xem tất cả sản phẩm →</span>
+                </button>
+              </li>
             </ul>
           </div>
 
